@@ -1,0 +1,45 @@
+.vr-page { height: 100%; min-height: 740px; display: flex; flex-direction: column; gap: 16px; }
+.vr-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.vr-toolbar h2 { display: flex; align-items: center; gap: 10px; font-size: 19px; }
+.vr-toolbar p { color: #7e9bb1; font-size: 12px; margin: 6px 0 0; }
+.vr-toolbar .arco-btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 9px; }
+.vr-workspace { flex: 1; min-height: 580px; display: grid; grid-template-columns: minmax(0, 1fr) 260px; border: 1px solid #29455a; border-radius: 17px; overflow: hidden; background: #101f30; }
+.vr-stage { position: relative; min-height: 580px; overflow: hidden; }
+.vr-canvas { width: 100%; height: 100%; position: absolute; inset: 0; }
+.vr-canvas canvas { display: block; width: 100%; height: 100%; touch-action: none; outline-offset: -3px; cursor: grab; }
+.vr-canvas canvas:active { cursor: grabbing; }
+.vr-view-label { position: absolute; top: 18px; left: 18px; padding: 10px 13px; border: 1px solid #ffffff30; background: #0d2339d9; border-radius: 10px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #e4f5ff; pointer-events: none; }
+.vr-view-label small { margin-left: 12px; font-size: 11px; color: #acc5d7; }
+.vr-help { position: absolute; bottom: 18px; left: 18px; right: 156px; padding: 10px 14px; background: #0d2339d9; border: 1px solid #ffffff22; border-radius: 9px; color: #d3e4ed; font-size: 11px; line-height: 1.6; pointer-events: none; }
+.vr-movement { position: absolute; right: 20px; bottom: 20px; display: grid; grid-template-columns: repeat(3, 35px); grid-template-rows: repeat(2, 35px); gap: 5px; }
+.vr-movement button { display: grid; place-items: center; border: 1px solid #abc8db66; background: #102c40e6; color: #dbf4ff; border-radius: 8px; touch-action: none; user-select: none; }
+.vr-movement button:active { background: #2689b1; }
+.vr-key-KeyW { grid-column: 2; }
+.vr-key-KeyA { grid-row: 2; grid-column: 1; }
+.vr-key-KeyS { grid-row: 2; grid-column: 2; }
+.vr-key-KeyD { grid-row: 2; grid-column: 3; }
+.vr-inspector { padding: 20px 18px; border-left: 1px solid #29455a; overflow: auto; }
+.vr-section-title { display: flex; align-items: center; justify-content: space-between; color: #d1e4ef; font-size: 13px; margin: 23px 0 12px; }
+.vr-section-title:first-child { margin-top: 0; }
+.vr-section-title span { color: #577d98; font-size: 10px; letter-spacing: 1px; }
+.vr-map { width: 100%; background: #0c1a28; border: 1px solid #243c50; border-radius: 10px; padding: 8px; }
+.vr-room-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 10px; }
+.vr-room-buttons button { padding: 7px; border: 1px solid #29455a; color: #aad0e4; background: #172d40; border-radius: 7px; font-size: 12px; }
+.vr-room-buttons button:hover { border-color: #6acff6; }
+.vr-room-buttons button:disabled { opacity: .4; cursor: default; }
+.vr-setting { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: #8eaec3; margin: 15px 0; }
+.vr-setting .arco-switch { min-width: 34px; height: 20px; }
+.vr-setting .arco-switch-dot { width: 14px; height: 14px; }
+.vr-setting .arco-switch-checked .arco-switch-dot { left: calc(100% - 17px); }
+.vr-note { font-size: 11px; line-height: 1.8; color: #718da4; margin-bottom: 13px; }
+.vr-inspector .arco-btn { border-radius: 8px; }
+.vr-model-name { color: #94c3d9; font-size: 11px; overflow-wrap: anywhere; }
+.vr-dimension { margin-top: 24px; padding-top: 16px; border-top: 1px solid #233e51; }
+.vr-dimension b { display: block; color: #90c9e2; font-weight: 500; font-size: 15px; letter-spacing: 1px; }
+.vr-dimension span { display: block; color: #587c96; font-size: 10px; margin-top: 8px; }
+.vr-disclaimer { font-size: 11px; color: #68849a; margin: 0; line-height: 1.5; }
+.vr-message { position: absolute; top: 80px; left: 20px; right: 20px; padding: 15px 40px 15px 16px; border-radius: 9px; background: #10293fee; color: #c4e7f9; font-size: 13px; }
+.vr-error { background: #482b2bef; color: #ffd3c9; }
+.vr-message button { position: absolute; right: 10px; top: 8px; background: none; border: 0; color: inherit; font-size: 22px; }
+.vr-page:fullscreen { padding: 20px; background: #091421; height: 100dvh; min-height: 0; width: 100%; }
+.vr-page:fullscreen .vr-workspace, .vr-page:fullscreen .vr-stage { min-height: 0; }

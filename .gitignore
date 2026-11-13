@@ -7,3 +7,14 @@
 
 # Local History for Visual Studio Code
 .history/
+
+# Dependencies and build output
+node_modules/
+dist/
+
+# macOS metadata
+.DS_Store
+
+# Local authentication credentials
+backend/data/auth.json
+backend/data/auth.json.tmp
