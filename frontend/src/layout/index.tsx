@@ -1,30 +1,30 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Wifi, Zap } from 'lucide-react';
+import { Moon, PanelLeftClose, PanelLeftOpen, Sun, Zap } from 'lucide-react';
 import type { Page, State, User } from '../types';
+import TodayAlmanac from '../calendar';
 import { nav } from './navigation';
 
-type LayoutProps = { page: Page; role: User['role']; state?: State; busy: boolean; children: ReactNode };
+type LayoutProps = { page: Page; role: User['role']; state?: State; busy: boolean; nightMode: boolean; onNightModeChange: (value: boolean) => void; children: ReactNode };
 
-export default function Layout({ page, role, state, busy, children }: LayoutProps) {
-  const [dashboardScale, setDashboardScale] = useState(() => Math.min(window.innerWidth / 1672, window.innerHeight / 941));
-  useEffect(() => {
-    const resize = () => setDashboardScale(Math.min(window.innerWidth / 1672, window.innerHeight / 941));
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
+export default function Layout({ page, role, state, busy, nightMode, onNightModeChange, children }: LayoutProps) {
+  const [expanded, setExpanded] = useState(false);
+  const compact = !expanded;
 
-  return <div className="dashboard-viewport"><div className="shell" style={{ transform: `translate(-50%, -50%) scale(${dashboardScale})` }}>
+  return <div className="dashboard-viewport"><div className={'shell' + (compact ? ' shell-compact' : '')}>
     <aside className="sidebar">
-      <a className="brand" href="#home"><span>M</span><div>米家中枢<small>SMART HOME</small></div></a>
+      <a className="brand" href="#home" aria-label="米家中枢首页"><span>M</span><div>米家中枢</div></a>
       <nav aria-label="主导航">{nav.filter(item => role !== 'guest' || !['automation', 'billing'].includes(item.id)).map(({ id, name, icon: Icon }) =>
         <a key={id} href={'#' + id} className={page === id ? 'selected' : ''} aria-current={page === id ? 'page' : undefined}>
-          <Icon size={19} />{name}
-        </a>)}</nav><div className="sidebar-footer"><Wifi size={16} /><span>本地演示环境<small>所有操作即时保存</small></span></div>
+          <Icon size={19} /><span>{name}</span>
+        </a>)}</nav>
+      <button className="sidebar-toggle" type="button" title={compact ? '展开菜单' : '收起菜单'} aria-label={compact ? '展开导航' : '收起导航'} aria-expanded={!compact} onClick={() => setExpanded(!expanded)}>
+        {compact ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+      </button>
     </aside>
     <div className="workspace">
       <header className="top"><div className="home-title"><h1>{nav.find(({ id }) => id === page)?.name}</h1></div>
-        <div className="top-status"><span><i className="online-dot" />{state?.devices.length ?? '–'} 台设备在线</span><span><Zap size={17} />{state?.devices.filter(d => ('on' in d && d.on) || (d.kind === 'robot' && d.cleaning)).length ?? '–'} 台运行中</span><DashboardClock /></div>
+        <div className="top-status"><span><i className="online-dot" />{state?.devices.length ?? '–'} 台设备在线</span><span><Zap size={17} />{state?.devices.filter(d => ('on' in d && d.on) || (d.kind === 'robot' && d.cleaning)).length ?? '–'} 台运行中</span><button className="theme-toggle" type="button" aria-pressed={nightMode} aria-label={nightMode ? '切换到日间模式' : '切换到夜间模式'} onClick={() => onNightModeChange(!nightMode)}>{nightMode ? <Sun size={16} /> : <Moon size={16} />}{nightMode ? '日间' : '夜间'}</button><DashboardClock /></div>
       </header>
       <main aria-busy={busy}>
         {children}
@@ -36,5 +36,11 @@ export default function Layout({ page, role, state, busy, children }: LayoutProp
 function DashboardClock() {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => { const timer = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(timer); }, []);
-  return <div className="dashboard-clock"><strong>{now.toLocaleTimeString('zh-CN', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit' })}</strong><small>{now.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai', month: 'long', day: 'numeric', weekday: 'long' })}</small></div>;
+  return <div className="dashboard-clock">
+    <button type="button" className="dashboard-clock-trigger" aria-haspopup="dialog" aria-controls="today-almanac">
+      <strong>{now.toLocaleTimeString('zh-CN', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit' })}</strong>
+      <small>{now.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai', month: 'long', day: 'numeric', weekday: 'long' })}</small>
+    </button>
+    <TodayAlmanac now={now} />
+  </div>;
 }

@@ -61,10 +61,27 @@ const label = z.string().trim().min(1).max(80);
 const members = z.enum(['self', 'partner', 'child', 'parents', 'stranger']);
 const categories = z.enum(['电费', '水费', '燃气费', '移动话费', '联通话费', '电信话费']);
 
-const auth = createAuth({ file: fileURLToPath(new URL('./data/auth.json', import.meta.url)) });
+const skipLogin = process.argv.includes('--skip-login');
 app.use('/api', validateOrigin);
-app.use('/api/auth', auth.router);
-app.use('/api', auth.requireAuth, authorizeHousehold);
+if (skipLogin) {
+  const localUser = { id: 'local', username: 'local', displayName: '本地预览', role: 'admin' };
+  app.use('/api', (req, res, next) => {
+    if (req.hostname !== '127.0.0.1' && req.hostname !== 'localhost') {
+      return res.status(403).json({ message: '免登录模式仅限本机访问' });
+    }
+    req.user = localUser;
+    res.set('Cache-Control', 'no-store');
+    next();
+  });
+  app.get('/api/auth/session', (_req, res) => res.json({
+    localPreview: true, user: localUser, household: { id: 'local', name: '本地家庭' },
+  }));
+} else {
+  const auth = createAuth({ file: fileURLToPath(new URL('./data/auth.json', import.meta.url)) });
+  app.use('/api/auth', auth.router);
+  app.use('/api', auth.requireAuth);
+}
+app.use('/api', authorizeHousehold);
 app.use('/api', (req, res, next) => {
   if (req.user.role === 'guest') {
     const json = res.json.bind(res);
@@ -171,4 +188,14 @@ app.use((error, _req, res, _next) => {
   console.error(error);
   res.status(500).json({ message: '保存失败，请重试' });
 });
-app.listen(3001, '127.0.0.1', () => console.log('Smart Home API: http://127.0.0.1:3001'));
+const port = Number(process.env.SMART_HOME_API_PORT || 3101);
+app.listen(port, '127.0.0.1', error => {
+  if (error) {
+    console.error(error.code === 'EADDRINUSE'
+      ? `Smart Home API 端口 ${port} 已被占用，请为前后端设置相同的 SMART_HOME_API_PORT。`
+      : error);
+    process.exitCode = 1;
+    return;
+  }
+  console.log(`Smart Home API: http://127.0.0.1:${port}${skipLogin ? '（本地免登录）' : ''}`);
+});

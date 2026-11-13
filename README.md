@@ -32,11 +32,13 @@ cd frontend
 npm run dev
 ```
 
-浏览器打开 http://127.0.0.1:5173。前端将 `/api` 请求转发到端口 3001 的后端，因此两个服务都需要运行。后端状态保存在 `backend/data/state.json`。
+浏览器打开 http://localhost:8000。前端将 `/api` 请求转发到端口 3101 的后端，因此两个服务都需要运行。若该端口被占用，在两个启动终端中设置同一个 `SMART_HOME_API_PORT` 后重启前后端。后端状态保存在 `backend/data/state.json`。
 
 前端构建检查：在 `frontend` 目录执行 `npm run build`。
 
 #### 登录与鉴权
+
+本地运行 `npm run dev --prefix backend` 时临时跳过登录。要恢复验证，停止该进程并运行 `npm start --prefix backend`。
 
 首次打开页面时创建家庭，设置家庭名称、管理员用户名、显示名称和 12–128 位密码，创建后自动登录。没有默认密码，也不开放自行注册。
 

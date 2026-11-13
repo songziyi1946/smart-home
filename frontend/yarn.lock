@@ -808,6 +808,11 @@ lucide-react@^0.468.0:
   resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-0.468.0.tgz#830c1bfd905575ddd23b832baa420c87db166910"
   integrity sha512-6koYRhnM2N0GGZIdXzSeiNwguv1gt/FAjZOiPl76roBi3xKEXa4WmfpxgQwTTL4KipXjefrnf3oV4IsYhi4JFA==
 
+lunar-typescript@1.8.6:
+  version "1.8.6"
+  resolved "https://registry.npmjs.org/lunar-typescript/-/lunar-typescript-1.8.6.tgz#9ecadd8610369f800bf46a517da7f6c598f6491d"
+  integrity sha512-5Eo4T/cnuXfrgO4k5LCpOGHIUOuz5hCF/IfNv0T29WY2shR36Hiz+ecN9WjnUuxUKhql9gbOkPaQoqLFKtPRNA==
+
 meshoptimizer@~1.1.1:
   version "1.1.1"
   resolved "https://registry.npmjs.org/meshoptimizer/-/meshoptimizer-1.1.1.tgz#20c7d050d59bdc573154814f6a37d47d89908cca"

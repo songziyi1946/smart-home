@@ -25,7 +25,7 @@ export default function DeviceRow({ device, busy, mutate }: { device: Device; bu
       {([{ value: 'open', label: '打开' }, { value: 'stop', label: '停止' }, { value: 'closed', label: '关闭' }]).map(({ value, label }) =>
         <Button key={value} size="small" disabled={busy || device.position === value} onClick={() => void send('position', value)}>{label}</Button>)}
     </div>}
-    {device.kind === 'light' && <Modal visible={details} title={device.name + ' · 亮度调节'} footer={null} onCancel={() => setDetails(false)}><div className="brightness">
+    {device.kind === 'light' && <Modal visible={details} title={device.name + ' · 亮度调节'} footer={null} getPopupContainer={() => document.fullscreenElement ?? document.body} onCancel={() => setDetails(false)}><div className="brightness">
       <small>亮度 {device.level}%</small><Slider aria-label={device.name + '亮度'} min={1} max={100} defaultValue={device.level} disabled={busy} onAfterChange={(value) => { if (typeof value === 'number') void send('level', value); }} />
     </div></Modal>}
   </div>;

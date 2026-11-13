@@ -1,39 +1,102 @@
 import * as T from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildHome, disposeObject } from './scene';
-import { canWalk, viewpoints } from './plan';
+import { canWalk, CEILING_HEIGHT, viewpoints } from './plan';
+import millworkUrl from './models/millwork.glb?url';
+import furnishingsUrl from './models/furnishings.glb?url';
 
 export type ViewerMode = 'walk' | 'orbit';
 export type ViewerStatus = { mode: ViewerMode; position: [number, number]; heading: number };
 export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) => void) {
-  const renderer = new T.WebGLRenderer({ antialias: true, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6)); renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = T.PCFSoftShadowMap; renderer.outputColorSpace = T.SRGBColorSpace;
-  renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.2;
+  const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.type = T.PCFShadowMap;
+  renderer.localClippingEnabled = true;
+  renderer.outputColorSpace = T.SRGBColorSpace;
+  renderer.toneMapping = T.ACESFilmicToneMapping;
   renderer.domElement.tabIndex = 0; renderer.domElement.setAttribute('aria-label', '可移动三维户型，拖动查看，WASD 或方向键行走');
   host.append(renderer.domElement);
-  const scene = new T.Scene(); scene.background = new T.Color('#d8e2e1');
-  const ambient = new T.HemisphereLight('#fff5df', '#8b8174', 2.2); scene.add(ambient);
-  const sun = new T.DirectionalLight('#fff3d7', 3.2); sun.position.set(-4, 9, 10); sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: .5, far: 40 }); sun.shadow.bias = -.0005; scene.add(sun);
-  const home = buildHome(); scene.add(home.root);
-  const ground = new T.Mesh(new T.PlaneGeometry(100, 100), new T.MeshStandardMaterial({ color: '#b5b9ae', roughness: 1 }));
-  ground.rotation.x = -Math.PI / 2; ground.position.y = -.12; ground.receiveShadow = true; scene.add(ground);
+  const scene = new T.Scene();
+  const sky = new T.Color();
+  const studio = new RoomEnvironment();
+  const pmrem = new T.PMREMGenerator(renderer);
+  const environment = pmrem.fromScene(studio, .08);
+  scene.environment = environment.texture;
+  studio.dispose(); pmrem.dispose();
+  const ambient = new T.HemisphereLight('#d4e4ff', '#797069', 1); scene.add(ambient);
+  const sun = new T.DirectionalLight('#f1f5ff', 1.3);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 7, bottom: -7, near: .5, far: 30 });
+  sun.shadow.bias = -.00015; sun.shadow.normalBias = .025; sun.shadow.radius = 3; scene.add(sun, sun.target);
+  let needsRender = true;
+  function invalidate() { needsRender = true; }
+  const home = buildHome(invalidate); scene.add(home.root);
+  const ground = new T.Mesh(new T.PlaneGeometry(100, 100), new T.MeshStandardMaterial({ color: '#9da5a7', roughness: 1 }));
+  ground.rotation.x = -Math.PI / 2; ground.position.y = -.195; ground.receiveShadow = true; scene.add(ground);
   const camera = new T.PerspectiveCamera(65, 1, .04, 150);
-  const orbit = new OrbitControls(camera, renderer.domElement); orbit.enableDamping = true; orbit.enabled = false; orbit.minDistance = 2; orbit.maxDistance = 28; orbit.maxPolarAngle = Math.PI / 2 - .02;
-  let mode: ViewerMode = 'walk'; let yaw = 0; let pitch = 0; let night = false; let roof = true;
+  const overview = new T.OrthographicCamera(-1, 1, 1, -1, .1, 120);
+  const orbit = new OrbitControls(overview, renderer.domElement);
+  orbit.enableDamping = true; orbit.minZoom = .5; orbit.maxZoom = 3;
+  orbit.minPolarAngle = .08; orbit.maxPolarAngle = Math.PI / 2 - .12;
+  orbit.addEventListener('change', invalidate);
+  const homeBounds = new T.Box3(new T.Vector3(0, -.19, 0), new T.Vector3(12.91, CEILING_HEIGHT, 7.53));
+  let fitWidth = 1; let fitHeight = 1;
+  let mode: ViewerMode = 'orbit'; let yaw = 0; let pitch = 0; let night = false; let roof = true;
   let imported: T.Group | undefined; let importedBounds: T.Box3 | undefined; let disposed = false; let importVersion = 0;
   let frame = 0; let lastTime = performance.now(); let reportAt = 0; let pointer: { id: number; x: number; y: number } | undefined;
   const keys = new Set<string>(); const held = new Set<string>(); const direction = new T.Vector3();
   const raycaster = new T.Raycaster();
-  function orient() { camera.rotation.order = 'YXZ'; camera.rotation.set(pitch, yaw, 0); }
+  function updatePresentation() {
+    const cutaway = mode === 'orbit';
+    home.setCutaway(cutaway, roof);
+    ground.visible = !cutaway;
+    sun.target.position.copy((importedBounds ?? homeBounds).getCenter(new T.Vector3()));
+    sun.position.copy(sun.target.position).add(new T.Vector3(-5.45, 9, 6.25));
+    scene.background = cutaway ? null : sky.set(night ? '#17263a' : '#c6d6e5');
+    ambient.color.set(night ? '#8ab7ff' : '#d4e4ff');
+    ambient.intensity = night ? .37 : cutaway ? .95 : 1.15;
+    sun.color.set(night ? '#7ba8ff' : '#f1f5ff');
+    sun.intensity = night ? .34 : 1.3;
+    scene.environmentIntensity = night ? .09 : .23;
+    renderer.toneMappingExposure = night ? .95 : 1;
+    renderer.shadowMap.needsUpdate = true;
+    invalidate();
+  }
+  function fitOverview() {
+    const bounds = importedBounds ?? homeBounds;
+    const center = bounds.getCenter(new T.Vector3());
+    const size = bounds.getSize(new T.Vector3());
+    orbit.target.copy(center);
+    const distance = size.length() * 1.5;
+    overview.position.copy(center).addScaledVector(new T.Vector3(.15, 1.55, 1).normalize(), distance);
+    overview.far = Math.max(120, distance * 3);
+    overview.zoom = 1;
+    overview.lookAt(center);
+    overview.updateMatrixWorld();
+    // Fit the box in camera space before setting the viewport-dependent frustum.
+    const projected = bounds.clone().applyMatrix4(overview.matrixWorldInverse).getSize(new T.Vector3());
+    fitWidth = projected.x; fitHeight = projected.y;
+    resize();
+    orbit.update();
+  }
+  function orient() { camera.rotation.order = 'YXZ'; camera.rotation.set(pitch, yaw, 0); invalidate(); }
   function walkAt(position: T.Vector3, target: T.Vector3) {
     mode = 'walk'; orbit.enabled = false; camera.position.copy(position); camera.lookAt(target);
     const euler = new T.Euler().setFromQuaternion(camera.quaternion, 'YXZ'); yaw = euler.y; pitch = euler.x; orient();
-    home.ceilings.visible = roof; report();
+    updatePresentation(); report();
   }
-  function report() { onStatus({ mode, position: [camera.position.x, camera.position.z], heading: yaw }); }
+  let previousStatus: ViewerStatus | undefined;
+  function report() {
+    if (previousStatus?.mode === mode && (mode === 'orbit' ||
+        (previousStatus.position[0] === camera.position.x && previousStatus.position[1] === camera.position.z && previousStatus.heading === yaw))) return;
+    previousStatus = { mode, position: [camera.position.x, camera.position.z], heading: yaw };
+    onStatus(previousStatus);
+  }
   function view(id: string) {
     if (imported) { setMode('orbit'); return; }
     const point = viewpoints.find(point => point.id === id) ?? viewpoints[0];
@@ -47,14 +110,15 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
         walkAt(new T.Vector3(center.x, 1.62, importedBounds.max.z - .6), new T.Vector3(center.x, 1.4, center.z));
       } else view('entry');
     } else {
-      mode = 'orbit'; orbit.enabled = true; home.ceilings.visible = false;
-      const center = importedBounds?.getCenter(new T.Vector3()) ?? new T.Vector3(6.4, 0, 3.7);
-      orbit.target.set(center.x, .6, center.z); camera.position.set(center.x + 5, 8, center.z + 7); orbit.update(); report();
+      mode = 'orbit'; orbit.enabled = true;
+      fitOverview(); updatePresentation(); report();
     }
   }
   function move(dx: number, dz: number) {
+    if (!dx && !dz) return;
+    const { x: startX, z: startZ } = camera.position;
     if (imported && importedBounds) {
-      direction.set(dx, 0, dz); const distance = direction.length(); if (!distance) return; direction.normalize();
+      direction.set(dx, 0, dz); const distance = direction.length(); direction.normalize();
       for (const height of [.45, 1.3]) {
         raycaster.set(new T.Vector3(camera.position.x, height, camera.position.z), direction); raycaster.far = distance + .2;
         if (raycaster.intersectObject(imported, true).length) return;
@@ -65,6 +129,7 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
       if (canWalk(camera.position.x + dx, camera.position.z, home.obstacles)) camera.position.x += dx;
       if (canWalk(camera.position.x, camera.position.z + dz, home.obstacles)) camera.position.z += dz;
     }
+    if (camera.position.x !== startX || camera.position.z !== startZ) invalidate();
   }
   function step(key: string, distance = .12) {
     if (mode !== 'walk') return;
@@ -87,12 +152,46 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
     pointer.x = event.clientX; pointer.y = event.clientY; orient();
   }
   function up(event: PointerEvent) { if (pointer?.id === event.pointerId) pointer = undefined; }
-  function wheel(event: WheelEvent) { if (mode === 'walk') { event.preventDefault(); camera.fov = T.MathUtils.clamp(camera.fov + event.deltaY * .025, 40, 85); camera.updateProjectionMatrix(); } }
+  function wheel(event: WheelEvent) { if (mode === 'walk') { event.preventDefault(); camera.fov = T.MathUtils.clamp(camera.fov + event.deltaY * .025, 40, 85); camera.updateProjectionMatrix(); invalidate(); } }
   const canvas = renderer.domElement;
   canvas.addEventListener('keydown', keydown); window.addEventListener('keyup', keyup); window.addEventListener('blur', clear); canvas.addEventListener('blur', clear);
   canvas.addEventListener('pointerdown', down); canvas.addEventListener('pointermove', drag); canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', clear); canvas.addEventListener('wheel', wheel, { passive: false });
-  function resize() { const width = host.clientWidth, height = host.clientHeight; if (!width || !height) return; renderer.setSize(width, height); camera.aspect = width / height; camera.updateProjectionMatrix(); }
-  const observer = new ResizeObserver(resize); observer.observe(host); resize(); view('entry');
+  function resize() {
+    const width = host.clientWidth, height = host.clientHeight;
+    if (!width || !height) return;
+    const aspect = width / height;
+    renderer.setSize(width, height);
+    camera.aspect = aspect; camera.updateProjectionMatrix();
+    const halfHeight = Math.max(fitHeight, fitWidth / aspect) * .59;
+    overview.left = -halfHeight * aspect; overview.right = -overview.left;
+    overview.bottom = -halfHeight; overview.top = halfHeight;
+    overview.updateProjectionMatrix();
+    invalidate();
+  }
+  const observer = new ResizeObserver(resize); observer.observe(host); setMode('orbit');
+  for (const url of [millworkUrl, furnishingsUrl]) {
+    new GLTFLoader().load(url, ({ scene: model }) => {
+      if (disposed) { disposeObject(model); return; }
+      model.traverse(object => {
+        if (!(object instanceof T.Mesh)) return;
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        object.castShadow = materials.every(material => !material.transparent);
+        object.receiveShadow = true;
+        for (const material of materials) if (material.transparent) material.depthWrite = false;
+      });
+      home.root.add(model);
+      if (url === millworkUrl) {
+        // The generated millwork now contains both entry cabinets and the living TV wall.
+        // Hide only the local fallback after the asset has loaded successfully.
+        home.millworkFallback.visible = false;
+        home.entryFallback.visible = false;
+      } else {
+        home.livingFallback.visible = false;
+      }
+      renderer.shadowMap.needsUpdate = true;
+      invalidate();
+    }, undefined, error => console.error('家具模型加载失败', error));
+  }
   function tick(time: number) {
     if (disposed) return;
     const dt = Math.min((time - lastTime) / 1000, .05); lastTime = time;
@@ -105,16 +204,20 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
       move((-Math.sin(yaw) * forward + Math.cos(yaw) * sideways) * speed, (-Math.cos(yaw) * forward - Math.sin(yaw) * sideways) * speed);
     } else orbit.update();
     if (time - reportAt > 140) { report(); reportAt = time; }
-    renderer.render(scene, camera); frame = requestAnimationFrame(tick);
+    if (needsRender) {
+      needsRender = false;
+      renderer.render(scene, mode === 'walk' ? camera : overview);
+    }
+    frame = requestAnimationFrame(tick);
   }
   frame = requestAnimationFrame(tick);
   return {
     view, setMode, step,
     focus() { canvas.focus(); },
     hold(key: string, active: boolean) { if (active) held.add(key); else held.delete(key); },
-    setNight(value: boolean) { night = value; ambient.intensity = night ? .2 : 2.2; sun.intensity = night ? .15 : 3.2; scene.background = new T.Color(night ? '#18222e' : '#d8e2e1'); renderer.toneMappingExposure = night ? .8 : 1.2; },
-    setLights(value: boolean) { home.setLights(value); },
-    setRoof(value: boolean) { roof = value; home.ceilings.visible = mode === 'walk' && roof; },
+    setNight(value: boolean) { night = value; updatePresentation(); },
+    setLights(value: boolean) { home.setLights(value); renderer.shadowMap.needsUpdate = true; invalidate(); },
+    setRoof(value: boolean) { roof = value; updatePresentation(); },
     async importModel(file: File) {
       if (file.size > 100 * 1024 * 1024) throw new Error('模型超过 100 MB，请先压缩或简化。');
       const version = ++importVersion;
@@ -133,12 +236,12 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
       imported = gltf.scene; imported.traverse(object => { if (object instanceof T.Mesh) object.castShadow = object.receiveShadow = true; });
       scene.add(imported); home.root.visible = false; importedBounds = new T.Box3().setFromObject(imported); setMode('orbit');
     },
-    resetModel() { importVersion++; if (imported) { scene.remove(imported); disposeObject(imported); imported = undefined; } importedBounds = undefined; home.root.visible = true; view('entry'); },
+    resetModel() { importVersion++; if (imported) { scene.remove(imported); disposeObject(imported); imported = undefined; } importedBounds = undefined; home.root.visible = true; setMode('orbit'); },
     dispose() {
-      disposed = true; importVersion++; cancelAnimationFrame(frame); observer.disconnect(); orbit.dispose();
+      disposed = true; importVersion++; cancelAnimationFrame(frame); observer.disconnect(); orbit.removeEventListener('change', invalidate); orbit.dispose();
       canvas.removeEventListener('keydown', keydown); window.removeEventListener('keyup', keyup); window.removeEventListener('blur', clear); canvas.removeEventListener('blur', clear);
       canvas.removeEventListener('pointerdown', down); canvas.removeEventListener('pointermove', drag); canvas.removeEventListener('pointerup', up); canvas.removeEventListener('pointercancel', clear); canvas.removeEventListener('wheel', wheel);
-      disposeObject(scene); renderer.dispose(); canvas.remove();
+      disposeObject(scene); environment.dispose(); renderer.dispose(); canvas.remove();
     },
   };
 }

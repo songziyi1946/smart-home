@@ -1,0 +1,16 @@
+{
+  "height": 2.385,
+  "cabinets": [
+    { "id": "living-tower", "kind": "doors", "bounds": [1.585, 3.64, 2.099, 3.99] },
+    { "id": "living-arch", "kind": "arch", "bounds": [2.099, 3.64, 3.085, 3.99] },
+    { "id": "closet-back", "kind": "reverse", "bounds": [1.61, 3.04, 3.085, 3.64] },
+    { "id": "living-shelves", "kind": "shelves", "bounds": [4.089, 3.64, 4.518, 3.99] },
+    { "id": "living-storage", "kind": "doors", "bounds": [4.518, 3.64, 5.465, 3.99] },
+    { "id": "kitchen-corner", "kind": "niche", "bounds": [5.465, 3.74, 6.047, 3.99] },
+    { "id": "kitchen-oven", "kind": "oven", "bounds": [6.047, 3.172, 6.54, 3.99] },
+    { "id": "entry-floating", "kind": "entry-floating", "bounds": [8.24, 4, 9.44, 4.35] },
+    { "id": "entry-wardrobe", "kind": "entry-wardrobe", "bounds": [6.15, 5.69, 7.30, 6.04] }
+  ],
+  "bedroomDoor": [3.115, 4.026, 3.99],
+  "island": [7.32, 2.565, 8.92, 3.165]
+}

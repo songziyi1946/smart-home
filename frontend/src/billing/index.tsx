@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Input, InputNumber, Modal, Select } from '@arco-design/web-react';
-import { Zap, Droplets, Flame, Smartphone, ArrowUpRight, ReceiptText } from 'lucide-react';
+import { Zap, Droplets, Flame, Smartphone, ArrowUpRight, ReceiptText, MapPin } from 'lucide-react';
 import { categories } from '../constants';
 import type { Category } from '../constants';
 import type { State, Mutate } from '../types';
@@ -47,20 +47,21 @@ export default function Billing({ state, busy, mutate }: { state: State; busy: b
     if (success) setDialog(undefined);
     else setFormError('保存失败，请检查输入或查看页面提示。');
   }
-  return <>
-    <div className="spread page-title"><div><h1>生活缴费</h1><p className="muted">杭州水电燃气 · 三大运营商</p></div>
+  return <div className="billing-page">
+    <section className="panel billing-overview">
+      <div className="billing-summary"><div><small>{month} 已记支出</small><strong>{money(monthly)}</strong></div><div><small>缴费账户</small><strong>{state.accounts.length}</strong></div></div>
+      <div className="billing-location"><span className="icon-box"><MapPin size={18} /></span><span><strong>杭州</strong><small>水费 · 电费 · 燃气费</small></span></div>
       <div className="button-row"><Button onClick={() => open('expense')}>记一笔</Button><Button type="primary" onClick={() => open('account')}>添加账户</Button></div>
-    </div>
-    <section className="panel billing-summary"><div><small>{month} 已记支出</small><strong>{money(monthly)}</strong></div><div><small>缴费账户</small><strong>{state.accounts.length}</strong></div></section>
+    </section>
     <div className="two-col billing-cols">
       <section className="panel"><h2>官方查询渠道</h2><div className="channels">{channels.map(({ name, href, icon: Icon }, index) =>
         <a key={name} href={href} target="_blank" rel="noreferrer"><span className="icon-box"><Icon size={19} /></span><span><strong>{categories[index]}</strong><small>{name}</small></span><ArrowUpRight size={16} /></a>)}</div></section>
-      <section className="panel"><h2>我的账户</h2><p className="muted">户号默认打码 · 数据保存在本地服务</p>
+      <section className="panel"><h2>我的账户</h2>
         {state.accounts.length ? <ul className="records">{state.accounts.map((account) => <li key={account.id}><span>{account.name}<small>{account.category}</small></span><span>{account.masked}</span></li>)}</ul> :
           <div className="empty"><ReceiptText size={24} /><p>暂无账户</p><Button onClick={() => open('account')}>添加账户</Button></div>}
       </section>
     </div>
-    <div className="two-col">
+    <div className="two-col billing-lower">
       <section className="panel"><h2>近 6 个月费用</h2>{months.some(({ cents }) => cents > 0) ? <ul className="history">
         {months.map(({ key, cents }) => <li key={key}><span>{key}</span><div><i style={{ width: (cents / max * 100) + '%' }} /></div><strong>{money(cents)}</strong></li>)}
       </ul> : <p className="empty">暂无费用数据</p>}</section>
@@ -79,5 +80,5 @@ export default function Billing({ state, busy, mutate }: { state: State; busy: b
       </>}
       {formError && <p role="alert" className="error-text">{formError}</p>}
     </Modal>
-  </>;
+  </div>;
 }

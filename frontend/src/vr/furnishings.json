@@ -1,0 +1,22 @@
+{
+  "sofa": { "x": 2.65, "z": 6.30, "width": 2.75, "depth": 0.94 },
+  "coffeeTable": { "x": 2.65, "z": 5.15, "width": 1.05, "depth": 0.65 },
+  "television": { "x": 2.40, "z": 4.30, "width": 1.35, "depth": 0.32 },
+  "bathrooms": [
+    {
+      "id": "ensuite",
+      "vanity": { "x": 5.45, "z": 1.60, "width": 0.66, "depth": 0.46, "rotation": -90 },
+      "toilet": { "x": 4.39, "z": 0.62, "rotation": 0 },
+      "shower": [4.78, 0.24, 5.68, 1.14],
+      "screen": [5.38, 1.14, 5.68, 1.16],
+      "sideScreen": [4.76, 0.24, 4.78, 1.14]
+    },
+    {
+      "id": "bath",
+      "vanity": { "x": 10.48, "z": 4.48, "width": 0.80, "depth": 0.42, "rotation": 0 },
+      "toilet": { "x": 11.08, "z": 5.52, "rotation": 180 },
+      "shower": [11.72, 4.28, 12.65, 5.90],
+      "screen": [11.70, 5.20, 11.72, 5.90]
+    }
+  ]
+}

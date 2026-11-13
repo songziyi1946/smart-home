@@ -6,7 +6,6 @@ import type { State, Mutate, Page, Session } from './types';
 import Layout from './layout';
 import { nav } from './layout/navigation';
 import Home from './home';
-import Scenes from './scenes';
 import Automation from './automation';
 import Billing from './billing';
 import Profile from './profile';
@@ -20,6 +19,8 @@ function currentPage(): Page {
 
 export default function App() {
   const [page, setPage] = useState(currentPage);
+  const [room, setRoom] = useState('客厅');
+  const [nightMode, setNightMode] = useState(() => window.localStorage.getItem('smart-home-theme') === 'dark');
   const [state, setState] = useState<State>();
   const [session, setSession] = useState<Session>();
   const [authChecked, setAuthChecked] = useState(false);
@@ -76,7 +77,7 @@ export default function App() {
   }
   useEffect(() => { void load(); }, []);
   useEffect(() => {
-    if (!session) return;
+    if (!session || session.localPreview) return;
     const timer = setTimeout(() => clearSession(), Math.max(0, session.expiresAt - Date.now()));
     return () => clearTimeout(timer);
   }, [session]);
@@ -110,6 +111,12 @@ export default function App() {
     const timeout = setTimeout(() => setNotice(undefined), 2600);
     return () => clearTimeout(timeout);
   }, [notice]);
+  useEffect(() => {
+    document.documentElement.dataset.theme = nightMode ? 'dark' : 'light';
+    document.body.dataset.theme = nightMode ? 'dark' : 'light';
+    document.body.setAttribute('arco-theme', nightMode ? 'dark' : 'light');
+    window.localStorage.setItem('smart-home-theme', nightMode ? 'dark' : 'light');
+  }, [nightMode]);
 
   if (!authChecked) return <div className="auth-viewport"><section className="panel auth-panel">
     {notice?.error ? <><p role="alert">{notice.text}</p><Button onClick={() => void load()}>重新连接</Button></> : '正在验证登录状态…'}
@@ -118,15 +125,14 @@ export default function App() {
 
   const activePage = session.user.role === 'guest' && ['automation', 'billing'].includes(page) ? 'home' : page;
   const pages = state ? {
-    home: <Home state={state} busy={busy} mutate={mutate} />,
-    scenes: <Scenes busy={busy} mutate={mutate} />,
+    home: <Home state={state} busy={busy} mutate={mutate} room={room} onRoomChange={setRoom} />,
     automation: <Automation state={state} busy={busy || session.user.role !== 'admin'} mutate={mutate} />,
-    vr: <Suspense fallback={<div className="panel">正在加载三维场景…</div>}><VR /></Suspense>,
+    vr: <Suspense fallback={<div className="panel">正在加载三维场景…</div>}><VR state={state} busy={busy} mutate={mutate} selectedRoom={room} onRoomChange={setRoom} nightMode={nightMode} /></Suspense>,
     billing: <Billing state={state} busy={busy} mutate={mutate} />,
     profile: <Profile state={state} session={session} busy={busy} onLogout={() => void logout()} onSessionExpired={() => clearSession()} />,
   } satisfies Record<Page, ReactNode> : undefined;
 
-  return <Layout page={activePage} role={session.user.role} state={state} busy={busy}>
+  return <Layout page={activePage} role={session.user.role} state={state} busy={busy} nightMode={nightMode} onNightModeChange={setNightMode}>
     {notice && <div className={'notice' + (notice.error ? ' error' : '')} role={notice.error ? 'alert' : 'status'}>{notice.text}<button aria-label="关闭提示" onClick={() => setNotice(undefined)}>×</button></div>}
     {pages ? pages[activePage] : <div className="panel">{notice?.error ? <Button onClick={() => void load()}>重新连接</Button> : '正在连接本地服务…'}</div>}
   </Layout>;

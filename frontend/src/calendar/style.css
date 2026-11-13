@@ -1,0 +1,19 @@
+.dashboard-clock { position: relative; z-index: 20; }
+.dashboard-clock::after { content: ""; position: absolute; top: 100%; right: 0; width: 100%; height: 12px; }
+.dashboard-clock-trigger { padding: 0; border: 0; background: transparent; color: inherit; text-align: right; }
+.dashboard-clock-trigger:focus-visible { border-radius: 4px; }
+.today-almanac { position: absolute; top: calc(100% + 12px); right: 0; width: 390px; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 18px 45px #28352f1a; color: #28352f; text-align: left; visibility: hidden; opacity: 0; transform: translateY(-5px); transition: opacity .16s, transform .16s, visibility .16s; pointer-events: none; }
+.dashboard-clock:hover .today-almanac, .dashboard-clock:focus-within .today-almanac { visibility: visible; opacity: 1; transform: translateY(0); pointer-events: auto; }
+.today-almanac-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.dashboard-clock .today-almanac-heading strong { display: block; font-size: 17px; color: #28352f; letter-spacing: 0; }
+.today-almanac-heading time { display: block; margin-top: 5px; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.today-almanac-heading b { color: var(--accent); font-size: 19px; white-space: nowrap; }
+.today-almanac-ganzhi { margin: 14px 0 0; color: var(--muted); font-size: 13px; }
+.today-almanac-occasion { margin: 10px 0 0; color: var(--warm); font-size: 14px; }
+.today-almanac-activities { margin: 16px 0 10px; }
+.today-almanac-activities > div { display: grid; grid-template-columns: 31px 1fr; align-items: start; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+.today-almanac-activities dt { display: grid; place-items: center; height: 26px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); }
+.today-almanac-activities > div + div dt { background: #f9e9e4; color: #a14035; }
+.today-almanac-activities dd { margin: 0; color: #526158; font-size: 13px; line-height: 1.65; }
+
+@media (max-width: 760px) { .today-almanac { width: min(390px, calc(100vw - 32px)); } }

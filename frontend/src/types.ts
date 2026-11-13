@@ -14,7 +14,10 @@ export type State = {
   expenses: { id: string; category: Category; cents: number; date: string; note: string }[];
 };
 export type Mutate = (path: string, method: string, body?: unknown) => Promise<boolean>;
-export type Page = 'home' | 'scenes' | 'automation' | 'billing' | 'vr' | 'profile';
+export type Page = 'home' | 'automation' | 'billing' | 'vr' | 'profile';
 
 export type User = { id: string; username: string; displayName: string; role: 'admin' | 'member' | 'guest'; createdAt: string; accessExpiresAt?: number };
-export type Session = { user: User; household: { id: string; name: string }; loggedInAt: string; expiresAt: number };
+export type Session = { household: { id: string; name: string } } & (
+  { localPreview: true; user: Pick<User, 'id' | 'username' | 'displayName' | 'role'> } |
+  { localPreview?: false; user: User; loggedInAt: string; expiresAt: number }
+);

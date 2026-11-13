@@ -41,7 +41,6 @@ export default function Members({ onSessionExpired }: { onSessionExpired: () => 
   }
   return <section className="panel household-members">
     <div className="section-heading"><h2><UserPlus />家庭成员与访客</h2><Button size="small" disabled={busy} onClick={() => void load()}>刷新成员</Button></div>
-    <p className="muted">每位家人使用自己的账户。访客仅可控制设备和场景，到期自动失效。</p>
     <ul className="records">{members.map(member => <li key={member.id}>
       <span>{member.displayName}<small>@{member.username} · {roleNames[member.role]}{member.accessExpiresAt ? ' · 有效至 ' + formatTime(new Date(member.accessExpiresAt).toISOString()) : ''}</small></span>
       {member.role !== 'admin' && <Button status="danger" size="small" disabled={busy} onClick={() => setRemoving(member)}>移除</Button>}

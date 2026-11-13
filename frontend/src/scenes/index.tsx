@@ -17,7 +17,6 @@ export default function Scenes({
           <Layers />
           一键场景
         </h2>
-        <small>让家提前准备好</small>
       </div>
       <div className="scenes">
         {[

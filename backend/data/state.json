@@ -5,7 +5,7 @@
       "name": "吸顶灯",
       "room": "客厅",
       "kind": "light",
-      "on": true,
+      "on": false,
       "level": 80
     },
     {
@@ -13,7 +13,7 @@
       "name": "灯带",
       "room": "客厅",
       "kind": "light",
-      "on": true,
+      "on": false,
       "level": 50
     },
     {
@@ -21,7 +21,7 @@
       "name": "落地灯",
       "room": "客厅",
       "kind": "light",
-      "on": true,
+      "on": false,
       "level": 60
     },
     {
@@ -102,7 +102,23 @@
   },
   "speaker": "客厅小爱音箱",
   "lightOn": true,
-  "events": [],
+  "events": [
+    {
+      "id": "8096d448-754a-4fe7-bdc1-e06482053521",
+      "message": "欢迎回家，今天辛苦啦",
+      "time": "2026-11-13T09:52:43.694Z"
+    },
+    {
+      "id": "9157f77d-974f-4e6e-a324-4c51e091a98c",
+      "message": "宝贝回来了，先去洗手哦",
+      "time": "2026-11-13T09:52:39.891Z"
+    },
+    {
+      "id": "db3a5463-8dbd-4551-bd4b-a9514a80cd14",
+      "message": "欢迎回来，饭马上就好",
+      "time": "2026-11-13T09:52:35.628Z"
+    }
+  ],
   "accounts": [],
   "expenses": []
 }

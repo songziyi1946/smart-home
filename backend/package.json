@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch server.mjs",
+    "dev": "node --watch server.mjs --skip-login",
     "start": "node server.mjs",
     "test": "node --test auth.test.mjs"
   },
