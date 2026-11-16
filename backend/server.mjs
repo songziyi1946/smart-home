@@ -1,28 +1,26 @@
+import {isDeepStrictEqual} from 'node:util';
+import {SQLiteStore} from './infrastructure/sqlite-store.mjs';
+import { initializeAutomations, validateRule, evaluateRule, createAutomationEngine } from './domain/automations/engine.mjs';
+import { initializeScenes, validateScene, createRun, executeRun } from './domain/scenes/service.mjs';
+import { createStateStream } from './app/state-stream.mjs';
+import { HomeAssistantProvider } from './providers/home-assistant/index.mjs';
+import { initializeDevices, deviceSnapshot, executeDeviceCommand } from './domain/devices/service.mjs';
+import { parseDeviceCommand, DeviceState } from './domain/devices/model.mjs';
 import express from 'express';
 import { createAuth, validateOrigin, authorizeHousehold, filterHouseholdState } from './auth.mjs';
 import { z } from 'zod';
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { resolve, sep } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
 const app = express();
 app.use(express.json({ limit: '32kb' }));
-const dir = new URL('./data/', import.meta.url);
-const file = new URL('state.json', dir);
-const temp = new URL('state.tmp', dir);
+const dir = process.env.SMART_HOME_DATA_DIR
+  ? pathToFileURL(resolve(process.env.SMART_HOME_DATA_DIR) + sep)
+  : new URL('./data/', import.meta.url);
 const now = () => new Date().toISOString();
 const initial = {
-  devices: [
-    { id: 'ceiling', name: '吸顶灯', room: '客厅', kind: 'light', on: true, level: 80 },
-    { id: 'strip', name: '灯带', room: '客厅', kind: 'light', on: true, level: 50 },
-    { id: 'floor', name: '落地灯', room: '客厅', kind: 'light', on: true, level: 60 },
-    { id: 'ac', name: '空调', room: '客厅', kind: 'ac', on: false },
-    { id: 'curtain', name: '窗帘', room: '客厅', kind: 'curtain', position: 'open' },
-    { id: 'robot', name: '扫地机器人', room: '客厅', kind: 'robot', cleaning: false, battery: 92 },
-    { id: 'dining', name: '餐厅吊灯', room: '餐厅', kind: 'light', on: false, level: 70 },
-    { id: 'bed', name: '床头灯', room: '主卧', kind: 'light', on: false, level: 30 },
-    { id: 'bath', name: '卫生间灯', room: '主卫', kind: 'light', on: false, level: 15 },
-  ],
   rules: [
     { id: 'night', name: '起夜夜灯', trigger: '卫生间检测到活动', condition: '22:00–06:30', action: '卫生间灯开启，亮度 15%', enabled: true, runs: 0, lastRun: null },
     { id: 'temperature', name: '主卧温度守卫', trigger: '主卧温度升高', condition: '示例规则', action: '开启空调制冷', enabled: false, runs: 0, lastRun: null },
@@ -34,21 +32,39 @@ const initial = {
   accounts: [],
   expenses: [],
 };
-let state = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : initial;
+const normalize = input => initializeAutomations(initializeScenes(initializeDevices({...structuredClone(initial),...input})));
+const store = new SQLiteStore(fileURLToPath(dir),{initialState:initial,normalize});
+const storedState=store.loadState();
+let state=normalize(storedState);
+if(!isDeepStrictEqual(state,storedState))store.saveState(state);
+let cachedProviderDevices=store.loadProviderDevices();
+const ha = process.env.HA_URL ? new HomeAssistantProvider({
+  url: process.env.HA_URL, token: process.env.HA_TOKEN,
+  entityPrefix: process.env.HA_ENTITY_PREFIX || '',
+  cachedDevices: cachedProviderDevices,
+  rooms: process.env.HA_ROOMS_FILE ? JSON.parse(readFileSync(process.env.HA_ROOMS_FILE, 'utf8')) : {},
+}) : undefined;
+let stream, automation;
+function observeDevices(){try{automation?.observe(snapshot().devices);}catch{console.error('自动化事件处理或日志保存失败');}}
+ha?.subscribe(() => {
+  if(ha.connected){const next=ha.snapshot();try{store.saveProviderDevices(next);cachedProviderDevices=next;}catch{console.error('Provider 状态缓存保存失败');}}
+  stream?.publish();observeDevices();
+});
+
 
 function commit(change) {
   const draft = structuredClone(state);
   change(draft);
-  mkdirSync(dir, { recursive: true, mode: 0o700 });
-  writeFileSync(temp, JSON.stringify(draft, null, 2), { mode: 0o600 });
-  renameSync(temp, file);
+  store.saveState(draft);
   state = draft;
+  stream?.publish();
+  observeDevices();
   return snapshot();
 }
 
 function snapshot() {
-  const { accounts, ...rest } = state;
-  return { ...rest, accounts: accounts.map(({ number, ...account }) => ({
+  const { accounts, devices, deviceStates, ...rest } = state;
+  return { ...rest, devices: [...deviceSnapshot(state), ...(ha ? ha.snapshot() : cachedProviderDevices)], accounts: accounts.map(({ number, ...account }) => ({
     ...account, masked: '••••' + number.slice(-Math.min(4, number.length - 1)),
   })) };
 }
@@ -62,8 +78,13 @@ const members = z.enum(['self', 'partner', 'child', 'parents', 'stranger']);
 const categories = z.enum(['电费', '水费', '燃气费', '移动话费', '联通话费', '电信话费']);
 
 const skipLogin = process.argv.includes('--skip-login');
+let sessionFor, subscribeAuth, activeAdmin;
+const testTime=process.env.SMART_HOME_AUTOMATION_TEST_TIME;
+if(testTime && (process.env.NODE_ENV!=='test' || !skipLogin || !Number.isFinite(Date.parse(testTime)))) throw new Error('自动化测试时钟仅允许 NODE_ENV=test 的本机免登录测试');
 app.use('/api', validateOrigin);
 if (skipLogin) {
+  sessionFor = req => ['127.0.0.1', 'localhost'].includes(req.hostname) ? {user:req.user,expiresAt:Infinity} : undefined;
+  activeAdmin = id => id === 'local';
   const localUser = { id: 'local', username: 'local', displayName: '本地预览', role: 'admin' };
   app.use('/api', (req, res, next) => {
     if (req.hostname !== '127.0.0.1' && req.hostname !== 'localhost') {
@@ -77,7 +98,9 @@ if (skipLogin) {
     localPreview: true, user: localUser, household: { id: 'local', name: '本地家庭' },
   }));
 } else {
-  const auth = createAuth({ file: fileURLToPath(new URL('./data/auth.json', import.meta.url)) });
+  const auth = createAuth({ repository: {load:()=>store.loadAuth(),save:data=>store.saveAuth(data),create:data=>store.saveAuth(data,{create:true})} });
+  activeAdmin = auth.isActiveAdmin;
+  sessionFor = auth.sessionFor; subscribeAuth = auth.subscribeSessions;
   app.use('/api/auth', auth.router);
   app.use('/api', auth.requireAuth);
 }
@@ -90,34 +113,60 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
+stream = createStateStream({ snapshot, sessionFor, subscribeAuth });
+app.get('/api/events', stream.route);
 app.get('/api/state', (_req, res) => res.json(snapshot()));
-app.patch('/api/devices/:id', (req, res) => {
-  const command = z.discriminatedUnion('action', [
-    z.object({ action: z.literal('power'), value: z.boolean() }),
-    z.object({ action: z.literal('level'), value: z.number().int().min(1).max(100) }),
-    z.object({ action: z.literal('position'), value: z.enum(['open', 'stop', 'closed']) }),
-    z.object({ action: z.literal('clean'), value: z.boolean() }),
-  ]).parse(req.body);
-  res.json(commit((draft) => {
-    const device = draft.devices.find(({ id }) => id === req.params.id);
-    if (!device) fail(404, '设备不存在');
-    if (command.action === 'power' && ['light', 'ac'].includes(device.kind)) device.on = command.value;
-    else if (command.action === 'level' && device.kind === 'light') device.level = command.value;
-    else if (command.action === 'position' && device.kind === 'curtain') device.position = command.value;
-    else if (command.action === 'clean' && device.kind === 'robot') device.cleaning = command.value;
-    else fail(400, '设备不支持此操作');
-  }));
+app.patch('/api/devices/:id', async (req, res) => {
+  const command = parseDeviceCommand(req.body);
+  if (req.params.id.startsWith('ha:')) {
+    if (!ha) fail(404, '设备不存在');
+    await ha.executeCommand(req.params.id.slice(3), command);
+    return res.json(snapshot());
+  }
+  res.json(commit(draft => executeDeviceCommand(draft, req.params.id, command)));
 });
-app.post('/api/scenes/:id', (req, res) => {
-  const scene = z.enum(['home', 'away', 'sleep']).parse(req.params.id);
-  res.json(commit((draft) => {
-    for (const device of draft.devices) {
-      if (device.kind === 'light') device.on = scene === 'home' ? device.room === '客厅' : scene === 'sleep' && device.id === 'bed';
-      if (device.kind === 'curtain') device.position = scene === 'home' ? 'open' : 'closed';
-      if (scene === 'away' && device.kind === 'ac') device.on = false;
-    }
-  }));
+app.post('/api/scenes', (req, res) => {
+  const input=validateScene(req.body,snapshot().devices);
+  res.status(201).json(commit(draft=>{if(draft.scenes.length>=100)fail(400,'场景数量已达上限');draft.scenes.push({id:randomUUID(),...input,version:1});}));
 });
+app.put('/api/scenes/:id', (req,res)=>{
+  const {version,...body}=z.object({version:z.number().int().positive()}).passthrough().parse(req.body);
+  const input=validateScene(body,snapshot().devices);
+  res.json(commit(draft=>{const index=draft.scenes.findIndex(s=>s.id===req.params.id);if(index<0)fail(404,'场景不存在');if(draft.scenes[index].version!==version)fail(409,'场景已被修改，请重新打开编辑');draft.scenes[index]={id:req.params.id,...input,version:version+1};}));
+});
+app.delete('/api/scenes/:id',(req,res)=>res.json(commit(draft=>{const index=draft.scenes.findIndex(s=>s.id===req.params.id);if(index<0)fail(404,'场景不存在');draft.scenes.splice(index,1);} )));
+let runningScene=false;
+async function runScene(sceneId,actorId,authorized){
+  const scene=state.scenes.find(s=>s.id===sceneId);if(!scene)fail(404,'场景不存在');if(runningScene)fail(409,'已有场景正在执行，请稍后重试');
+  runningScene=true;
+  try{
+    const run=createRun(scene,actorId);
+    const save=value=>commit(draft=>{const index=draft.sceneRuns.findIndex(r=>r.id===value.id);if(index<0)draft.sceneRuns.unshift(structuredClone(value));else draft.sceneRuns[index]=structuredClone(value);draft.sceneRuns=draft.sceneRuns.slice(0,50);});
+    save(run);
+    await executeRun(run,{authorized,save,execute:async(id,command)=>{
+      const device=snapshot().devices.find(d=>d.id===id);if(!device)fail(404,'设备不存在或 Provider 未连接');
+      if(!device.capabilities.includes(command.capability))fail(400,'设备不支持此操作');
+      if(!device.state.online)fail(409,'设备已离线');
+      if(device.providerId==='mock')commit(draft=>executeDeviceCommand(draft,id,command));
+      else if(device.providerId==='home-assistant'&&ha)await ha.executeCommand(device.providerDeviceId,command);
+      else fail(400,'设备 Provider 不可用');
+    }});
+    return run;
+  }finally{runningScene=false;}
+}
+app.post('/api/scenes/:id',async(req,res)=>res.json({run:await runScene(req.params.id,req.user.id,()=>!!sessionFor(req))}));
+automation=createAutomationEngine({rules:()=>state.automations,executeScene:runScene,authorized:id=>activeAdmin(id),now:()=>testTime?new Date(testTime):new Date(),save:run=>commit(draft=>{const i=draft.automationRuns.findIndex(r=>r.id===run.id);if(i<0)draft.automationRuns.unshift(structuredClone(run));else draft.automationRuns[i]=structuredClone(run);draft.automationRuns=draft.automationRuns.slice(0,100);})});
+automation.observe(snapshot().devices);
+app.post('/api/automations/preview',(req,res)=>{
+ const body=z.object({rule:z.unknown(),event:z.object({from:z.union([z.boolean(),z.number(),z.string()]),to:z.union([z.boolean(),z.number(),z.string()])}).strict(),at:z.string().datetime({offset:true}).optional()}).strict().parse(req.body);
+ const rule=validateRule(body.rule,snapshot().devices,state.scenes);
+ DeviceState.shape.values.shape[rule.trigger.capability].parse(body.event.from);DeviceState.shape.values.shape[rule.trigger.capability].parse(body.event.to);
+ res.json({...evaluateRule(rule,{...body.event,deviceId:rule.trigger.deviceId,capability:rule.trigger.capability},body.at?new Date(body.at):new Date()),scene:state.scenes.find(s=>s.id===rule.action.sceneId),note:'预览不执行动作；实际执行还会检查冷却、并发、授权与设备状态'});
+});
+app.post('/api/automations',(req,res)=>{const input=validateRule(req.body,snapshot().devices,state.scenes);res.status(201).json(commit(draft=>{if(draft.automations.length>=100)fail(400,'自动化数量已达上限');draft.automations.push({id:randomUUID(),...input,version:1,createdBy:req.user.id});}));});
+app.put('/api/automations/:id',(req,res)=>{const {version,...body}=z.object({version:z.number().int().positive()}).passthrough().parse(req.body);const input=validateRule(body,snapshot().devices,state.scenes);res.json(commit(draft=>{const rule=draft.automations.find(r=>r.id===req.params.id);if(!rule)fail(404,'规则不存在');if(rule.version!==version)fail(409,'规则已被修改，请重新打开');Object.assign(rule,input,{version:version+1,createdBy:req.user.id});}));});
+app.patch('/api/automations/:id',(req,res)=>{const {enabled}=z.object({enabled:z.boolean()}).strict().parse(req.body);res.json(commit(draft=>{const rule=draft.automations.find(r=>r.id===req.params.id);if(!rule)fail(404,'规则不存在');if(enabled)validateRule((({id,version,createdBy,...input})=>input)(rule),snapshot().devices,state.scenes);rule.enabled=enabled;rule.version++;}));});
+app.delete('/api/automations/:id',(req,res)=>res.json(commit(draft=>{const i=draft.automations.findIndex(r=>r.id===req.params.id);if(i<0)fail(404,'规则不存在');draft.automations.splice(i,1);} )));
 app.patch('/api/rules/:id', (req, res) => {
   const { enabled } = z.object({ enabled: z.boolean() }).parse(req.body);
   res.json(commit((draft) => {
@@ -181,7 +230,7 @@ app.use((error, _req, res, _next) => {
     res.status(400).json({ message: '输入格式有误，请检查后重试' });
     return;
   }
-  if (error.status >= 400 && error.status < 500) {
+  if (error.status >= 400 && error.status <= 502) {
     res.status(error.status).json({ message: error.message });
     return;
   }
@@ -189,7 +238,7 @@ app.use((error, _req, res, _next) => {
   res.status(500).json({ message: '保存失败，请重试' });
 });
 const port = Number(process.env.SMART_HOME_API_PORT || 3101);
-app.listen(port, '127.0.0.1', error => {
+const server = app.listen(port, '127.0.0.1', error => {
   if (error) {
     console.error(error.code === 'EADDRINUSE'
       ? `Smart Home API 端口 ${port} 已被占用，请为前后端设置相同的 SMART_HOME_API_PORT。`
@@ -197,5 +246,7 @@ app.listen(port, '127.0.0.1', error => {
     process.exitCode = 1;
     return;
   }
-  console.log(`Smart Home API: http://127.0.0.1:${port}${skipLogin ? '（本地免登录）' : ''}`);
+  console.log(`Smart Home API: http://127.0.0.1:${server.address().port}${skipLogin ? '（本地免登录）' : ''}`);
 });
+
+for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => { automation.close(); stream.close(); ha?.close(); server.closeAllConnections(); server.close(()=>store.close()); });

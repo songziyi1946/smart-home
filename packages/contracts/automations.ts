@@ -1,0 +1,4 @@
+import type {Capability} from './devices';
+export type AutomationInput={schemaVersion:1;name:string;enabled:boolean;trigger:{type:'device_state_changed';deviceId:string;capability:Capability;from?:boolean|number|string;to:boolean|number|string};condition:{type:'time_window';start:string;end:string;timeZone:string};action:{type:'run_scene';sceneId:string};executionPolicy:{mode:'single';cooldownSeconds:number}};
+export type AutomationRule=AutomationInput&{id:string;version:number;createdBy:string};
+export type AutomationRun={id:string;ruleId:string;name:string;ruleVersion:number;event:{deviceId:string;capability:Capability;from:boolean|number|string;to:boolean|number|string};sceneId:string;sceneRunId?:string;status:'running'|'completed'|'failed'|'skipped';startedAt:string;finishedAt?:string;evaluatedAt:string;reason?:string};

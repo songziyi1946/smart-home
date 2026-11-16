@@ -1,3 +1,4 @@
+import { hasCapability, isClimate, roomPowerCommand } from '../devices';
 import { useEffect, useRef, useState } from 'react';
 import { Button, Drawer, Modal, Switch } from '@arco-design/web-react';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Box, Expand, Footprints, House, RotateCcw, Settings2, Map, Upload } from 'lucide-react';
@@ -60,9 +61,9 @@ export default function VR({ state, busy, mutate, selectedRoom, onRoomChange, ni
   }
   const roomDevices = state.devices.filter(device => belongsToRoom(device.room, selectedRoom));
   const visibleDevices = roomDevices.filter(device => controlTab === 'all' ||
-    (controlTab === 'light' && device.kind === 'light') ||
-    (controlTab === 'climate' && device.kind === 'ac') ||
-    (controlTab === 'curtain' && device.kind === 'curtain'));
+    (controlTab === 'light' && hasCapability(device, 'brightness')) ||
+    (controlTab === 'climate' && isClimate(device)) ||
+    (controlTab === 'curtain' && hasCapability(device, 'position')));
   const selectedViewpoint = viewpoints.find(point => point.name === selectedRoom);
   const controlsBusy = busy || batchBusy;
   function enterRoom(point = selectedViewpoint) {
@@ -84,14 +85,12 @@ export default function VR({ state, busy, mutate, selectedRoom, onRoomChange, ni
     setBatchBusy(true);
     try {
       for (const device of roomDevices) {
-        const action = device.kind === 'light' || device.kind === 'ac' ? { action: 'power', value: enabled } :
-          device.kind === 'curtain' ? { action: 'position', value: enabled ? 'open' : 'closed' } :
-          !enabled ? { action: 'clean', value: false } : undefined;
+        const action = roomPowerCommand(device, enabled);
         if (action && !await mutate('/devices/' + device.id, 'PATCH', action)) break;
       }
     } finally { setBatchBusy(false); }
   }
-  async function triggerScene(id: 'home' | 'away' | 'sleep') { await mutate('/scenes/' + id, 'POST'); }
+  async function triggerScene(id: string) { await mutate('/scenes/' + id, 'POST', {}); }
   const roomPanel = <>
     <div className="vr-section-title"><strong>空间导航</strong><Button size="small" onClick={() => { setPanelOpen(false); setMapOpen(true); }} disabled={!!modelName}>放大导航</Button></div>
     {modelName ? <p className="vr-note">当前为导入模型，参考户型导航已隐藏。</p> : <SpaceMap room={selectedRoom} onSelect={selectRoom} status={status} />}
@@ -103,7 +102,7 @@ export default function VR({ state, busy, mutate, selectedRoom, onRoomChange, ni
           <div className="vr-control-tabs">{([['all', '全部'], ['light', '灯光'], ['climate', '温控'], ['curtain', '窗帘']] as const).map(([id, label]) => <button key={id} aria-pressed={controlTab === id} onClick={() => setControlTab(id)}>{label}</button>)}</div>
           <div className="vr-room-devices">{visibleDevices.length ? visibleDevices.map(device => <DeviceRow key={device.id} device={device} busy={controlsBusy} mutate={mutate} />) : <div className="empty">{roomDevices.length ? '当前分类暂无设备' : '这个房间暂无可控设备'}</div>}</div>
         </div>
-        <div className="vr-quick-scenes"><span>全屋场景</span><Button size="small" disabled={controlsBusy} onClick={() => void triggerScene('home')}>回家</Button><Button size="small" disabled={controlsBusy} onClick={() => void triggerScene('away')}>离家</Button><Button size="small" disabled={controlsBusy} onClick={() => void triggerScene('sleep')}>睡眠</Button></div>
+        <div className="vr-quick-scenes"><span>全屋场景</span>{state.scenes.map(scene=><Button key={scene.id} size="small" disabled={controlsBusy} onClick={()=>void triggerScene(scene.id)}>{scene.name}</Button>)}</div>
   </>;
   return <section ref={page} className="vr-page" aria-label="三维实景漫游">
     <div className="vr-toolbar">

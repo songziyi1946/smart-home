@@ -156,3 +156,9 @@ test('visitor snapshots contain only device data and no family or billing detail
   assert.equal(result.futurePrivateField, undefined);
   assert.equal(filterHouseholdState(privateState, { role: 'member' }), privateState);
 });
+
+test('guest scene visibility includes definitions but only their own execution records',()=>{
+ const state={devices:[],scenes:[{id:'public',name:'阅读',actions:[]}],sceneRuns:[{actorId:'owner',name:'private-run'},{actorId:'visitor',name:'my-run'}]};
+ const filtered=filterHouseholdState(state,{id:'visitor',role:'guest'});
+ assert.equal(filtered.scenes.length,1);assert.equal(filtered.sceneRuns.length,1);assert.equal(filtered.sceneRuns[0].name,'my-run');assert.equal(filtered.sceneRuns[0].actorId,undefined);assert.equal(JSON.stringify(filtered).includes('private-run'),false);
+});

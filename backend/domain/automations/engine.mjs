@@ -1,0 +1,26 @@
+import {z} from 'zod';import {randomUUID} from 'node:crypto';import {Capability,DeviceState,deviceError} from '../devices/model.mjs';
+const scalar=z.union([z.boolean(),z.number().finite(),z.string().max(80)]);
+const time=z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+const zone=z.string().max(80).refine(value=>{try{new Intl.DateTimeFormat('en',{timeZone:value});return true;}catch{return false;}},'无效时区');
+export const RuleInput=z.object({schemaVersion:z.literal(1),name:z.string().trim().min(1).max(80),enabled:z.boolean(),trigger:z.object({type:z.literal('device_state_changed'),deviceId:z.string().min(1).max(200),capability:Capability,from:scalar.optional(),to:scalar}).strict(),condition:z.object({type:z.literal('time_window'),start:time,end:time,timeZone:zone}).strict().refine(c=>c.start!==c.end,'起止时间不能相同'),action:z.object({type:z.literal('run_scene'),sceneId:z.string().min(1).max(100)}).strict(),executionPolicy:z.object({mode:z.literal('single'),cooldownSeconds:z.number().int().min(1).max(3600)}).strict()}).strict();
+export function validateRule(input,devices,scenes){const rule=RuleInput.parse(input);const d=devices.find(d=>d.id===rule.trigger.deviceId);if(!d?.capabilities.includes(rule.trigger.capability))throw deviceError(400,'触发设备不存在或不支持该能力');const schema=DeviceState.shape.values.shape[rule.trigger.capability];schema.parse(rule.trigger.to);if(rule.trigger.from!==undefined)schema.parse(rule.trigger.from);if(!scenes.some(s=>s.id===rule.action.sceneId))throw deviceError(400,'目标场景不存在');return rule;}
+export function matchesTime(condition,date){const parts=new Intl.DateTimeFormat('en-GB',{timeZone:condition.timeZone,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date);const current=parts.find(p=>p.type==='hour').value+':'+parts.find(p=>p.type==='minute').value;return condition.start<condition.end?current>=condition.start&&current<condition.end:current>=condition.start||current<condition.end;}
+export function evaluateRule(rule,event,date){const trigger=event.deviceId===rule.trigger.deviceId&&event.capability===rule.trigger.capability&&!Object.is(event.from,event.to)&&event.from!==undefined&&Object.is(event.to,rule.trigger.to)&&(rule.trigger.from===undefined||Object.is(event.from,rule.trigger.from));const time=matchesTime(rule.condition,date);return {wouldRun:rule.enabled&&trigger&&time,triggerMatches:trigger,timeMatches:time,reason:!rule.enabled?'规则已禁用':!trigger?'未匹配设备状态变化':!time?'不在允许时间段':'条件满足，将调用场景',evaluatedAt:date.toISOString(),timeZone:rule.condition.timeZone};}
+export function initializeAutomations(store){store.automations??=[];store.automationRuns??=[];for(const run of store.automationRuns)if(run.status==='running')Object.assign(run,{status:'failed',reason:'服务重启，自动化中断；未自动重试',finishedAt:new Date().toISOString()});return store;}
+export function createAutomationEngine({rules,executeScene,save,authorized,now=()=>new Date(),clock=()=>Date.now()}){
+ const previous=new Map(),active=new Set(),lastRun=new Map();let stopped=false;
+ function observe(devices){if(stopped)return;const existing=new Set(devices.map(d=>d.id));for(const id of previous.keys())if(!existing.has(id))previous.delete(id);
+  const changes=[];for(const d of devices){const old=previous.get(d.id);previous.set(d.id,structuredClone(d.state));if(!old?.online||!d.state.online)continue;for(const capability of d.capabilities){const from=old.values[capability],to=d.state.values[capability];if(from!==undefined&&to!==undefined&&!Object.is(from,to))changes.push({deviceId:d.id,capability,from,to});}}
+  for(const event of changes)for(const candidate of rules()){
+   const rule=structuredClone(candidate);if(!rule.enabled||event.deviceId!==rule.trigger.deviceId||event.capability!==rule.trigger.capability||!Object.is(event.to,rule.trigger.to)||(rule.trigger.from!==undefined&&!Object.is(event.from,rule.trigger.from)))continue;
+   const check=evaluateRule(rule,event,now());const run={id:randomUUID(),ruleId:rule.id,name:rule.name,ruleVersion:rule.version,event,sceneId:rule.action.sceneId,startedAt:new Date().toISOString(),evaluatedAt:check.evaluatedAt,status:'running'};
+   const suppressed=active.has(rule.id)?'规则正在执行':clock()-(lastRun.get(rule.id)??-Infinity)<rule.executionPolicy.cooldownSeconds*1000?'冷却时间内':undefined;
+   if(!check.wouldRun||suppressed){save({...run,status:'skipped',reason:suppressed??check.reason,finishedAt:new Date().toISOString()});continue;}
+   active.add(rule.id);lastRun.set(rule.id,clock());
+   const permitted=()=>!stopped&&authorized(rule.createdBy)&&rules().some(r=>r.id===rule.id&&r.enabled&&r.version===rule.version);
+   // Defer execution until the incoming snapshot/commit has finished updating its cache.
+   void Promise.resolve().then(async()=>{save(run);if(!permitted())throw deviceError(403,'规则已禁用、修改或授权已失效');const result=await executeScene(rule.action.sceneId,'automation:'+rule.id,permitted);run.sceneRunId=result.id;run.status=result.status==='completed'?'completed':'failed';run.reason=result.reason;}).catch(error=>{run.status='failed';run.reason=error.status>=400&&error.status<=502?error.message:'自动化执行或保存失败';}).finally(()=>{run.finishedAt=new Date().toISOString();try{save(run);}catch{console.error('自动化日志保存失败');}active.delete(rule.id);});
+  }
+ }
+ return {observe,close(){stopped=true;previous.clear();}};
+}

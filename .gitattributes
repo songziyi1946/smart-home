@@ -1,0 +1,8 @@
+# Keep source archives free of installed dependencies, build output and local secrets.
+**/node_modules export-ignore
+**/dist export-ignore
+.env export-ignore
+.env.* export-ignore
+.env.example -export-ignore
+backend/data export-ignore
+tools/device-simulator/.lab-auth.json export-ignore

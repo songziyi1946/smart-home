@@ -1,3 +1,5 @@
+import { onlineSummary } from '../homeTelemetry';
+import { isRunning } from '../devices';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Moon, PanelLeftClose, PanelLeftOpen, Sun, Zap } from 'lucide-react';
@@ -10,6 +12,7 @@ type LayoutProps = { page: Page; role: User['role']; state?: State; busy: boolea
 export default function Layout({ page, role, state, busy, nightMode, onNightModeChange, children }: LayoutProps) {
   const [expanded, setExpanded] = useState(false);
   const compact = !expanded;
+  const online = state ? onlineSummary(state.devices) : undefined;
 
   return <div className="dashboard-viewport"><div className={'shell' + (compact ? ' shell-compact' : '')}>
     <aside className="sidebar">
@@ -24,7 +27,7 @@ export default function Layout({ page, role, state, busy, nightMode, onNightMode
     </aside>
     <div className="workspace">
       <header className="top"><div className="home-title"><h1>{nav.find(({ id }) => id === page)?.name}</h1></div>
-        <div className="top-status"><span><i className="online-dot" />{state?.devices.length ?? '–'} 台设备在线</span><span><Zap size={17} />{state?.devices.filter(d => ('on' in d && d.on) || (d.kind === 'robot' && d.cleaning)).length ?? '–'} 台运行中</span><button className="theme-toggle" type="button" aria-pressed={nightMode} aria-label={nightMode ? '切换到日间模式' : '切换到夜间模式'} onClick={() => onNightModeChange(!nightMode)}>{nightMode ? <Sun size={16} /> : <Moon size={16} />}{nightMode ? '日间' : '夜间'}</button><DashboardClock /></div>
+        <div className="top-status"><span title={online?.simulated ? `含 ${online.simulated} 台模拟设备；按设备记录统计` : '按设备记录统计'}><i className={online?.online ? "online-dot" : "online-dot offline-dot"} />{online ? `${online.online}/${online.total} 在线 · ${online.offline} 离线${online.simulated ? ' · 含模拟' : ''}` : '暂无数据'}</span><span><Zap size={17} />{state?.devices.filter(d => isRunning(d)).length ?? '–'} 台运行中</span><button className="theme-toggle" type="button" aria-pressed={nightMode} aria-label={nightMode ? '切换到日间模式' : '切换到夜间模式'} onClick={() => onNightModeChange(!nightMode)}>{nightMode ? <Sun size={16} /> : <Moon size={16} />}{nightMode ? '日间' : '夜间'}</button><DashboardClock /></div>
       </header>
       <main aria-busy={busy}>
         {children}

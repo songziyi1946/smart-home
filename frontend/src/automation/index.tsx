@@ -1,3 +1,4 @@
+import Rules from './Rules';
 import { useState } from 'react';
 import { Button, Checkbox, Input, Select, Switch, Tabs } from '@arco-design/web-react';
 import { members } from '../constants';
@@ -12,18 +13,12 @@ export default function Automation({ state, busy, mutate }: { state: State; busy
   const save = (generate: boolean) => mutate('/greetings', 'PUT', { greetings, lightOn, speaker: state.speaker, generate });
   return <div className="automation-page"><Tabs defaultActiveTab="rules">
     <Tabs.TabPane key="rules" title="我的自动化"><div className="two-col">
-      <section className="panel"><h2>自动化规则</h2>
-        {state.rules.map((rule) => <article className="rule" key={rule.id}>
-          <div className="spread"><h3>{rule.name}</h3><Switch aria-label={rule.name} checked={rule.enabled} disabled={busy} onChange={(enabled) => void mutate('/rules/' + rule.id, 'PATCH', { enabled })} /></div>
-          <dl>{[['触发', rule.trigger], ['条件', rule.condition], ['动作', rule.action]].map(([name, value]) => <div key={name}><dt>{name}</dt><dd>{value}</dd></div>)}</dl>
-          <small className="muted">执行 {rule.runs} 次 · {rule.lastRun ? formatTime(rule.lastRun) : '暂无执行记录'}</small>
-        </article>)}
-      </section>
+      <Rules state={state} busy={busy} mutate={mutate}/>
       <section className="panel"><h2>门锁指纹 · 专属欢迎语</h2>
         {(Object.keys(members) as Member[]).map((key) => <label className="field-line" key={key}><span>{members[key]}</span><Input value={greetings[key]} maxLength={80} onChange={(value) => setGreetings({ ...greetings, [key]: value })} /></label>)}
         <p className="muted">播报设备 · {state.speaker}</p>
         <Checkbox checked={lightOn} onChange={setLightOn}>同时打开客厅灯</Checkbox>
-        <div className="button-row"><Button disabled={busy} onClick={() => void save(false)}>保存配置</Button><Button type="primary" disabled={busy} onClick={() => void save(true)}>生成 / 更新联动</Button></div>
+        <div className="button-row"><Button disabled={busy} onClick={() => void save(false)}>保存配置</Button><small>欢迎语为原有播报模拟配置，不会创建可执行规则。</small></div>
       </section>
     </div></Tabs.TabPane>
     <Tabs.TabPane key="debug" title="调试实验室"><section className="panel"><h2>模拟播报</h2>

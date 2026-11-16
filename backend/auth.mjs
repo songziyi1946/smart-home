@@ -15,18 +15,21 @@ const identity = credentials.extend({ displayName: z.string().trim().min(1).max(
 const publicUser = ({ passwordHash, salt, disabled, ...user }) => user;
 const digest = (token) => createHash('sha256').update(token).digest('hex');
 
-export function createAuth({ file, sessionTTL = 8 * 60 * 60 * 1000, now = Date.now }) {
-  const stored = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null;
+export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, now = Date.now }) {
+  const stored = repository ? repository.load() : existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null;
   let data = stored && (stored.users ? stored : {
     household: { id: randomUUID(), name: '我的家' }, users: [stored], invitations: [],
   });
   const sessions = new Map();
+  const sessionListeners = new Set();
+  const notifySessions = () => { for (const listener of sessionListeners) listener(); };
   const attempts = new Map();
   const router = Router();
   const getToken = (req) => (req.headers.cookie ?? '').split(';').map(value => value.trim()).find(value => value.startsWith(cookieName + '='))?.slice(cookieName.length + 1);
   const cookieOptions = (req) => ({ httpOnly: true, sameSite: 'strict', secure: req.secure, path: '/' });
   const active = user => user && !user.disabled && (!user.accessExpiresAt || user.accessExpiresAt > now());
   function save() {
+    if(repository){try{repository.save(data);}catch(error){data=repository.load();throw error;}return;}
     writeFileSync(file + '.tmp', JSON.stringify(data, null, 2), { mode: 0o600 });
     renameSync(file + '.tmp', file);
   }
@@ -50,6 +53,7 @@ export function createAuth({ file, sessionTTL = 8 * 60 * 60 * 1000, now = Date.n
     const expiresAt = Math.min(now() + sessionTTL, user.accessExpiresAt ?? Infinity);
     const value = { userId: user.id, expiresAt, loggedInAt: new Date(now()).toISOString() };
     sessions.set(digest(token), value);
+    notifySessions();
     res.cookie(cookieName, token, { ...cookieOptions(req), maxAge: expiresAt - now() });
     res.json(sessionInfo(user, value));
   }
@@ -93,8 +97,8 @@ export function createAuth({ file, sessionTTL = 8 * 60 * 60 * 1000, now = Date.n
     const user = await makeUser(input, 'admin');
     const household = { id: randomUUID(), name: input.homeName };
     const initial = { household, users: [user], invitations: [] };
-    mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
-    try { writeFileSync(file, JSON.stringify(initial, null, 2), { flag: 'wx', mode: 0o600 }); }
+    if(!repository)mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
+    try { if(repository)repository.create(initial);else writeFileSync(file, JSON.stringify(initial, null, 2), { flag: 'wx', mode: 0o600 }); }
     catch (error) {
       if (error.code === 'EEXIST') return res.status(409).json({ message: '家庭已创建，请登录或通过邀请加入' });
       throw error;
@@ -147,22 +151,30 @@ export function createAuth({ file, sessionTTL = 8 * 60 * 60 * 1000, now = Date.n
     user.disabled = true;
     save();
     for (const [key, value] of sessions) if (value.userId === user.id) sessions.delete(key);
+    notifySessions();
     res.json({ ok: true });
   });
   router.post('/logout', (req, res) => {
     const token = getToken(req);
     if (token) sessions.delete(digest(token));
+    notifySessions();
     res.clearCookie(cookieName, cookieOptions(req));
     res.json({ ok: true });
   });
-  return { router, requireAuth };
+  return { router, requireAuth,
+    isActiveAdmin(id) { const user=data?.users.find(u=>u.id===id);return !!active(user)&&user.role==='admin'; },
+    sessionFor(req) { const current = session(req); return current ? { user: publicUser(current.user), expiresAt: current.value.expiresAt } : undefined; },
+    subscribeSessions(listener) { sessionListeners.add(listener); return () => sessionListeners.delete(listener); },
+  };
 }
 
 export function authorizeHousehold(req, res, next) {
   const role = req.user.role;
   const path = req.path.toLowerCase();
+  if(role!=='admin' && /^\/automations(\/|$)/.test(path) && req.method!=='GET')return res.status(403).json({message:'自动化管理需要家庭管理员权限'});
+  if(role !== 'admin' && ((path === '/scenes' && req.method === 'POST') || (['PUT','PATCH','DELETE'].includes(req.method) && /^\/scenes(\/|$)/.test(path)))) return res.status(403).json({message:'场景管理需要家庭管理员权限'});
   if (role === 'guest' && !(
-    (req.method === 'GET' && path === '/state') ||
+    (req.method === 'GET' && (path === '/state' || path === '/events')) ||
     (req.method === 'PATCH' && /^\/devices\/[^/]+$/.test(path)) ||
     (req.method === 'POST' && /^\/scenes\/[^/]+$/.test(path))
   )) return res.status(403).json({ message: '访客仅可使用设备和场景控制' });
@@ -186,5 +198,5 @@ export function validateOrigin(req, res, next) {
 
 export function filterHouseholdState(state, user) {
   if (user.role !== 'guest') return state;
-  return { devices: state.devices, rules: [], accounts: [], expenses: [], events: [], greetings: {}, speaker: '', lightOn: false };
+  return { devices: state.devices, automations: [], automationRuns: [], scenes: state.scenes ?? [], sceneRuns: (state.sceneRuns ?? []).filter(run=>run.actorId===user.id).map(({actorId,...run})=>run), rules: [], accounts: [], expenses: [], events: [], greetings: {}, speaker: '', lightOn: false };
 }

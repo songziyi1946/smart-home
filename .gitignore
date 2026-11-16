@@ -18,3 +18,15 @@ dist/
 # Local authentication credentials
 backend/data/auth.json
 backend/data/auth.json.tmp
+
+# Local runtime configuration
+.env
+.env.*
+!.env.example
+
+# Disposable Home Assistant lab credentials
+tools/device-simulator/.lab-auth.json
+
+# SQLite runtime data and migration backups
+backend/data/*.sqlite*
+backend/data/*.pre-sqlite-*.bak

@@ -1,64 +1,32 @@
-import { ChevronRight, House, Layers, LogOut, Moon } from "lucide-react";
-import { useState } from "react";
-import type { Mutate } from "../types";
-
-export default function Scenes({
-  busy,
-  mutate,
-}: {
-  busy: boolean;
-  mutate: Mutate;
-}) {
-  const [active, setActive] = useState("");
-  return (
-    <section className="panel scene-panel">
-      <div className="section-heading">
-        <h2>
-          <Layers />
-          一键场景
-        </h2>
-      </div>
-      <div className="scenes">
-        {[
-          {
-            id: "home",
-            name: "回家",
-            description: "亮起灯光 · 打开窗帘",
-            icon: House,
-          },
-          {
-            id: "away",
-            name: "离家",
-            description: "关闭灯光 · 关闭空调",
-            icon: LogOut,
-          },
-          {
-            id: "sleep",
-            name: "睡眠",
-            description: "留盏床头灯 · 合上窗帘",
-            icon: Moon,
-          },
-        ].map(({ id, name, description, icon: Icon }) => (
-          <button
-            className={
-              "scene-card scene-" + id + (active === id ? " active" : "")
-            }
-            key={id}
-            disabled={busy}
-            aria-pressed={active === id}
-            onClick={async () => {
-              if (await mutate("/scenes/" + id, "POST")) setActive(id);
-            }}
-          >
-            <span className="scene-symbol">
-              <Icon />
-            </span>
-            <strong>{name}</strong>
-            <small>{description}</small>
-            <ChevronRight className="scene-arrow" size={18} />
-          </button>
-        ))}
-      </div>
-    </section>
-  );
+import {Layers,ChevronRight,Play} from 'lucide-react';
+import {useState} from 'react';
+import {Button,Modal} from '@arco-design/web-react';
+import type {State,Scene,Mutate,DeviceCommand} from '../types';
+const controls={power:{label:'电源',initial:false},brightness:{label:'亮度 %',initial:50},colorTemperature:{label:'色温 K',initial:3500},position:{label:'窗帘操作',initial:'open'},positionPercent:{label:'窗帘位置 %',initial:100},cleaning:{label:'清扫',initial:true},targetTemperature:{label:'目标温度 °C',initial:23},hvacMode:{label:'空调模式',initial:'cool'}};
+type CommandKey=keyof typeof controls;
+const choices:Partial<Record<CommandKey,string[]>>={position:['open','stop','closed'],hvacMode:['off','heat','cool','heat_cool','auto','dry','fan_only']};
+export default function Scenes({state,busy,mutate,canManage}:{state:State;busy:boolean;mutate:Mutate;canManage:boolean}){
+ const [manage,setManage]=useState(false),[draft,setDraft]=useState<Scene>();
+ const available=state.devices.filter(d=>d.capabilities.some(c=>c in controls));
+ const changeAction=(index:number,patch:Partial<Scene['actions'][number]>)=>setDraft(current=>current?{...current,actions:current.actions.map((a,i)=>i===index?{...a,...patch}:a)}:current);
+ const initialAction=(deviceId=available[0]?.id)=>{const device=available.find(d=>d.id===deviceId);const capability=device?.capabilities.find(c=>c in controls) as CommandKey|undefined;return capability?{deviceId:device!.id,command:{capability,value:controls[capability].initial} as DeviceCommand}:undefined;};
+ const add=()=>{const action=initialAction();if(action)setDraft(current=>current?{...current,actions:[...current.actions,action]}:current);};
+ const latest=state.sceneRuns[0];
+ return <section className="panel scene-panel">
+  <div className="section-heading"><h2><Layers/>一键场景</h2>{canManage&&<Button size="small" disabled={busy} onClick={()=>setManage(true)}>管理场景</Button>}</div>
+  <div className="scenes">{state.scenes.map(scene=><button className="scene-card" key={scene.id} disabled={busy||latest?.status==='running'} onClick={()=>void mutate('/scenes/'+scene.id,'POST',{})}><span className="scene-symbol"><Play/></span><strong>{scene.name}</strong><small>{scene.description||`${scene.actions.length} 个动作`}</small><ChevronRight className="scene-arrow" size={18}/></button>)}</div>
+  {!state.scenes.length&&<p className="empty">暂无场景{canManage?'，请在管理场景中创建':''}</p>}
+  {latest&&<details className="scene-result" open={latest.status==='failed'}><summary>{latest.name} · {latest.status==='running'?'执行中':latest.status==='completed'?'动作已下发':'执行失败'}{latest.reason?' · '+latest.reason:''}</summary><small>已下发仅表示 Provider 接受命令，设备最终状态以反馈为准。</small><ol>{latest.actions.map((action,i)=><li key={i}>{state.devices.find(d=>d.id===action.deviceId)?.name??action.deviceId} · {controls[action.command.capability].label} = {String(action.command.value)}：{{pending:'待执行',executing:'下发中',sent:'已下发',failed:'失败',skipped:'已跳过'}[action.status]}{action.reason?'（'+action.reason+'）':''}</li>)}</ol></details>}
+  <Modal visible={manage} title="管理场景" footer={null} onCancel={()=>{if(!busy){setManage(false);setDraft(undefined);}}} getPopupContainer={()=>document.fullscreenElement??document.body}>
+   {!draft?<><Button disabled={busy||!available.length} onClick={()=>setDraft({id:'',name:'',description:'',version:0,actions:[initialAction()!]})}>创建场景</Button>{!available.length&&<p>暂无可控制设备</p>}{state.scenes.map(scene=><div className="scene-manager-row" key={scene.id}><span>{scene.name} · {scene.actions.length} 个动作</span><Button disabled={busy} onClick={()=>setDraft(structuredClone(scene))}>编辑</Button><Button status="danger" disabled={busy} onClick={()=>{if(window.confirm(`删除场景“${scene.name}”？`))void mutate('/scenes/'+scene.id,'DELETE',{});}}>删除</Button></div>)}</>:<form className="scene-editor" onSubmit={async event=>{event.preventDefault();const body={name:draft.name,description:draft.description,actions:draft.actions,...(draft.id?{version:draft.version}:{})};if(await mutate('/scenes'+(draft.id?'/'+draft.id:''),draft.id?'PUT':'POST',body))setDraft(undefined);}}>
+    <label>场景名称<input required maxLength={80} value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label>
+    <label>说明<input maxLength={200} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})}/></label>
+    <p>按顺序下发；任一步失败停止，已执行动作不会自动回滚。</p>
+    {draft.actions.map((action,i)=>{const device=state.devices.find(d=>d.id===action.deviceId);const key=action.command.capability;return <fieldset key={i} disabled={busy}><legend>动作 {i+1}</legend><label>设备<select value={action.deviceId} onChange={e=>changeAction(i,initialAction(e.target.value)!)}>{!device&&<option value={action.deviceId}>设备已移除：{action.deviceId}</option>}{available.map(d=><option key={d.id} value={d.id}>{d.name} · {d.room}{d.state.online?'':'（离线）'}</option>)}</select></label><label>能力<select value={key} onChange={e=>{const capability=e.target.value as CommandKey;changeAction(i,{command:{capability,value:controls[capability].initial} as DeviceCommand});}}>{[...new Set([key,...device?.capabilities.filter(c=>c in controls)??[]])].map(c=><option key={c} value={c}>{controls[c as CommandKey].label}</option>)}</select></label>
+     <label>值{key==='power'||key==='cleaning'?<select value={String(action.command.value)} onChange={e=>changeAction(i,{command:{capability:key,value:e.target.value==='true'}})}><option value="true">{key==='power'?'开启':'开始清扫'}</option><option value="false">{key==='power'?'关闭':'暂停'}</option></select>:choices[key]?<select value={String(action.command.value)} onChange={e=>changeAction(i,{command:{capability:key,value:e.target.value} as DeviceCommand})}>{choices[key]!.map(value=><option key={value} value={value}>{value}</option>)}</select>:<input type="number" required step={key==='targetTemperature'||key==='positionPercent'?'any':1} value={Number(action.command.value)} onChange={e=>changeAction(i,{command:{capability:key,value:Number(e.target.value)} as DeviceCommand})}/>}</label>
+     <Button disabled={i===0||busy} onClick={()=>{const actions=[...draft.actions];[actions[i-1],actions[i]]=[actions[i],actions[i-1]];setDraft({...draft,actions});}}>上移</Button><Button disabled={busy||draft.actions.length===1} onClick={()=>setDraft({...draft,actions:draft.actions.filter((_,index)=>index!==i)})}>移除</Button></fieldset>;})}
+    <div className="button-row"><Button disabled={busy||draft.actions.length>=100} onClick={add}>添加动作</Button><Button htmlType="submit" type="primary" loading={busy}>保存</Button><Button disabled={busy} onClick={()=>setDraft(undefined)}>返回</Button></div>
+   </form>}
+  </Modal>
+ </section>;
 }

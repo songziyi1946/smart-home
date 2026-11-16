@@ -1,14 +1,13 @@
+import type {AutomationRule,AutomationRun} from '../../packages/contracts/automations';
+import type {Scene, SceneRun} from '../../packages/contracts/scenes';
+export type {Scene, SceneRun} from '../../packages/contracts/scenes';
 import type { Category, Member } from './constants';
 
-export type Device = { id: string; name: string; room: string } & (
-  { kind: 'light'; on: boolean; level: number } |
-  { kind: 'ac'; on: boolean } |
-  { kind: 'curtain'; position: 'open' | 'stop' | 'closed' } |
-  { kind: 'robot'; cleaning: boolean; battery: number }
-);
+import type { DeviceSnapshot } from '../../packages/contracts/devices';
+export type { Device, Capability, DeviceState, DeviceCommand, DeviceSnapshot } from '../../packages/contracts/devices';
 export type Rule = { id: string; name: string; trigger: string; condition: string; action: string; enabled: boolean; runs: number; lastRun: string | null };
 export type State = {
-  devices: Device[]; rules: Rule[]; greetings: Record<Member, string>; speaker: string; lightOn: boolean;
+  automations: AutomationRule[]; automationRuns: AutomationRun[]; scenes: Scene[]; sceneRuns: SceneRun[]; devices: DeviceSnapshot[]; rules: Rule[]; greetings: Record<Member, string>; speaker: string; lightOn: boolean;
   events: { id: string; message: string; time: string }[];
   accounts: { id: string; name: string; category: Category; masked: string }[];
   expenses: { id: string; category: Category; cents: number; date: string; note: string }[];

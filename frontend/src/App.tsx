@@ -1,8 +1,9 @@
+import { subscribeState } from './stateStream';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@arco-design/web-react';
 import { ApiError, request } from './api';
-import type { State, Mutate, Page, Session } from './types';
+import type { State, Mutate, Page, Session, SceneRun } from './types';
 import Layout from './layout';
 import { nav } from './layout/navigation';
 import Home from './home';
@@ -52,8 +53,7 @@ export default function App() {
       if (version !== generation.current) return;
       setSession(currentSession);
       setAuthChecked(true);
-      const snapshot = await request('/state');
-      if (version === generation.current) setState(snapshot);
+
     } catch (error) {
       if (version === generation.current) handleError(error);
     }
@@ -77,6 +77,26 @@ export default function App() {
   }
   useEffect(() => { void load(); }, []);
   useEffect(() => {
+    if (!session) return;
+    const version = generation.current;
+    let stopped = false;
+    let checkingSession = false;
+    const close = subscribeState(
+      snapshot => { if (!stopped && version === generation.current) setState(snapshot); },
+      () => { if (!stopped && version === generation.current) clearSession(); },
+      () => {
+        // Revalidate only on a stream failure, never periodically. EventSource retries transport failures.
+        if (checkingSession || stopped) return;
+        checkingSession = true;
+        void request<Session>('/auth/session').catch(error => {
+          if (!stopped && version === generation.current && error instanceof ApiError && error.status === 401) clearSession(error.setupRequired);
+        }).finally(() => { checkingSession = false; });
+      },
+    );
+    return () => { stopped = true; close(); };
+  }, [session]);
+
+  useEffect(() => {
     if (!session || session.localPreview) return;
     const timer = setTimeout(() => clearSession(), Math.max(0, session.expiresAt - Date.now()));
     return () => clearTimeout(timer);
@@ -93,10 +113,10 @@ export default function App() {
     setBusy(true);
     setNotice(undefined);
     try {
-      const snapshot = await request(path, method, body);
+      const result = await request<{run?:SceneRun}>(path, method, body);
       if (version !== generation.current) return false;
-      setState(snapshot);
-      setNotice({ text: '操作已保存' });
+      if(result.run?.status==='failed'){setNotice({text:'场景执行失败：'+result.run.reason,error:true});return false;}
+      setNotice({ text: result.run ? '场景动作已下发，请查看设备反馈' : '操作已保存' });
       return true;
     } catch (error) {
       if (version === generation.current) handleError(error);
@@ -125,7 +145,7 @@ export default function App() {
 
   const activePage = session.user.role === 'guest' && ['automation', 'billing'].includes(page) ? 'home' : page;
   const pages = state ? {
-    home: <Home state={state} busy={busy} mutate={mutate} room={room} onRoomChange={setRoom} />,
+    home: <Home canManageScenes={session.user.role === 'admin'} state={state} busy={busy} mutate={mutate} room={room} onRoomChange={setRoom} />,
     automation: <Automation state={state} busy={busy || session.user.role !== 'admin'} mutate={mutate} />,
     vr: <Suspense fallback={<div className="panel">正在加载三维场景…</div>}><VR state={state} busy={busy} mutate={mutate} selectedRoom={room} onRoomChange={setRoom} nightMode={nightMode} /></Suspense>,
     billing: <Billing state={state} busy={busy} mutate={mutate} />,
