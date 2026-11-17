@@ -1,0 +1,3 @@
+import {useEffect,useState} from 'react';
+export function useMobile(){const [mobile,setMobile]=useState(()=>window.matchMedia('(max-width: 767px)').matches);useEffect(()=>{const q=window.matchMedia('(max-width: 767px)');const change=()=>setMobile(q.matches);q.addEventListener('change',change);return()=>q.removeEventListener('change',change);},[]);return mobile;}
+export function readFavorites(key:string):string[]|null{try{const data=JSON.parse(localStorage.getItem(key)??'null');return Array.isArray(data)&&data.every(id=>typeof id==='string')?[...new Set(data)].slice(0,12):null;}catch{return null;}}

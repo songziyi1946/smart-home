@@ -22,7 +22,7 @@ export default function DeviceRow({ device, busy, mutate }: { device: DeviceSnap
     position ? values.position === undefined ? '状态未知' : { open: '已打开', closed: '已关闭', stop: '已停止' }[values.position] : '',
   ].filter(Boolean);
   const status = !device.state.online ? '已离线' : statuses.join(' · ') || '暂无可用控制';
-  return <div className={'device' + (active ? ' device-active' : '')}>
+  return <div className={'device' + (active ? ' device-active' : '') + (!device.state.online ? ' device-offline' : '')}>
     <div className="device-line">
       <span className={'device-art' + (brightness ? ' kind-light' : '')}><Icon size={25} /></span>
       <div className="device-label">{brightness ?

@@ -35,7 +35,7 @@ export default function Login({ setupRequired, onLogin, onSetupChange }: {
     } finally { setBusy(false); }
   }
   return <div className="auth-viewport"><section className="panel auth-panel">
-    <div className="auth-brand"><LockKeyhole size={30} /><span>米家中枢</span></div>
+    <div className="auth-brand"><LockKeyhole size={30} /><span>Home OS</span></div>
     <h1>{setupRequired ? '创建你的家庭' : joining ? '加入家庭' : '欢迎回家'}</h1>
     <p className="muted">{setupRequired ? '设置家庭名称和管理员账户，开始连接家人。' : joining ? '输入家庭管理员提供的一次性邀请码，设置你自己的账户。' : '使用你的家庭账户登录，设备控制权限随身份生效。'}</p>
     <form onSubmit={event => void submit(event)}>

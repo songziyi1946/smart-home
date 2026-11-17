@@ -455,3 +455,14 @@ Unless the user explicitly asks otherwise, prioritize work in this order:
 ## Realtime state transport
 
 The frontend consumes `/api/events` through EventSource; do not reintroduce periodic `/api/state` polling or apply mutation response snapshots over the stream. `backend/app/state-stream.mjs` sends full current snapshots on every connection/reconnection and coalesces Provider/local commit notifications. This is current-state resync, not historical event replay. Preserve per-frame session validation and guest filtering, and immediate connection invalidation on logout/member removal.
+
+## Frontend experience boundaries
+
+- Mobile (<768px) has its own home/more views in `frontend/src/mobile/Views.tsx`; do not replace them with vertically stacked desktop dashboard panels.
+- `styles/tokens.css` owns shared semantic colors and Arco theme mapping; `styles/shell.css` owns app navigation/connection presentation.
+- Reuse `deviceControls/model.ts` for capability-based command dispatch and summaries; keep real device state sourced from SSE.
+- Room browsing groups existing roomId values; this is not room CRUD. Favorites are browser-local IDs scoped by household/user, not server configuration.
+- Preserve legacy hash routes, guest restrictions, mobile environment visibility, explicit drawer close/back behavior, and cache labels during connection loss.
+
+- Desktop home is composed in `frontend/src/home/index.tsx`; desktop-only directory/cards/selectors live in `frontend/src/desktop/`. Keep desktop attention and mobile attention consistent through shared state selectors.
+- `#devices` provides read/control/filter/favorite workflows only. Do not imply device rename, room assignment or online connection configuration is persisted until those APIs exist.

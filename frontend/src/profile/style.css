@@ -1,0 +1,472 @@
+.settings-page {
+  display: grid;
+  gap: 24px;
+}
+.settings-page h2 {
+  font-size: 18px;
+  margin: 0;
+}
+.settings-page h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+.settings-page header,
+.settings-member-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.settings-muted,
+.settings-page small {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.settings-page a {
+  color: var(--accent);
+}
+.settings-page header a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.settings-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.settings-home-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 16px;
+}
+.settings-hero h2 {
+  font-size: 25px;
+  margin: 5px 0;
+}
+.settings-hero p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.settings-hero > div:first-of-type {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.settings-hero-action {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.settings-badge {
+  display: inline-block;
+  font-size: 12px;
+  padding: 5px 10px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius-pill);
+}
+.settings-badge.muted {
+  color: var(--muted);
+  background: var(--control);
+}
+.settings-tabs {
+  display: flex;
+  gap: 8px;
+}
+.settings-tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--panel);
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.settings-tabs button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.settings-general-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 24px;
+  align-items: start;
+}
+.settings-facts {
+  margin: 20px 0;
+}
+.settings-facts > div {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.settings-facts dt {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.settings-facts dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.settings-facts dd a {
+  margin-left: 12px;
+  font-size: 13px;
+}
+.settings-avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-size: 17px;
+}
+.settings-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.settings-account small {
+  display: block;
+  margin-top: 3px;
+}
+.settings-account strong {
+  font-weight: 500;
+}
+.settings-session {
+  margin: 20px 0;
+}
+.settings-page summary {
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--accent);
+  padding: 8px 0;
+}
+.settings-session .settings-facts dd {
+  font-size: 13px;
+}
+.settings-members {
+  display: grid;
+  gap: 16px;
+}
+.settings-member-heading {
+  margin-bottom: 0;
+}
+.settings-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.settings-member-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.settings-member-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+.settings-member-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+.settings-member-list li > div {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.settings-member-list li strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+.settings-member-list li strong small {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--control);
+  border-radius: 4px;
+  margin-left: 8px;
+}
+.settings-member-list li > div > span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 5px 0;
+}
+.settings-member-list li p {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 5px 0;
+}
+.settings-member-list .arco-btn {
+  flex-shrink: 0;
+}
+.settings-invite fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.settings-invite label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  margin: 18px 0;
+}
+.settings-invite select {
+  font: inherit;
+  color: var(--color-text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 10px;
+  min-height: 44px;
+  width: 100%;
+  min-width: 0;
+}
+.settings-role-note {
+  font-size: 13px;
+  line-height: 1.7;
+  padding: 14px;
+  background: var(--control);
+  border-radius: var(--radius-control);
+  color: var(--muted);
+}
+.settings-invite-result {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.settings-invite-result > strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.settings-invite-result p {
+  font-size: 13px;
+}
+.settings-invite-result .settings-code {
+  font-family: monospace;
+  font-size: 25px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  user-select: all;
+}
+.settings-invite-result small {
+  display: block;
+  margin-bottom: 12px;
+}
+.settings-invite-result.expired p,
+.settings-error {
+  color: var(--color-danger);
+  font-size: 14px;
+}
+.settings-error {
+  padding: 12px 16px;
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-control);
+}
+.settings-permission-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin: 20px 0;
+}
+.settings-permissions ul {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.settings-permissions li {
+  display: grid;
+  gap: 6px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.settings-permissions li > span {
+  color: var(--muted);
+}
+.settings-permissions li > strong {
+  font-weight: 500;
+}
+.settings-integrations {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.settings-provider-list article {
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+}
+.settings-provider-list article > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.settings-provider-list p,
+.settings-setup p,
+.settings-unavailable p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.settings-setup ol {
+  padding-left: 20px;
+  margin: 20px 0;
+}
+.settings-setup li {
+  padding: 12px 0;
+}
+.settings-setup strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.settings-setup code {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.settings-shortcuts a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.settings-shortcuts a > span {
+  flex: 1;
+}
+@media (max-width: 1050px) {
+  .settings-member-grid,
+  .settings-integrations {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 767px) {
+  .settings-page {
+    gap: 16px;
+  }
+  .settings-page .panel {
+    padding: 18px;
+  }
+  .settings-page .arco-btn {
+    min-height: 44px;
+  }
+  .settings-hero {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .settings-hero h2 {
+    font-size: 21px;
+  }
+  .settings-hero-action {
+    margin-left: 0;
+    width: 100%;
+  }
+  .settings-hero-action > .arco-btn {
+    width: 100%;
+  }
+  .settings-tabs {
+    gap: 6px;
+  }
+  .settings-tabs button {
+    flex: 1;
+    gap: 5px;
+    font-size: 12px;
+    padding: 10px 5px;
+  }
+  .settings-general-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .settings-general-grid > .panel {
+    width: 100%;
+  }
+  .settings-general-grid > .panel:nth-child(2) {
+    order: -1;
+  }
+  .settings-facts > div {
+    gap: 12px;
+    font-size: 13px;
+  }
+  .settings-page header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .settings-member-heading {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .settings-member-heading > .settings-actions {
+    width: 100%;
+  }
+  .settings-actions > .arco-btn {
+    flex: 1;
+  }
+  .settings-member-list li {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .settings-member-list li > div {
+    min-width: 140px;
+  }
+  .settings-member-list li > .arco-btn {
+    margin-left: auto;
+  }
+  .settings-invite select {
+    font-size: 16px;
+  }
+  .settings-invite fieldset > .arco-btn {
+    width: 100%;
+  }
+  .settings-permission-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .settings-provider-list article > div {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .settings-setup .settings-muted {
+    overflow-wrap: anywhere;
+  }
+  .settings-invite-result .settings-code {
+    font-size: 23px;
+  }
+}

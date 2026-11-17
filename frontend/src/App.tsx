@@ -1,11 +1,23 @@
+import Devices from './desktop/Devices';
+import {emptyFilters} from './desktop/model';
+import type {DeviceFilters} from './desktop/model';
+import './desktop/style.css';
+import {Drawer} from '@arco-design/web-react';
+import {useMobile,readFavorites} from './mobile/hooks';
+import {MobileHome,RoomsPage} from './mobile/Views';
+import DevicePanel from './deviceControls/Panel';
+import {defaultFavorites} from './deviceControls/model';
+import './mobile/style.css';
+import {StatusPanel,PageSkeleton} from './ui/StatusPanel';
+import type {ConnectionStatus} from './connection';
+import Scenes from './scenes';
 import { subscribeState } from './stateStream';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Button } from '@arco-design/web-react';
 import { ApiError, request } from './api';
 import type { State, Mutate, Page, Session, SceneRun } from './types';
 import Layout from './layout';
-import { nav } from './layout/navigation';
+import { resolvePage } from './layout/navigation';
 import Home from './home';
 import Automation from './automation';
 import Billing from './billing';
@@ -15,23 +27,48 @@ import Login from './login';
 const VR = lazy(() => import('./vr'));
 
 function currentPage(): Page {
-  return nav.find(({ id }) => '#' + id === location.hash)?.id ?? 'home';
+  return resolvePage(location.hash);
 }
 
 export default function App() {
+  const mobile=useMobile();
+  const [selectedDevice,setSelectedDevice]=useState<string>();
+  const openDevice=(id:string)=>{history.pushState({devicePanel:id},'',location.href);setSelectedDevice(id);};
+  const closeDevice=()=>{setSelectedDevice(undefined);if(history.state?.devicePanel)history.back();};
+  useEffect(()=>{const back=()=>setSelectedDevice(typeof history.state?.devicePanel==='string'?history.state.devicePanel:undefined);window.addEventListener('popstate',back);return()=>window.removeEventListener('popstate',back);},[]);
+  const [deviceFilters,setDeviceFilters]=useState<DeviceFilters>({...emptyFilters});
+  const openDirectory=(patch:Partial<DeviceFilters>={})=>{setDeviceFilters({...emptyFilters,...patch});location.hash='devices';};
+  const [mobileRoom,setMobileRoom]=useState('all');
+  const [offlineOnly,setOfflineOnly]=useState(false);
+  const [favoriteDialog,setFavoriteDialog]=useState(false);
+  const [favoriteConfig,setFavoriteConfig]=useState<{key:string;value:string[]|null}>({key:'',value:null});
   const [page, setPage] = useState(currentPage);
+  useEffect(()=>{window.scrollTo(0,0);setSelectedDevice(undefined);},[page]);
   const [room, setRoom] = useState('客厅');
-  const [nightMode, setNightMode] = useState(() => window.localStorage.getItem('smart-home-theme') === 'dark');
+  const [nightMode, setNightMode] = useState(() => {try{return window.localStorage.getItem('smart-home-theme') === 'dark';}catch{return false;}});
   const [state, setState] = useState<State>();
   const [session, setSession] = useState<Session>();
+  const favoriteKey=session?`home-os:favorites:${session.household.id}:${session.user.id}`:'';
+  useEffect(()=>{setFavoriteConfig({key:favoriteKey,value:favoriteKey?readFavorites(favoriteKey):null});setSelectedDevice(undefined);setFavoriteDialog(false);},[favoriteKey]);
+  const favoriteIds=(favoriteConfig.key===favoriteKey?favoriteConfig.value:null)??defaultFavorites(state?.devices??[]);
+  const toggleFavorite=(id:string)=>{const ids=favoriteIds.includes(id)?favoriteIds.filter(value=>value!==id):[...favoriteIds,id];if(ids.length>12)return;setFavoriteConfig({key:favoriteKey,value:ids});try{localStorage.setItem(favoriteKey,JSON.stringify(ids));}catch{setNotice({text:'收藏仅保留在当前页面，浏览器不允许持久保存。',error:true});}};
+  const openRoom=(id:string)=>{setMobileRoom(id);setOfflineOnly(false);location.hash='rooms';};
   const [authChecked, setAuthChecked] = useState(false);
   const [setupRequired, setSetupRequired] = useState(false);
   const generation = useRef(0);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ text: string; error?: boolean }>();
   const locked = useRef(false);
+  const [connection,setConnection]=useState<ConnectionStatus>('connecting');
+  const [lastReceived,setLastReceived]=useState<number>();
+  const [streamAttempt,setStreamAttempt]=useState(0);
+  const connected=useRef(false);
+  const reconnect=()=>{setConnection(navigator.onLine?'connecting':'offline');setStreamAttempt(value=>value+1);};
   function clearSession(setup = false) {
     generation.current++;
+    connected.current=false;
+    setConnection('connecting');
+    setLastReceived(undefined);
     setSession(undefined);
     setState(undefined);
     setNotice(undefined);
@@ -81,10 +118,19 @@ export default function App() {
     const version = generation.current;
     let stopped = false;
     let checkingSession = false;
+    connected.current=false;
+    setConnection(navigator.onLine?'connecting':'offline');
+    const watchdog=setTimeout(()=>{if(!stopped&&!connected.current)setConnection(navigator.onLine?'error':'offline');},10000);
+    const offline=()=>{connected.current=false;setConnection('offline');};
+    const online=()=>setStreamAttempt(value=>value+1);
+    window.addEventListener('offline',offline);window.addEventListener('online',online);
     const close = subscribeState(
-      snapshot => { if (!stopped && version === generation.current) setState(snapshot); },
+      snapshot => { if (!stopped && version === generation.current) {connected.current=true;clearTimeout(watchdog);setConnection('live');setLastReceived(Date.now());setState(snapshot);} },
       () => { if (!stopped && version === generation.current) clearSession(); },
       () => {
+        if(stopped)return;
+        connected.current=false;
+        setConnection(navigator.onLine?'reconnecting':'offline');
         // Revalidate only on a stream failure, never periodically. EventSource retries transport failures.
         if (checkingSession || stopped) return;
         checkingSession = true;
@@ -93,8 +139,8 @@ export default function App() {
         }).finally(() => { checkingSession = false; });
       },
     );
-    return () => { stopped = true; close(); };
-  }, [session]);
+    return () => { stopped = true; clearTimeout(watchdog);window.removeEventListener('offline',offline);window.removeEventListener('online',online);close(); };
+  }, [session,streamAttempt]);
 
   useEffect(() => {
     if (!session || session.localPreview) return;
@@ -108,6 +154,7 @@ export default function App() {
   }, []);
   const mutate: Mutate = async (path, method, body) => {
     if (locked.current) return false;
+    if(!connected.current){setNotice({text:'连接恢复后再试，当前显示上次同步的数据。',error:true});return false;}
     locked.current = true;
     const version = generation.current;
     setBusy(true);
@@ -135,25 +182,32 @@ export default function App() {
     document.documentElement.dataset.theme = nightMode ? 'dark' : 'light';
     document.body.dataset.theme = nightMode ? 'dark' : 'light';
     document.body.setAttribute('arco-theme', nightMode ? 'dark' : 'light');
-    window.localStorage.setItem('smart-home-theme', nightMode ? 'dark' : 'light');
+    try{window.localStorage.setItem('smart-home-theme', nightMode ? 'dark' : 'light');}catch{/* Theme remains available for this session. */}
   }, [nightMode]);
 
-  if (!authChecked) return <div className="auth-viewport"><section className="panel auth-panel">
-    {notice?.error ? <><p role="alert">{notice.text}</p><Button onClick={() => void load()}>重新连接</Button></> : '正在验证登录状态…'}
-  </section></div>;
+  if (!authChecked) return <div className="auth-viewport">
+    <StatusPanel kind={notice?.error?'error':'loading'} title={notice?.error?'暂时无法连接家庭':'正在验证家庭会话'} description={notice?.text??'请稍候，正在安全地连接你的家庭。'} onRetry={notice?.error?()=>void load():undefined} retryLabel="重新连接"/>
+  </div>;
   if (!session) return <Login setupRequired={setupRequired} onLogin={onLogin} onSetupChange={setSetupRequired} />;
 
   const activePage = session.user.role === 'guest' && ['automation', 'billing'].includes(page) ? 'home' : page;
+  const controlsBusy=busy||connection!=='live';
   const pages = state ? {
-    home: <Home canManageScenes={session.user.role === 'admin'} state={state} busy={busy} mutate={mutate} room={room} onRoomChange={setRoom} />,
-    automation: <Automation state={state} busy={busy || session.user.role !== 'admin'} mutate={mutate} />,
-    vr: <Suspense fallback={<div className="panel">正在加载三维场景…</div>}><VR state={state} busy={busy} mutate={mutate} selectedRoom={room} onRoomChange={setRoom} nightMode={nightMode} /></Suspense>,
-    billing: <Billing state={state} busy={busy} mutate={mutate} />,
-    profile: <Profile state={state} session={session} busy={busy} onLogout={() => void logout()} onSessionExpired={() => clearSession()} />,
+    home: mobile?<MobileHome state={state} favorites={favoriteIds} onFavorites={()=>setFavoriteDialog(true)} onRoom={openRoom} onOffline={()=>{setMobileRoom('all');setOfflineOnly(true);location.hash='rooms';}} busy={controlsBusy} mutate={mutate} onOpen={openDevice}/>:<Home state={state} busy={controlsBusy} mutate={mutate} favorites={favoriteIds} onFavorites={()=>setFavoriteDialog(true)} onFavorite={toggleFavorite} onOpen={openDevice} onRoom={openRoom} onOffline={()=>openDirectory({status:'offline'})} onDevices={()=>openDirectory()} canViewBilling={session.user.role!=='guest'}/>,
+    devices: <Devices state={state} busy={controlsBusy} mutate={mutate} favorites={favoriteIds} onFavorite={toggleFavorite} onOpen={openDevice} filters={deviceFilters} onFilters={setDeviceFilters} role={session.user.role}/>,
+    rooms: <RoomsPage state={state} roomId={mobileRoom} onRoom={setMobileRoom} offlineOnly={offlineOnly} onOfflineChange={setOfflineOnly} busy={controlsBusy} mutate={mutate} onOpen={openDevice}/>,
+    account: <Profile onDevices={()=>openRoom('all')} key="account" initialSection="members" state={state} session={session} busy={controlsBusy} pending={busy} onLogout={()=>void logout()} onSessionExpired={()=>clearSession()}/>,
+    scenes: <Scenes state={state} canManage={session.user.role==='admin'} busy={controlsBusy} pending={busy} mutate={mutate}/>,
+    automation: <Automation state={state} busy={controlsBusy} pending={busy} mutate={mutate} canManage={session.user.role==='admin'}/>,
+    vr: <Suspense fallback={<StatusPanel kind="loading" title="正在加载空间视图" description="三维模块按需加载，不影响日常设备控制。"/>}><VR state={state} busy={controlsBusy} mutate={mutate} selectedRoom={room} onRoomChange={setRoom} nightMode={nightMode} /></Suspense>,
+    billing: <Billing state={state} busy={controlsBusy} pending={busy} mutate={mutate} />,
+    profile: <Profile onDevices={()=>openRoom('all')} key="profile" state={state} session={session} busy={controlsBusy} pending={busy} onLogout={() => void logout()} onSessionExpired={() => clearSession()} />,
   } satisfies Record<Page, ReactNode> : undefined;
 
-  return <Layout page={activePage} role={session.user.role} state={state} busy={busy} nightMode={nightMode} onNightModeChange={setNightMode}>
+  return <Layout mobile={mobile} householdName={session.household.name} connection={connection} lastReceived={lastReceived} onReconnect={reconnect} page={activePage} role={session.user.role} state={state} busy={busy} nightMode={nightMode} onNightModeChange={setNightMode}>
     {notice && <div className={'notice' + (notice.error ? ' error' : '')} role={notice.error ? 'alert' : 'status'}>{notice.text}<button aria-label="关闭提示" onClick={() => setNotice(undefined)}>×</button></div>}
-    {pages ? pages[activePage] : <div className="panel">{notice?.error ? <Button onClick={() => void load()}>重新连接</Button> : '正在连接本地服务…'}</div>}
+    {pages ? pages[activePage] : connection==='connecting'?<PageSkeleton/>:<StatusPanel kind={connection==='offline'?'offline':'error'} title="暂未取得家庭状态" description="连接恢复后会自动同步，设备状态不会用演示值填充。" onRetry={reconnect} retryLabel="重新连接"/>}
+    <DevicePanel device={state?.devices.find(d=>d.id===selectedDevice)} visible={!!selectedDevice} mobile={mobile} busy={controlsBusy} mutate={mutate} onClose={closeDevice} favorite={favoriteIds.includes(selectedDevice??'')} onFavorite={()=>selectedDevice&&toggleFavorite(selectedDevice)}/>
+    <Drawer visible={favoriteDialog} title={<div className="control-sheet-heading"><span>常用设备</span><button aria-label="关闭收藏管理" onClick={()=>setFavoriteDialog(false)}>关闭</button></div>} closable={false} placement={mobile?'bottom':'right'} height={mobile?'75dvh':undefined} width={mobile?undefined:400} onCancel={()=>setFavoriteDialog(false)} footer={null} focusLock autoFocus><p className="hint-text">仅保存在当前浏览器；最多收藏12项，首页展示前6项。取消收藏不会删除设备。</p><div className="favorite-list">{state?.devices.length===0&&<StatusPanel compact kind="empty" title="暂无可收藏设备" description="接入设备后，可选择常用设备。" action={<a className="quiet-button" href="#profile" onClick={()=>setFavoriteDialog(false)}>查看家庭设置</a>}/>} {state?.devices.map(device=><label key={device.id}><input type="checkbox" checked={favoriteIds.includes(device.id)} disabled={!favoriteIds.includes(device.id)&&favoriteIds.length>=12} onChange={()=>toggleFavorite(device.id)}/><span>{device.name}<small>{device.room}{device.state.online?'':' · 离线'}</small></span></label>)}{favoriteIds.filter(id=>!state?.devices.some(d=>d.id===id)).map(id=><label key={id}><input type="checkbox" checked onChange={()=>toggleFavorite(id)}/><span>已移除或暂未发现的设备<small>{id}</small></span></label>)}</div></Drawer>
   </Layout>;
 }

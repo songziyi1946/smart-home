@@ -25,3 +25,5 @@ export function onlineSummary(devices: DeviceSnapshot[]) {
   return {online, total: devices.length, offline: devices.length - online,
     simulated: devices.filter(d => sourceLabel(d) === '模拟数据').length};
 }
+
+export function latestFailures<T extends {status:string}>(runs:T[],key:(run:T)=>string){const seen=new Set<string>();return runs.filter(run=>{const id=key(run);if(seen.has(id))return false;seen.add(id);return run.status==='failed';});}

@@ -1,54 +1,19 @@
-import { metricReading, occupancyReading, onlineSummary } from '../homeTelemetry';
-import { hasCapability, isRunning, isClimate } from '../devices';
-import { lazy, Suspense, useState } from 'react';
-import { Leaf, Thermometer, Droplets, Wind, Zap, ShieldCheck, LockKeyhole, PersonStanding, House, Lightbulb, ScanLine, AirVent, SlidersHorizontal, LayoutGrid } from 'lucide-react';
-import { belongsToRoom, rooms } from '../constants';
-import type { State, Mutate } from '../types';
-import Scenes from '../scenes';
-import DeviceRow from './DeviceRow';
-
-const ModelPreview = lazy(() => import('./ModelPreview'));
-
-export default function Home({ canManageScenes, state, busy, mutate, room, onRoomChange }: { canManageScenes: boolean; state: State; busy: boolean; mutate: Mutate; room: string; onRoomChange: (room: string) => void }) {
-  const [deviceScope, setDeviceScope] = useState<'room' | 'all'>('room');
-  const devices = state.devices.filter((device) => belongsToRoom(device.room, room));
-  const visibleDevices = deviceScope === 'all' ? state.devices : devices;
-  const running = state.devices.filter(d => isRunning(d)).length;
-  const lights = devices.filter((device) => hasCapability(device, 'brightness'));
-  const curtain = devices.find(d => hasCapability(d, 'position'));
-  const ac = devices.find(d => isClimate(d));
-  const metrics = [
-    {key: 'temperature', label: '温度', unit: '°C', Icon: Thermometer},
-    {key: 'humidity', label: '湿度', unit: '%', Icon: Droplets},
-    {key: 'pm25', label: 'PM2.5', unit: 'μg/m³', Icon: Leaf},
-    {key: 'co2', label: 'CO₂', unit: 'ppm', Icon: Wind},
-  ] as const;
-  const readings = metrics.map(metric => ({...metric, reading: metricReading(state.devices, metric.key)}));
-  const occupancy = occupancyReading(state.devices);
-  const online = onlineSummary(state.devices);
-  const environmentSources = [...new Set(readings.flatMap(item => item.reading ? [item.reading.source] : []))].join(' / ') || '暂无数据';
-  return <div className="home-grid">
-    <div className="stack overview-stack">
-      <section className="panel environment-panel"><div className="section-heading"><h2><Leaf />环境总览</h2><span className="quality-badge">{environmentSources}</span></div><div className="metrics">
-        {readings.map(({key, label, unit, Icon, reading}) => <div key={key}><Icon /><span title={reading ? `${reading.device.name} · ${reading.device.room} · ${reading.source}${reading.device.state.updatedAt ? ' · ' + new Date(reading.device.state.updatedAt).toLocaleString('zh-CN') : ''}` : '未接入或设备离线'}>
-          <strong className={!reading ? 'metric-unavailable' : undefined}>{reading ? <>{Number(reading.value.toFixed(1))}<em> {unit}</em></> : '暂无数据'}</strong><small>{label}{reading ? ' · ' + (reading.source === '模拟数据' ? '模拟' : 'HA') : ''}</small>
-        </span></div>)}
-      </div></section>
-      <section className="panel energy-panel"><div className="section-heading"><h2><Zap />能源总览</h2></div><div className="energy-gauge"><svg viewBox="0 0 200 200"><circle className="gauge-track" cx="100" cy="100" r="82" /><circle className="gauge-value" cx="100" cy="100" r="82" strokeDasharray="0 515" /></svg><div><strong>— <small>kW</small></strong><span>暂无数据</span></div></div><div className="energy-details"><span>运行设备 <b>{running} 台</b></span><span>开启灯光 <b>{state.devices.filter(d => d.state.online && hasCapability(d, 'brightness') && d.state.values.power).length} 盏</b></span></div></section>
-      <section className="panel security-panel"><div className="section-heading"><h2><ShieldCheck />安防状态</h2><span className="quality-badge">暂无数据</span></div><div className="security-row"><LockKeyhole /><span>门锁</span><b>暂无数据</b></div><div className="security-row" title={occupancy.partial ? '部分人体传感器离线或状态未知' : undefined}><PersonStanding /><span>{occupancy.text}</span><small>{occupancy.source}</small></div></section>
-    </div>
-    <div className="stack center-stack">
-      <section className="panel room-panel"><div className="section-heading"><h2><House />家里实景</h2><a className="enter-vr" href="#vr">进入 VR →</a></div>
-      <div className="rooms" aria-label="房间">
-        {rooms.map((name) => <button key={name} aria-pressed={room === name} onClick={() => onRoomChange(name)}>{name}</button>)}
-      </div>
-      {room === '客厅' ? <div className="room-preview" role="img" aria-label="客厅实景示意图"><img src="/room.png" alt="" /><div className="room-image-label"><strong>{room}</strong><span>实景示意 · {devices.length} 台设备</span></div></div> :
-        <Suspense fallback={<div className="room-placeholder">正在加载模型预览…</div>}><ModelPreview room={room} overview /></Suspense>}
-      <div className="room-status"><span><Lightbulb className="warm" /><span>灯光 <b>{lights.filter((light) => light.state.online && light.state.values.power).length}/{lights.length}</b> 已开</span></span><span><ScanLine /><span>窗帘{curtain?.state.online && curtain.state.values.position !== undefined ? ({open:'已打开',closed:'已关闭',stop:'已停止'}[curtain.state.values.position]) : '暂无数据'}</span></span><span><AirVent /><span>空调{ac?.state.online && ac.state.values.power !== undefined ? (ac.state.values.power ? '已开启' : '已关闭') : '暂无数据'}</span></span></div>
-      </section>
-      <Scenes state={state} canManage={canManageScenes} busy={busy} mutate={mutate} />
-    </div>
-    <section className="panel devices-panel"><div className="section-heading"><h2><SlidersHorizontal />快捷控制</h2></div><div className="device-filters"><button aria-pressed={deviceScope === 'room'} onClick={() => setDeviceScope('room')}>{room}</button><button aria-pressed={deviceScope === 'all'} onClick={() => setDeviceScope('all')}>全部设备</button></div><div className="device-grid">{visibleDevices.length ? visibleDevices.map((device) =>
-      <DeviceRow key={device.id} device={device} busy={busy} mutate={mutate} />) : <div className="empty"><LayoutGrid size={32} /><p>这个房间还没有设备</p></div>}</div><div className="device-panel-footer"><SlidersHorizontal size={15} />在线 {online.online}/{online.total} · 离线 {online.offline}{online.simulated > 0 ? ` · 含 ${online.simulated} 台模拟设备` : ''}</div></section>
-  </div>;
+import {useState} from 'react';import {AlertTriangle,ArrowUpRight,House,Layers,Leaf,Star,Activity,Box} from 'lucide-react';
+import type {State,Mutate,DeviceSnapshot} from '../types';import {roomOptions} from '../deviceControls/model';import {metricReading,occupancyReading,sourceLabel} from '../homeTelemetry';import {isRunning} from '../devices';import DesktopDeviceCard from '../desktop/DeviceCard';import {attention} from '../desktop/model';
+export default function Home({state,busy,mutate,favorites,onFavorites,onFavorite,onOpen,onRoom,onOffline,onDevices,canViewBilling}:{state:State;busy:boolean;mutate:Mutate;favorites:string[];onFavorites:()=>void;onFavorite:(id:string)=>void;onOpen:(id:string)=>void;onRoom:(id:string)=>void;onOffline:()=>void;onDevices:()=>void;canViewBilling:boolean}){
+ const issues=attention(state),rooms=roomOptions(state.devices);const [environmentRoom,setEnvironmentRoom]=useState('');const actualRoom=rooms.some(r=>r.id===environmentRoom)?environmentRoom:rooms.find(r=>state.devices.some(d=>d.roomId===r.id&&d.capabilities.includes('temperature')&&!d.capabilities.includes('power')))?.id??rooms[0]?.id;
+ const environmentDevices=state.devices.filter(d=>d.roomId===actualRoom);const metrics=[['temperature','温度','°C'],['humidity','湿度','%'],['pm25','PM2.5','μg/m³'],['co2','CO₂','ppm']] as const;
+ const common=favorites.map(id=>state.devices.find(d=>d.id===id)).filter((d):d is DeviceSnapshot=>!!d).slice(0,6);
+ const events=[...state.sceneRuns.map(r=>({...r,kind:'场景' as const})),...state.automationRuns.map(r=>({...r,kind:'自动化' as const}))].sort((a,b)=>Date.parse(b.startedAt)-Date.parse(a.startedAt)).slice(0,6);
+ const count=issues.offline.length+issues.lowBattery.length+issues.scenes.length+issues.automations.length;
+ return <div className="desktop-home"><section className="desktop-welcome"><div><span className="desktop-eyebrow">家的日常，一目了然</span><h2>{count?'有状态需要你留意':'从一个动作，开始舒适生活'}</h2><p>常用设备、生活场景和房间状态，都在这里。</p></div><button className="quiet-button" onClick={onDevices}>全部设备 <ArrowUpRight size={17}/></button></section>
+  {count>0&&<section className="desktop-attention" aria-label="需要关注"><div className="desktop-section-head"><h2><AlertTriangle size={19}/>需要关注 <small>{count} 项</small></h2></div><div className="attention-items">{!!issues.offline.length&&<button onClick={onOffline}><strong>{issues.offline.length} 项设备离线</strong><span>{issues.offline.slice(0,2).map(d=>d.name).join('、')}{issues.offline.length>2?'等':''}</span><small>查看离线设备 →</small></button>}{issues.lowBattery.slice(0,2).map(d=><button key={d.id} onClick={()=>onOpen(d.id)}><strong>{d.name}</strong><span>电量 {Math.round(d.state.values.battery!)}%，低于20%</span><small>查看详情 →</small></button>)}{issues.scenes.slice(0,2).map(run=><details key={run.id}><summary>场景失败 · {run.name}</summary><p>{run.reason??'请查看执行记录'}</p><a href="#scenes">查看场景 →</a></details>)}{issues.automations.slice(0,2).map(run=><details key={run.id}><summary>自动化失败 · {run.name}</summary><p>{run.reason??'请查看执行记录'}</p><a href="#automation">查看规则 →</a></details>)}</div></section>}
+  <section className="panel desktop-quick-scenes"><div className="desktop-section-head"><h2><Layers size={19}/>快捷场景</h2><a href="#scenes">全部场景 <ArrowUpRight size={15}/></a></div><div className="desktop-scene-strip">{state.scenes.slice(0,4).map(scene=>{const run=state.sceneRuns.find(r=>r.sceneId===scene.id);return <button key={scene.id} disabled={busy||state.sceneRuns.some(run=>run.status==='running')} onClick={()=>void mutate('/scenes/'+scene.id,'POST',{})}><span className="scene-mini-icon"><Layers size={20}/></span><span><strong>{scene.name}</strong><small>{run?.status==='running'?'正在下发动作…':scene.description||`${scene.actions.length} 个动作`}</small></span><ArrowUpRight size={16}/></button>;})}{!state.scenes.length&&<p className="muted">暂无场景，请在场景页创建。</p>}</div></section>
+  <div className="desktop-home-columns"><div className="desktop-home-primary"><section><div className="desktop-section-head"><h2><Star size={19}/>常用设备</h2><button className="desktop-text-link" onClick={onFavorites}>管理收藏</button></div>{common.length?<div className="desktop-device-grid">{common.map(d=><DesktopDeviceCard key={d.id} device={d} busy={busy} mutate={mutate} favorite onFavorite={()=>onFavorite(d.id)} onOpen={()=>onOpen(d.id)}/>)}</div>:<div className="panel desktop-empty"><p>还没有收藏设备</p><button className="quiet-button" onClick={onFavorites}>选择常用设备</button></div>}</section>
+   <section><div className="desktop-section-head"><h2><House size={19}/>房间状态</h2><a href="#rooms">全部房间 <ArrowUpRight size={15}/></a></div><div className="desktop-room-grid">{rooms.map(room=>{const devices=state.devices.filter(d=>d.roomId===room.id),offline=devices.filter(d=>!d.state.online).length,temp=metricReading(devices,'temperature'),humidity=metricReading(devices,'humidity');return <button className="desktop-room-card" key={room.id} onClick={()=>onRoom(room.id)}><span><House size={20}/><strong>{room.name}</strong><ArrowUpRight size={16}/></span><small>{devices.filter(isRunning).length} 项运行中 · {devices.length} 项设备状态</small><p>{temp?`${temp.value}°C`:'温度暂无数据'} · {humidity?`${humidity.value}% 湿度`:'湿度暂无数据'}</p><small className={offline?'warning':''}>{offline?`${offline} 项离线`:'已发现设备在线'}{temp?' · '+temp.source:''}</small></button>;})}</div></section>
+  </div><aside className="desktop-home-secondary"><section className="panel"><div className="desktop-section-head"><h2><Leaf size={19}/>房间环境</h2></div><label className="desktop-room-picker">查看房间<select value={actualRoom??''} onChange={e=>setEnvironmentRoom(e.target.value)}>{!rooms.length&&<option value="">暂无房间</option>}{rooms.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label><div className="desktop-environment">{metrics.map(([key,label,unit])=>{const reading=metricReading(environmentDevices,key);return <div key={key}><small>{label}</small><strong>{reading?Number(reading.value.toFixed(1)):'—'}{reading&&<em>{unit}</em>}</strong><small>{reading?sourceLabel(reading.device):'暂无数据'}</small></div>;})}</div><p className="desktop-occupancy">{occupancyReading(environmentDevices).text}</p><small className="muted">只显示所选房间已接入的环境读数。</small></section>
+   <section className="panel"><div className="desktop-section-head"><h2><Activity size={19}/>最近活动</h2></div>{events.length?<ol className="desktop-activity">{events.map(event=><li key={event.kind+event.id}><details><summary><small>{event.kind} · {new Date(event.startedAt).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</small><strong>{event.name}</strong><span className={event.status==='failed'?'warning':''}>{{running:'执行中',completed:'动作已下发',failed:'执行失败',skipped:'已跳过'}[event.status]}</span></summary><p>{event.reason??'以设备最终反馈为准'}</p>{event.kind==='场景'&&'actions' in event&&<ul>{event.actions.map((a,i)=><li key={i}>{state.devices.find(d=>d.id===a.deviceId)?.name??a.deviceId} · {{pending:'待执行',executing:'下发中',sent:'已下发',failed:'失败',skipped:'跳过'}[a.status]}{a.reason?'：'+a.reason:''}</li>)}</ul>}</details></li>)}</ol>:<p className="muted">还没有场景或自动化执行记录。</p>}</section>
+   <section className="desktop-secondary-links"><a href="#vr"><Box size={19}/><span>空间视图 / VR<small>按需进入漫游与模型管理</small></span><ArrowUpRight size={16}/></a>{canViewBilling&&<a href="#billing"><span>能源与缴费<small>费用记录、账户与缴费渠道</small></span><ArrowUpRight size={16}/></a>}<p>能源采集、门锁与布防尚未接入，不生成健康状态或趋势。</p></section>
+  </aside></div>
+ </div>;
 }

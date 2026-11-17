@@ -31,6 +31,7 @@ try{
  const lamp='light.sim_living_room_light',motion='binary_sensor.sim_living_room_motion',co2='sensor.sim_living_room_environment_co2';
  await wait(async()=>!!(await find(lamp))?.state.online,'light discovery');
  await command(lamp,'power',true);await wait(async()=>(await find(lamp))?.state.values.power===true,'A light feedback');console.log('PASS A: Home OS -> HA -> MQTT -> delayed light -> state feedback');
+ await command(lamp,'colorTemperature',4000);await wait(async()=>(await find(lamp))?.state.values.colorTemperature===4000,'Kelvin color temperature MQTT feedback');console.log('PASS: light color temperature 4000 K feedback');
  streamAbort?.abort();await post('/devices/sim_living_room_environment/state',{co2:1175});await new Promise(r=>setTimeout(r,500));await connectState();await wait(async()=>(await find(co2))?.state.values.co2===1175,'SSE reconnect full snapshot');console.log('PASS: SSE reconnect recovers missed telemetry without state polling');
  await wait(async()=>!!(await find(co2))?.state.online,'grouped environment discovery');
  await post('/devices/sim_living_room_motion/state',{occupancy:true});await wait(async()=>(await find(motion))?.state.values.occupancy===true,'B motion');assert.equal((await find(motion)).state.source,'simulator');console.log('PASS B: Control API -> MQTT -> HA WS -> Home OS occupancy');

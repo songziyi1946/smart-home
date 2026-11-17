@@ -1,49 +1,23 @@
-import { onlineSummary } from '../homeTelemetry';
-import { isRunning } from '../devices';
-import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
-import { Moon, PanelLeftClose, PanelLeftOpen, Sun, Zap } from 'lucide-react';
-import type { Page, State, User } from '../types';
-import TodayAlmanac from '../calendar';
-import { nav } from './navigation';
-
-type LayoutProps = { page: Page; role: User['role']; state?: State; busy: boolean; nightMode: boolean; onNightModeChange: (value: boolean) => void; children: ReactNode };
-
-export default function Layout({ page, role, state, busy, nightMode, onNightModeChange, children }: LayoutProps) {
-  const [expanded, setExpanded] = useState(false);
-  const compact = !expanded;
-  const online = state ? onlineSummary(state.devices) : undefined;
-
-  return <div className="dashboard-viewport"><div className={'shell' + (compact ? ' shell-compact' : '')}>
-    <aside className="sidebar">
-      <a className="brand" href="#home" aria-label="米家中枢首页"><span>M</span><div>米家中枢</div></a>
-      <nav aria-label="主导航">{nav.filter(item => role !== 'guest' || !['automation', 'billing'].includes(item.id)).map(({ id, name, icon: Icon }) =>
-        <a key={id} href={'#' + id} className={page === id ? 'selected' : ''} aria-current={page === id ? 'page' : undefined}>
-          <Icon size={19} /><span>{name}</span>
-        </a>)}</nav>
-      <button className="sidebar-toggle" type="button" title={compact ? '展开菜单' : '收起菜单'} aria-label={compact ? '展开导航' : '收起导航'} aria-expanded={!compact} onClick={() => setExpanded(!expanded)}>
-        {compact ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
-      </button>
-    </aside>
-    <div className="workspace">
-      <header className="top"><div className="home-title"><h1>{nav.find(({ id }) => id === page)?.name}</h1></div>
-        <div className="top-status"><span title={online?.simulated ? `含 ${online.simulated} 台模拟设备；按设备记录统计` : '按设备记录统计'}><i className={online?.online ? "online-dot" : "online-dot offline-dot"} />{online ? `${online.online}/${online.total} 在线 · ${online.offline} 离线${online.simulated ? ' · 含模拟' : ''}` : '暂无数据'}</span><span><Zap size={17} />{state?.devices.filter(d => isRunning(d)).length ?? '–'} 台运行中</span><button className="theme-toggle" type="button" aria-pressed={nightMode} aria-label={nightMode ? '切换到日间模式' : '切换到夜间模式'} onClick={() => onNightModeChange(!nightMode)}>{nightMode ? <Sun size={16} /> : <Moon size={16} />}{nightMode ? '日间' : '夜间'}</button><DashboardClock /></div>
-      </header>
-      <main aria-busy={busy}>
-        {children}
-      </main>
-    </div>
-  </div></div>;
+import {onlineSummary} from '../homeTelemetry';
+import {useEffect,useState} from 'react';import type {ReactNode} from 'react';
+import {Moon,Sun,House,PanelLeftClose,PanelLeftOpen,Wifi,WifiOff,RefreshCw} from 'lucide-react';
+import type {Page,State,User} from '../types';import type {ConnectionStatus} from '../connection';import {connectionMessage} from '../connection';
+import TodayAlmanac from '../calendar';import {nav,visibleNavigation} from './navigation';
+type LayoutProps={page:Page;role:User['role'];householdName:string;mobile:boolean;state?:State;busy:boolean;nightMode:boolean;onNightModeChange:(value:boolean)=>void;connection:ConnectionStatus;lastReceived?:number;onReconnect:()=>void;children:ReactNode};
+export default function Layout({page,role,householdName,mobile,state,busy,nightMode,onNightModeChange,connection,lastReceived,onReconnect,children}:LayoutProps){
+ const [compact,setCompact]=useState(false);const items=visibleNavigation(role),online=state?onlineSummary(state.devices):undefined;
+ const status=connectionMessage(connection,!!state);const live=connection==='live';
+ const links=(group:'daily'|'manage')=>items.filter(item=>item.group===group).map(({id,name,icon:Icon})=><a key={id} href={'#'+id} className={(page===id||(id==='profile'&&page==='account'))?'selected':''} aria-current={(page===id||(id==='profile'&&page==='account'))?'page':undefined}><Icon size={20} aria-hidden/><span>{name}</span></a>);
+ return <div className={'shell'+(compact?' shell-compact':'')}>
+  <a className="skip-link" href="#main-content" onClick={e=>{e.preventDefault();document.getElementById('main-content')?.focus();}}>跳转到内容</a>
+  <aside className="sidebar"><a className="brand" href="#home" aria-label="Home OS 家庭总览"><span><House size={22}/></span><div>Home OS<small>让生活自在发生</small></div></a><nav aria-label="主导航"><p className="nav-group-label">日常使用</p>{links('daily')}<p className="nav-group-label">管理与记录</p>{links('manage')}</nav><div className="sidebar-footer"><span className="home-monogram">{householdName.slice(0,1)}</span><span className="household-label">{householdName}<small>{{admin:'家庭管理员',member:'家庭成员',guest:'限时访客'}[role]}</small></span></div><button className="sidebar-toggle" onClick={()=>setCompact(!compact)} aria-label={compact?'展开导航':'收起导航'} aria-expanded={!compact}>{compact?<PanelLeftOpen size={18}/>:<PanelLeftClose size={18}/>}</button></aside>
+  <div className="workspace"><header className="top"><div className="home-title"><p>{mobile&&page==='home'?'欢迎回家':householdName}</p><h1>{mobile&&page==='home'?householdName:page==='account'?'家庭与成员':nav.find(item=>item.id===page)?.name}</h1></div><div className="header-tools"><span className={'connection-pill connection-'+connection} role="status">{live?<Wifi size={15}/>:<WifiOff size={15}/>}<span>{status.label}</span></span><button className="theme-toggle" aria-label={nightMode?'切换到日间模式':'切换到夜间模式'} aria-pressed={nightMode} onClick={()=>onNightModeChange(!nightMode)}>{nightMode?<Sun size={18}/>:<Moon size={18}/>}</button><DashboardClock/></div></header>
+  <main id="main-content" tabIndex={-1} aria-busy={busy||!state}>
+   {!live&&state&&<div className={'connection-banner connection-'+connection} role={connection==='error'?'alert':'status'}><WifiOff size={20} aria-hidden/><div><strong>{status.label}</strong><p>{status.detail}{lastReceived?' 上次同步 '+new Date(lastReceived).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):''}</p></div><button className="quiet-button" onClick={onReconnect}><RefreshCw size={16}/>重新连接</button></div>}
+   {online&&<div className="household-summary"><span>{live?'当前家庭':'上次记录'}<b>{online.online}/{online.total}</b>设备状态在线</span><span className={online.offline?'summary-warning':''}>{online.total===0?'尚未发现设备':online.offline?`${online.offline} 项设备离线`:'暂无离线设备'}</span>{online.simulated>0&&<small>含 {online.simulated} 项模拟数据</small>}</div>}
+   {children}
+  </main></div>
+  <nav className="mobile-nav" aria-label="移动导航">{(['home','rooms','scenes','profile'] as const).map(id=>{const item=nav.find(i=>i.id===id)!;const Icon=item.icon;const selected=page===id||(id==='profile'&&['account','devices','automation','billing','vr'].includes(page));return <a key={id} href={'#'+id} className={selected?'selected':''} aria-current={selected?'page':undefined}><Icon size={21}/><span>{id==='profile'?'我的':item.shortName}</span></a>;})}</nav>
+ </div>;
 }
-
-function DashboardClock() {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => { const timer = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(timer); }, []);
-  return <div className="dashboard-clock">
-    <button type="button" className="dashboard-clock-trigger" aria-haspopup="dialog" aria-controls="today-almanac">
-      <strong>{now.toLocaleTimeString('zh-CN', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit' })}</strong>
-      <small>{now.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai', month: 'long', day: 'numeric', weekday: 'long' })}</small>
-    </button>
-    <TodayAlmanac now={now} />
-  </div>;
-}
+function DashboardClock(){const [now,setNow]=useState(()=>new Date());useEffect(()=>{const timer=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(timer);},[]);return <div className="dashboard-clock"><button type="button" className="dashboard-clock-trigger" aria-haspopup="dialog" aria-controls="today-almanac"><strong>{now.toLocaleTimeString('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit'})}</strong><small>{now.toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai',month:'long',day:'numeric',weekday:'short'})}</small></button><TodayAlmanac now={now}/></div>;}

@@ -1,0 +1,53 @@
+/* Foundation tokens. Breakpoints: mobile <768, tablet 768–1199, desktop >=1200. */
+:root {
+  color-scheme: light;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-xs: 12px; --font-sm: 13px; --font-body: 15px; --font-md: 16px; --font-section: 18px; --font-title: 30px;
+  --weight-normal: 400; --weight-medium: 500; --weight-semibold: 600;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-12: 48px;
+  --radius-sm: 8px; --radius-control: 10px; --radius-card: 20px; --radius-overlay: 24px; --radius-pill: 999px;
+  --duration-fast: 120ms; --duration-normal: 200ms; --ease-standard: cubic-bezier(.2,0,0,1);
+  --touch-target: 44px; --icon-sm: 18px; --icon-md: 22px; --content-width: 1520px; --sidebar-width: 224px; --rail-width: 80px;
+  --color-page: #f5f4f0; --color-surface: #fff; --color-surface-muted: #eeefeb; --color-sidebar: #f0f0eb;
+  --color-text: #242b27; --color-text-secondary: #606b63; --color-text-inverse: #fff;
+  --color-border: #dce1d9; --color-brand: #476653; --color-brand-soft: #e6eee5;
+  --color-success: #376048; --color-success-soft: #e6eee5;
+  --color-warning: #805b19; --color-warning-soft: #f7efd9;
+  --color-danger: #a33c33; --color-danger-soft: #f9e9e5;
+  --color-offline: #737b75; --color-light: #916421; --color-light-soft: #f4ead3;
+  --shadow-card: 0 2px 8px #25332905; --shadow-overlay: 0 12px 40px #2533291f;
+  --page: var(--color-page); --panel: var(--color-surface); --control: var(--color-surface-muted); --line: var(--color-border);
+  --muted: var(--color-text-secondary); --accent: var(--color-brand); --accent-soft: var(--color-brand-soft); --warm: var(--color-light);
+  --brand-1: 230,238,229; --brand-2: 214,226,212; --brand-3: 179,200,176; --brand-4: 143,173,143; --brand-5: 101,138,110; --brand-6: 71,102,83; --brand-7: 55,80,65;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-page: #191d1a; --color-surface: #222823; --color-surface-muted: #2b332d; --color-sidebar: #1d231f;
+  --color-text: #e9eee8; --color-text-secondary: #abb7ac; --color-text-inverse: #192019;
+  --color-border: #3b453d; --color-brand: #b0d1b6; --color-brand-soft: #33483a;
+  --color-success: #b0d1b6; --color-success-soft: #33483a;
+  --color-warning: #e8c27d; --color-warning-soft: #403622;
+  --color-danger: #f2a89f; --color-danger-soft: #492f2b;
+  --color-offline: #a7b1a8; --color-light: #e9c589; --color-light-soft: #433b29;
+  --shadow-card: 0 2px 8px #0000000a; --shadow-overlay: 0 12px 40px #00000040;
+  --brand-1: 40,57,46; --brand-2: 51,72,58; --brand-3: 74,101,82; --brand-4: 108,145,117; --brand-5: 145,179,154; --brand-6: 176,209,182; --brand-7: 197,226,202;
+}
+/* Arco consumes the same semantic palette; do not maintain a second theme. */
+body, body[arco-theme='dark'] {
+  --color-bg-1: var(--color-page); --color-bg-2: var(--color-surface); --color-bg-3: var(--color-surface); --color-bg-4: var(--color-surface); --color-bg-5: var(--color-surface);
+  --color-fill-1: var(--color-page); --color-fill-2: var(--color-surface-muted); --color-fill-3: var(--color-brand-soft); --color-fill-4: var(--color-border);
+  --color-text-1: var(--color-text); --color-text-2: var(--color-text-secondary); --color-text-3: var(--color-text-secondary); --color-text-4: var(--color-offline);
+  --color-border-1: var(--color-border); --color-border-2: var(--color-border); --color-border-3: var(--color-border);
+}
+
+body, body[arco-theme="dark"] {
+ --primary-1: var(--brand-1);
+ --primary-2: var(--brand-2);
+ --primary-3: var(--brand-3);
+ --primary-4: var(--brand-4);
+ --primary-5: var(--brand-5);
+ --primary-6: var(--brand-6);
+ --primary-7: var(--brand-7);
+}
+/* Shared foreground, including drawers and confirmation modals. */
+.arco-btn-primary:not(.arco-btn-disabled):not(.arco-btn-status-danger):not(.arco-btn-status-warning):not(.arco-btn-status-success){color:var(--color-text-inverse);}

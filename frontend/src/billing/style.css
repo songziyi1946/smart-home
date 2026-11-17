@@ -1,0 +1,445 @@
+.ledger-page,
+.ledger-stack {
+  display: grid;
+  gap: 24px;
+}
+.ledger-page header,
+.ledger-editor header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.ledger-page h2,
+.ledger-editor h2 {
+  font-size: 18px;
+  margin: 0;
+}
+.ledger-page p,
+.ledger-hint {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.ledger-page small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.ledger-page button:not(.arco-btn),
+.ledger-page a {
+  color: var(--accent);
+}
+.ledger-page button:not(.arco-btn) {
+  cursor: pointer;
+}
+.ledger-page input,
+.ledger-page select,
+.ledger-editor input,
+.ledger-editor select {
+  font: inherit;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  color: var(--color-text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.ledger-page label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+.ledger-eyebrow {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 8px;
+}
+.ledger-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 26px 0;
+}
+.ledger-summary > div > span {
+  color: var(--muted);
+  font-size: 14px;
+}
+.ledger-summary > div > strong {
+  display: block;
+  font-size: 40px;
+  font-weight: 500;
+  letter-spacing: -1px;
+  margin: 8px 0;
+}
+.ledger-summary-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ledger-category-summary {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  gap: 12px;
+}
+.ledger-category-summary button {
+  display: grid;
+  gap: 12px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 8px;
+  color: var(--color-text) !important;
+  border-radius: 8px;
+}
+.ledger-category-summary button:hover {
+  background: var(--control);
+}
+.ledger-category-summary span {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+.ledger-category-summary strong {
+  font-size: 16px;
+  font-weight: 500;
+}
+.ledger-desktop-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.ledger-page ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ledger-trend li {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr) 100px;
+  gap: 16px;
+  align-items: center;
+  margin: 24px 0;
+  font-size: 13px;
+}
+.ledger-trend li > div {
+  height: 8px;
+  border-radius: 8px;
+  background: var(--control);
+  overflow: hidden;
+}
+.ledger-trend i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 8px;
+}
+.ledger-trend strong {
+  text-align: right;
+  font-weight: 500;
+}
+.ledger-energy > div {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+.ledger-energy article {
+  display: grid;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.ledger-energy strong {
+  color: var(--color-text);
+  font-weight: 500;
+}
+.ledger-channels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.ledger-channels a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 14px;
+  min-width: 0;
+}
+.ledger-channels a > span {
+  flex: 1;
+  min-width: 0;
+}
+.ledger-channels strong {
+  font-size: 14px;
+  color: var(--color-text);
+  font-weight: 500;
+}
+.ledger-channels a > svg {
+  flex-shrink: 0;
+}
+.ledger-accounts li,
+.ledger-recent li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+.ledger-accounts li > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ledger-accounts li strong,
+.ledger-recent strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.ledger-accounts li a {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  gap: 4px;
+  font-size: 13px;
+  min-height: 44px;
+}
+.ledger-accounts h2 small {
+  display: inline;
+  margin-left: 6px;
+}
+.ledger-empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 24px 12px;
+}
+.ledger-filters {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.ledger-filters button,
+.ledger-recent button {
+  border: 0;
+  background: transparent;
+  padding: 8px;
+}
+.ledger-record-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+}
+.ledger-record-total strong {
+  font-size: 18px;
+  color: var(--color-text);
+  font-weight: 500;
+}
+.ledger-record-list li {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.ledger-record-list strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.ledger-record-list small {
+  overflow-wrap: anywhere;
+}
+.ledger-record-date {
+  font-size: 13px;
+  color: var(--muted);
+}
+.ledger-editor {
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+}
+.ledger-editor fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.ledger-editor label {
+  display: grid;
+  gap: 8px;
+  margin: 20px 0;
+  font-size: 14px;
+}
+.ledger-editor input,
+.ledger-editor select {
+  width: 100%;
+  min-height: 44px;
+}
+.ledger-error {
+  color: var(--color-danger);
+  font-size: 14px;
+}
+.ledger-tabs {
+  display: flex;
+  gap: 8px;
+}
+.ledger-tabs button {
+  flex: 1;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: var(--radius-control);
+  min-height: 44px;
+  padding: 8px;
+  font-size: 13px;
+}
+.ledger-tabs button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.ledger-energy-disclosure summary {
+  padding: 16px;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+.ledger-energy-disclosure .panel {
+  margin-top: 12px;
+}
+@media (max-width: 1199px) and (min-width: 768px) {
+  .ledger-desktop-grid {
+    grid-template-columns: 1fr;
+  }
+  .ledger-category-summary {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 767px) {
+  .ledger-page,
+  .ledger-stack {
+    gap: 16px;
+  }
+  .ledger-page .panel {
+    padding: 18px;
+  }
+  .ledger-page header {
+    gap: 12px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .ledger-overview header {
+    display: block;
+  }
+  .ledger-overview h2 {
+    display: none;
+  }
+  .ledger-overview .ledger-month {
+    justify-content: space-between;
+  }
+  .ledger-eyebrow {
+    margin-bottom: 16px;
+  }
+  .ledger-summary {
+    display: block;
+    margin: 20px 0;
+  }
+  .ledger-summary > div > strong {
+    font-size: 34px;
+  }
+  .ledger-summary-actions {
+    margin-top: 18px;
+  }
+  .ledger-summary-actions .arco-btn {
+    flex: 1;
+    min-height: 44px;
+  }
+  .ledger-category-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 4px;
+    padding-top: 16px;
+  }
+  .ledger-category-summary button {
+    padding: 4px;
+    min-height: 64px;
+    gap: 8px;
+  }
+  .ledger-category-summary strong {
+    font-size: 14px;
+  }
+  .ledger-category-summary span {
+    font-size: 12px;
+    gap: 4px;
+  }
+  .ledger-channels {
+    grid-template-columns: 1fr;
+  }
+  .ledger-channels a {
+    min-height: 64px;
+  }
+  .ledger-channels small {
+    font-size: 13px;
+  }
+  .ledger-filters {
+    gap: 12px;
+  }
+  .ledger-filters label {
+    display: grid;
+    gap: 6px;
+    flex: 1;
+    min-width: 110px;
+  }
+  .ledger-page input,
+  .ledger-page select {
+    font-size: 16px;
+    min-height: 44px;
+    max-width: 100%;
+  }
+  .ledger-record-list li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 12px;
+  }
+  .ledger-record-date {
+    grid-column: 1/-1;
+  }
+  .ledger-record-list > li > strong {
+    align-self: start;
+  }
+  .ledger-recent header {
+    align-items: center;
+  }
+  .ledger-page .arco-btn {
+    min-height: 44px;
+  }
+  .ledger-editor {
+    padding: 18px;
+  }
+  .ledger-editor input,
+  .ledger-editor select {
+    font-size: 16px;
+  }
+  .ledger-editor .arco-btn {
+    min-height: 44px;
+  }
+  .ledger-editor fieldset > .arco-btn {
+    width: 100%;
+  }
+}
+

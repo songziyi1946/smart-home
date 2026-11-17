@@ -1,0 +1,518 @@
+.flow-page {
+  display: grid;
+  gap: 20px;
+}
+.flow-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.flow-heading p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+.flow-heading h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.flow-tabs {
+  display: flex;
+  gap: 8px;
+}
+.flow-tabs button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--panel);
+  color: var(--muted);
+}
+.flow-tabs button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.flow-scene-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.flow-scene-cards,
+.flow-rule-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.flow-scene-card.selected {
+  border-color: var(--accent);
+}
+.flow-scene-name {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  padding: 0;
+}
+.flow-scene-name h3 {
+  font-size: 20px;
+  font-weight: 500;
+}
+.flow-scene-name p {
+  color: var(--muted);
+  font-size: 13px;
+  min-height: 40px;
+}
+.flow-card-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 16px;
+}
+.flow-card-buttons > small {
+  margin-right: auto;
+}
+.flow-last-run {
+  display: block;
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.flow-last-run.failed,
+.flow-status.failed,
+.flow-failure {
+  color: var(--color-danger);
+}
+.flow-status {
+  font-size: 13px;
+  color: var(--muted);
+}
+.flow-status.completed {
+  color: var(--accent);
+}
+.flow-status.running {
+  color: var(--color-warning);
+}
+.flow-timeline {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+.flow-timeline > li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.flow-timeline > li > div {
+  min-width: 0;
+  flex: 1;
+}
+.flow-timeline strong {
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.flow-timeline p,
+.flow-timeline span:not(.flow-step-number) {
+  font-size: 13px;
+}
+.flow-timeline .failed strong {
+  color: var(--color-danger);
+}
+.flow-step-number {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--control);
+  color: var(--accent);
+  font-size: 12px;
+}
+.flow-run-detail small,
+.flow-hint {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.flow-empty {
+  padding: 36px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+.flow-editor {
+  max-width: 1200px;
+  width: 100%;
+}
+.flow-editor fieldset {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  min-width: 0;
+}
+.flow-field {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0;
+  font-size: 13px;
+  min-width: 0;
+}
+.flow-field input,
+.flow-field select,
+.flow-history select {
+  font: inherit;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--panel);
+  color: var(--color-text);
+}
+.flow-form-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.flow-notice {
+  padding: 12px 14px;
+  background: var(--control);
+  border-radius: var(--radius-control);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 16px 0;
+}
+.flow-action {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 18px;
+  margin: 16px 0;
+}
+.flow-action header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.flow-action header strong {
+  font-size: 14px;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.flow-action header button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: var(--control);
+  color: var(--muted);
+  border-radius: 8px;
+  margin-left: 4px;
+}
+.flow-action-fields {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 16px;
+}
+.flow-save {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.flow-checkbox {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+.flow-checkbox input {
+  accent-color: var(--accent);
+  width: 18px;
+  height: 18px;
+}
+.flow-rule-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.85fr);
+  gap: 24px;
+  align-items: start;
+}
+.flow-editor-step {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  margin-top: 20px;
+}
+.flow-editor-step h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+}
+.flow-editor-step h3 > b,
+.rule-sentence b {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.rule-sentence {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+.rule-sentence li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+}
+.rule-sentence span {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.rule-sentence strong,
+.rule-sentence small {
+  display: block;
+  margin-top: 4px;
+  font-weight: 500;
+}
+.rule-sentence small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.flow-advanced {
+  margin-top: 20px;
+}
+.flow-advanced summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--accent);
+  padding: 10px 0;
+}
+.flow-preview-result {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.flow-preview-result h3 {
+  font-size: 17px;
+}
+.flow-preview-result small {
+  display: block;
+  font-size: 12px;
+}
+.flow-preview-result ul {
+  padding-left: 20px;
+  line-height: 1.8;
+}
+.flow-history-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1.4fr);
+  gap: 24px;
+}
+.flow-history .flow-heading label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+.flow-history select {
+  min-width: 120px;
+}
+.flow-log-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  max-height: 620px;
+  overflow: auto;
+}
+.flow-log-list button {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--panel);
+  color: var(--color-text);
+  padding: 14px;
+}
+.flow-log-list button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.flow-log-list strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.flow-log-list small {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.flow-log-inspector {
+  min-width: 0;
+}
+.flow-log-inspector h3 {
+  font-size: 18px;
+}
+.flow-mobile-actions {
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+@media (max-width: 1199px) {
+  .flow-scene-cards {
+    grid-template-columns: 1fr;
+  }
+  .flow-action-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+  .flow-action-fields > .flow-field:first-child {
+    grid-column: 1/-1;
+  }
+}
+@media (max-width: 767px) {
+  .flow-scene-layout,
+  .flow-rule-editor,
+  .flow-history-layout,
+  .flow-rule-cards {
+    grid-template-columns: 1fr;
+  }
+  .flow-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .flow-heading h2 {
+    font-size: 18px;
+  }
+  .flow-scene-cards {
+    grid-template-columns: 1fr;
+  }
+  .flow-scene-card {
+    padding: 18px;
+  }
+  .flow-scene-name h3 {
+    font-size: 18px;
+  }
+  .flow-scene-name p {
+    min-height: 0;
+  }
+  .flow-card-buttons .arco-btn {
+    min-height: 44px;
+  }
+  .flow-form-pair,
+  .flow-action-fields {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .flow-field input,
+  .flow-field select,
+  .flow-history select {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  .flow-action {
+    padding: 12px;
+  }
+  .flow-action header {
+    flex-wrap: wrap;
+  }
+  .flow-action header > div {
+    margin-left: auto;
+  }
+  .flow-action header button {
+    width: 44px;
+    height: 44px;
+  }
+  .flow-save {
+    flex-wrap: wrap;
+  }
+  .flow-save > .arco-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+  .flow-log-list {
+    max-height: 250px;
+  }
+  .flow-rule-card .flow-heading {
+    flex-wrap: nowrap;
+  }
+  .flow-rule-card .flow-heading h3 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .flow-tabs {
+    flex-wrap: wrap;
+  }
+  .flow-tabs button {
+    min-height: 44px;
+  }
+}
+.flow-history .flow-heading label {
+  white-space: nowrap;
+}
+.flow-run-detail a {
+  color: var(--accent);
+}
+@media (max-width: 767px) {
+  .flow-mobile > .flow-heading {
+    align-items: center;
+    flex-wrap: nowrap;
+    margin-bottom: 0;
+  }
+  .flow-mobile .flow-scene-name p {
+    margin: 6px 0;
+  }
+  .flow-mobile .flow-tabs {
+    margin-bottom: 0;
+  }
+  .flow-mobile .flow-rule-card .rule-sentence {
+    margin: 10px 0;
+  }
+  .flow-mobile .flow-rule-card .rule-sentence li {
+    padding: 8px 0;
+  }
+  .flow-mobile .flow-rule-card .flow-last-run {
+    min-height: 44px;
+  }
+  .flow-mobile .flow-rule-card .flow-card-buttons {
+    margin-top: 8px;
+  }
+}
+@media (max-width: 767px) {
+  .flow-mobile .flow-log-inspector {
+    grid-row: 1;
+  }
+  .flow-mobile .flow-log-list {
+    grid-row: 2;
+  }
+}
