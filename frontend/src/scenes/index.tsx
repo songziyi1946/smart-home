@@ -113,7 +113,6 @@ export default function Scenes({
       <section className="panel flow-editor">
         <div className="flow-heading">
           <div>
-            <small>生活场景 / 编排</small>
             <h2>{draft.id ? "编辑场景" : "创建场景"}</h2>
           </div>
           <Button disabled={pending} onClick={() => setDraft(undefined)}>
@@ -161,10 +160,9 @@ export default function Scenes({
                 />
               </label>
             </div>
-            <div className="flow-notice">
-              按顺序下发，共 {draft.actions.length}{" "}
-              个动作。任一步失败后停止，已执行动作不会回滚。
-            </div>
+            <h3 title="按顺序下发。遇到失败即停止，已执行的动作不会自动回滚。">
+              动作 · {draft.actions.length}
+            </h3>
             {draft.actions.map((a, i) => {
               const d = state.devices.find((d) => d.id === a.deviceId);
               return (
@@ -307,10 +305,20 @@ export default function Scenes({
     );
   return (
     <div className={"flow-page " + (mobile ? "flow-mobile" : "")}>
-      <div className="flow-heading">
-        <div>
-          <h2>{mobile ? "日常场景" : "让日常，一键开始"}</h2>
-          {!mobile && <p>选择场景执行，结果通过设备反馈确认。</p>}
+      <div className="flow-toolbar">
+        <div className="flow-tabs">
+          <button
+            aria-pressed={tab === "scenes"}
+            onClick={() => setTab("scenes")}
+          >
+            场景列表
+          </button>
+          <button aria-pressed={tab === "logs"} onClick={() => setTab("logs")}>
+            执行记录
+            {state.sceneRuns.some((r) => r.status === "failed")
+              ? " · 含失败记录"
+              : ""}
+          </button>
         </div>
         {canManage && (
           <Button
@@ -321,20 +329,6 @@ export default function Scenes({
             创建场景
           </Button>
         )}
-      </div>
-      <div className="flow-tabs">
-        <button
-          aria-pressed={tab === "scenes"}
-          onClick={() => setTab("scenes")}
-        >
-          我的场景
-        </button>
-        <button aria-pressed={tab === "logs"} onClick={() => setTab("logs")}>
-          执行记录
-          {state.sceneRuns.some((r) => r.status === "failed")
-            ? " · 含失败记录"
-            : ""}
-        </button>
       </div>
       {tab === "logs" ? (
         <History
@@ -477,7 +471,6 @@ export default function Scenes({
                   </Button>
                 )}
               </div>
-              <p className="flow-hint">顺序执行 · 失败后停止</p>
               <ol className="flow-timeline">
                 {current.actions.map((a, i) => (
                   <li key={i}>

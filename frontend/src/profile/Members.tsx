@@ -124,9 +124,6 @@ export default function Members({
           </Button>
         )}
       </header>
-      <p className="settings-muted">
-        选择身份后生成一次性邀请码，对方在登录页选择“加入家庭”。
-      </p>
       <fieldset disabled={locked}>
         <label>
           邀请身份
@@ -197,7 +194,7 @@ export default function Members({
               </p>
             </>
           )}
-          <small>关闭此视图不会撤销邀请；邀请码将在使用后或到期时失效。</small>
+          {!expired && <small>请让对方在登录页选择“加入家庭”。</small>}
           <Button onClick={() => setInvite(undefined)}>隐藏邀请码</Button>
         </div>
       )}
@@ -211,7 +208,7 @@ export default function Members({
             <h2>家庭成员与访客</h2>
             <p className="settings-muted">
               {loaded
-                ? `${members.length} 位上次读取时有效的成员；有人加入后请刷新。`
+                ? `${members.length} 位成员 · 上次刷新`
                 : "正在读取成员名单…"}
             </p>
           </div>
@@ -296,9 +293,6 @@ export default function Members({
                 ))}
               </ul>
             )}
-            <p className="settings-muted">
-              目前不支持直接变更角色或移交管理员。
-            </p>
           </section>
         )}
         {(!mobile || inviting) && invitation}

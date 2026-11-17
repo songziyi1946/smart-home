@@ -32,7 +32,7 @@ export default function Automation({
   return (
     <div className="automation-page">
       <Tabs defaultActiveTab="rules">
-        <Tabs.TabPane key="rules" title="自动化">
+        <Tabs.TabPane key="rules" title="规则">
           <Rules
             state={state}
             busy={busy}
@@ -44,7 +44,7 @@ export default function Automation({
         <Tabs.TabPane key="greetings" title="欢迎语示例">
           <div>
             <section className="panel">
-              <h2>门锁指纹 · 专属欢迎语</h2>
+              <h2>模拟欢迎语配置</h2>
               {(Object.keys(members) as Member[]).map((key) => (
                 <label className="field-line" key={key}>
                   <span>{members[key]}</span>
@@ -68,14 +68,12 @@ export default function Automation({
                 >
                   保存配置
                 </Button>
-                <small>欢迎语为原有播报模拟配置，不会创建可执行规则。</small>
               </div>
             </section>
           </div>
         </Tabs.TabPane>
-        <Tabs.TabPane key="debug" title="调试实验室">
+        <Tabs.TabPane key="debug" title="模拟播报">
           <section className="panel">
-            <h2>模拟播报</h2>
             <div className="button-row">
               <Select
                 aria-label="模拟成员"

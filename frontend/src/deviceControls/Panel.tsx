@@ -225,7 +225,6 @@ export default function DevicePanel({
                     </option>
                   ))}
                 </select>
-                <small>设备不支持的设置会提示原因，当前状态以反馈为准。</small>
               </label>
             )}
             {has("positionPercent") && (

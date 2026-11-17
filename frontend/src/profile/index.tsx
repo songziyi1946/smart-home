@@ -26,6 +26,7 @@ import "./style.css";
 export default function Profile({
   state,
   session,
+  householdName,
   busy,
   pending = false,
   onLogout,
@@ -35,6 +36,7 @@ export default function Profile({
 }: {
   state: State;
   session: Session;
+  householdName: string;
   busy: boolean;
   pending?: boolean;
   onLogout: () => void;
@@ -66,21 +68,13 @@ export default function Profile({
           </article>
         ))}
       </div>
-      <p className="settings-muted">
-        权限由服务端校验。访客的场景执行记录仅包含本人操作。
-      </p>
     </details>
   );
   const integrations = (
     <div className="settings-integrations">
       <section className="panel">
         <header>
-          <div>
-            <h2>设备接入</h2>
-            <p className="settings-muted">
-              以下是现有能力与设备快照，不是服务商连接诊断。
-            </p>
-          </div>
+          <h2>设备来源</h2>
           <a href="#devices">
             查看设备 <ChevronRight size={16} />
           </a>
@@ -88,51 +82,41 @@ export default function Profile({
         <div className="settings-provider-list">
           <article>
             <div>
-              <h3>MockProvider</h3>
-              <span className="settings-badge">已实现 · 模拟设备</span>
+              <h3>模拟设备</h3>
             </div>
-            <p>{providers.mock} 项模拟设备记录，用于开发和演示。</p>
+            <p>{providers.mock} 项设备记录</p>
           </article>
           <article>
             <div>
               <h3>Home Assistant</h3>
-              <span className="settings-badge">已实现 · 服务端配置</span>
             </div>
             <p>
               {providers.ha
-                ? `发现 ${providers.ha} 项设备记录，其中 ${providers.haOnline} 项设备在线。`
-                : "当前没有 HA 设备记录，无法据此确认是否已配置连接。"}
+                ? `${providers.haOnline} / ${providers.ha} 项设备在线`
+                : "暂无设备记录"}
             </p>
-            <small>
-              支持设备发现、能力控制和状态订阅；具体可用能力取决于接入实体。
-            </small>
           </article>
           <article>
             <div>
               <h3>MQTT 虚拟设备模拟器</h3>
-              <span className="settings-badge">已实现 · 本地运行</span>
             </div>
             <p>
               {providers.simulator
-                ? `当前 ${providers.simulator} 项设备状态标记为模拟器来源。`
-                : "当前没有模拟器来源的设备记录。"}
+                ? `${providers.simulator} 项模拟设备记录`
+                : "暂无设备记录"}
             </p>
-            <small>
-              通过 Home Assistant Discovery 接入，可用于无硬件测试。
-            </small>
           </article>
           <article>
             <div>
               <h3>Matter / 厂商直连</h3>
               <span className="settings-badge muted">尚未接入</span>
             </div>
-            <p>没有网页配网、厂商账号绑定或自动发现配网入口。</p>
           </article>
         </div>
       </section>
       {admin && (
-        <section className="panel settings-setup">
-          <h2>现有接入步骤</h2>
+        <details className="panel settings-setup">
+          <summary>Home Assistant 接入步骤</summary>
           <ol>
             <li>
               <strong>准备 Home Assistant</strong>
@@ -157,7 +141,7 @@ export default function Profile({
             完整命令见项目 README 的“开发与设备接入”，以及
             tools/device-simulator/README.md。连接错误需由部署者查看服务端配置和日志。
           </p>
-        </section>
+        </details>
       )}
     </div>
   );
@@ -169,14 +153,13 @@ export default function Profile({
             <House size={26} />
           </span>
           <div>
-            <small>{preview ? "本地开发预览" : "当前家庭"}</small>
-            <h2>{session.household.name}</h2>
+            <h2>{householdName}</h2>
             <p>
               {user.displayName} · {roleNames[user.role]}
             </p>
           </div>
-          <div className="settings-hero-action">
-            {admin && !preview ? (
+          {admin && !preview && (
+            <div className="settings-hero-action">
               <Button
                 icon={<Users size={16} />}
                 disabled={busy}
@@ -184,12 +167,8 @@ export default function Profile({
               >
                 成员与邀请
               </Button>
-            ) : (
-              <span className="settings-badge">
-                {preview ? "未启用真实登录" : "按当前身份访问"}
-              </span>
-            )}
-          </div>
+            </div>
+          )}
         </section>
       )}
       <nav className="settings-tabs" aria-label="家庭设置视图">
@@ -214,12 +193,11 @@ export default function Profile({
             <section className="panel">
               <header>
                 <h2>我的家庭</h2>
-                <span className="settings-badge">信息查看</span>
               </header>
               <dl className="settings-facts">
                 <div>
                   <dt>家庭名称</dt>
-                  <dd>{session.household.name}</dd>
+                  <dd>{householdName}</dd>
                 </div>
                 <div>
                   <dt>设备记录</dt>
@@ -238,9 +216,6 @@ export default function Profile({
                   </dd>
                 </div>
               </dl>
-              <p className="settings-muted">
-                家庭改名、房间维护、多家庭切换尚未提供配置入口。
-              </p>
             </section>
             <section className="panel">
               <header>
@@ -258,7 +233,6 @@ export default function Profile({
                   </small>
                 </div>
               </div>
-              <p className="settings-muted">{roleDetails[user.role]}</p>
               {!session.localPreview ? (
                 <>
                   <details className="settings-session">
@@ -304,12 +278,9 @@ export default function Profile({
                 </>
               ) : (
                 <p className="settings-muted">
-                  本地预览不创建真实账户或成员；请以正常登录模式运行后使用成员管理。
+                  账户功能需登录后使用。
                 </p>
               )}
-              <p className="settings-muted">
-                头像、显示名和密码修改尚未提供设置入口。
-              </p>
             </section>
           </div>
           {mobile && (
@@ -350,7 +321,7 @@ export default function Profile({
             <section className="panel settings-unavailable">
               <h2>成员管理需要真实登录</h2>
               <p>
-                本地预览不生成邀请，也不展示虚构成员。请由部署者以正常登录模式启动服务。
+                请以正常登录模式启动服务。
               </p>
             </section>
           ) : admin ? (

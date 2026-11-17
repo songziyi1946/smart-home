@@ -1,7 +1,7 @@
 import { hasCapability, isClimate, roomPowerCommand } from '../devices';
 import { useEffect, useRef, useState } from 'react';
 import { Button, Drawer, Modal, Switch } from '@arco-design/web-react';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Box, Expand, Footprints, House, RotateCcw, Settings2, Map, Upload } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Box, Expand, Footprints, RotateCcw, Settings2, Map, Upload } from 'lucide-react';
 import { createViewer, type Viewer, type ViewerStatus } from './viewer';
 import { viewpoints } from './plan';
 import { belongsToRoom } from '../constants';
@@ -106,7 +106,6 @@ export default function VR({ state, busy, mutate, selectedRoom, onRoomChange, ni
   </>;
   return <section ref={page} className="vr-page" aria-label="三维实景漫游">
     <div className="vr-toolbar">
-      <div><h2><House />家的每一处，都在眼前</h2><p>选择房间查看设备，进入房间开始漫游</p></div>
       <div className="button-row">
         <Button icon={<Settings2 size={16} />} onClick={() => setSettingsOpen(true)}>场景设置</Button>
         <Button disabled={!ready} type={status.mode === 'walk' ? 'primary' : 'secondary'} icon={<Footprints size={16} />} onClick={() => viewer.current?.setMode('walk')}>进入漫游</Button>
@@ -131,8 +130,7 @@ export default function VR({ state, busy, mutate, selectedRoom, onRoomChange, ni
     </div>
     {compact && <button className="vr-panel-trigger" onClick={() => setPanelOpen(true)} aria-expanded={panelOpen}><Map size={20} /><span><strong>{selectedRoom}</strong> · {roomDevices.length} 台设备</span><span>空间导航与控制 ↑</span></button>}
     <Drawer title="空间导航与控制" visible={compact && panelOpen} onCancel={() => setPanelOpen(false)} footer={null} placement={mobile ? 'bottom' : 'right'} width={380} height="75dvh" className="vr-panel-drawer" getPopupContainer={() => document.fullscreenElement ?? document.body} unmountOnExit>{roomPanel}</Drawer>
-    <Drawer title="场景设置 / 模型管理" visible={settingsOpen} onCancel={() => setSettingsOpen(false)} footer={null} width="min(400px, 100vw)" getPopupContainer={() => document.fullscreenElement ?? document.body}>
-        <div className="vr-section-title">场景设置</div>
+    <Drawer title="场景设置" visible={settingsOpen} onCancel={() => setSettingsOpen(false)} footer={null} width="min(400px, 100vw)" getPopupContainer={() => document.fullscreenElement ?? document.body}>
         <label className="vr-setting">参考模型照明<Switch checked={lights} disabled={!ready || !!modelName} onChange={value => { setLights(value); viewer.current?.setLights(value); }} /></label>
         <label className="vr-setting">室内显示顶面<Switch checked={roof} disabled={!ready || !!modelName || status.mode !== 'walk'} onChange={value => { setRoof(value); viewer.current?.setRoof(value); }} /></label>
         <div className="vr-section-title">设计师模型</div>

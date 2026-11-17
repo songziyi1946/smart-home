@@ -1,0 +1,84 @@
+:root {
+  --control-height: 40px;
+  --control-compact-height: 32px;
+  --control-padding: var(--space-3);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='m1 4 5 5 5-5' fill='none' stroke='%23606b63' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+:root[data-theme="dark"] {
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='m1 4 5 5 5-5' fill='none' stroke='%23abb7ac' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+select,
+:is(.ledger-page, .ledger-editor, .flow-field) input:not([type="checkbox"]),
+.directory-search > label {
+  min-width: 0;
+  height: var(--control-height);
+  padding: 0 var(--control-padding);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background-color: var(--panel);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 14px;
+}
+select {
+  appearance: none;
+  padding-inline-end: calc(2 * var(--control-padding) + 12px);
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right var(--control-padding) center;
+  background-size: 12px;
+}
+select:disabled {
+  color: var(--color-offline);
+  background-color: var(--control);
+}
+.arco-select-size-default.arco-select-single .arco-select-view {
+  height: var(--control-height);
+  padding-inline: var(--control-padding);
+  border-radius: var(--radius-control);
+}
+.arco-input,
+.arco-input-group > .arco-input-inner-wrapper-default:only-child {
+  min-height: var(--control-height);
+  padding-inline: var(--control-padding);
+  border-radius: var(--radius-control);
+}
+.arco-input-inner-wrapper-default .arco-input {
+  min-height: calc(var(--control-height) - 2px);
+  padding-inline: 0;
+}
+.arco-btn-size-default {
+  height: var(--control-height);
+  padding-inline: var(--control-padding);
+  border-radius: var(--radius-control);
+}
+.arco-btn-size-small {
+  height: var(--control-compact-height);
+  padding-inline: var(--control-padding);
+  border-radius: var(--radius-control);
+}
+.arco-btn-size-default.arco-btn-icon-only {
+  width: var(--control-height);
+  height: var(--control-height);
+}
+@media (max-width: 767px), (pointer: coarse) {
+  :root {
+    --control-height: var(--touch-target);
+    --control-compact-height: var(--touch-target);
+  }
+}
+@media (max-width: 767px) {
+  select,
+  :is(.ledger-page, .ledger-editor, .flow-field) input:not([type="checkbox"]),
+  .arco-input,
+  .arco-select-size-default.arco-select-single input {
+    font-size: 16px;
+  }
+}
+@media (forced-colors: active) {
+  select {
+    appearance: auto;
+    padding-inline-end: var(--control-padding);
+    background-image: none;
+  }
+}

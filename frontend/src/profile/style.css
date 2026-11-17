@@ -88,8 +88,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 44px;
-  padding: 10px 18px;
+  min-height: var(--control-height);
+  padding: 0 var(--control-padding);
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   background: var(--panel);
@@ -246,15 +246,7 @@
   margin: 18px 0;
 }
 .settings-invite select {
-  font: inherit;
-  color: var(--color-text);
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  padding: 10px;
-  min-height: 44px;
   width: 100%;
-  min-width: 0;
 }
 .settings-role-note {
   font-size: 13px;
@@ -345,6 +337,7 @@
   color: var(--muted);
   line-height: 1.7;
 }
+.settings-setup summary {font-weight: 600;cursor: pointer;}
 .settings-setup ol {
   padding-left: 20px;
   margin: 20px 0;
@@ -448,9 +441,6 @@
   }
   .settings-member-list li > .arco-btn {
     margin-left: auto;
-  }
-  .settings-invite select {
-    font-size: 16px;
   }
   .settings-invite fieldset > .arco-btn {
     width: 100%;

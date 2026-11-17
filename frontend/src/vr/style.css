@@ -1,6 +1,5 @@
 .vr-page { display: flex; flex-direction: column; gap: 16px; position: relative; }
 .vr-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.vr-toolbar p { color: var(--muted); font-size: 13px; margin: 5px 0 0; }
 .vr-toolbar .button-row { margin: 0; }
 .vr-toolbar .arco-btn { display: inline-flex; align-items: center; gap: 6px; }
 .vr-workspace { display: grid; grid-template-columns: minmax(0, 1fr) clamp(360px, 27vw, 400px); gap: 20px; min-width: 0; }
@@ -35,7 +34,7 @@
 .vr-map-room[aria-pressed="true"] { color: #fff; background: var(--accent); border-color: var(--accent); }
 .vr-map-room:focus-visible { z-index: 1; }
 .vr-room-buttons { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
-.vr-room-buttons button { border: 0; border-radius: 8px; padding: 8px 12px; background: var(--control); color: var(--muted); font-size: 13px; }
+.vr-room-buttons button { min-height: var(--control-height); border: 0; border-radius: var(--radius-control); padding: 0 var(--control-padding); background: var(--control); color: var(--muted); font-size: 13px; }
 .vr-room-buttons button[aria-pressed="true"] { color: #3e6049; background: #dce6d7; }
 .vr-room-control { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
 .vr-room-control-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -45,7 +44,7 @@
 .vr-room-control-head .button-row { margin: 0; }
 .vr-enter-room { margin-top: 14px; }
 .vr-control-tabs { display: flex; gap: 5px; margin: 16px 0 12px; }
-.vr-control-tabs button { flex: 1; border: 0; padding: 7px 4px; border-radius: 7px; background: var(--control); color: var(--muted); font-size: 13px; }
+.vr-control-tabs button { flex: 1; min-height: var(--control-height); border: 0; padding: 0 var(--control-padding); border-radius: var(--radius-control); background: var(--control); color: var(--muted); font-size: 13px; }
 .vr-control-tabs button[aria-pressed="true"] { color: #3e6049; background: #dce6d7; }
 .vr-room-devices { display: grid; gap: 8px; }
 .vr-room-devices .device { padding: 12px; }
@@ -74,7 +73,7 @@
   .vr-toolbar { gap: 12px; }
   .vr-toolbar h2 { font-size: 18px; }
   .vr-toolbar .button-row { width: 100%; gap: 6px; }
-  .vr-toolbar .arco-btn { padding-inline: 9px; font-size: 13px; }
+  .vr-toolbar .arco-btn { font-size: 13px; }
   .vr-stage { height: clamp(360px, 55dvh, 580px); border-radius: 14px; }
   .vr-view-label { top: 12px; left: 12px; padding: 8px; font-size: 12px; }
   .vr-daynight { top: 56px; right: 12px; }

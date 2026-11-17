@@ -97,9 +97,7 @@ export function SceneResult({
           <a href="#devices">检查设备状态 →</a>
         </p>
       )}
-      <small>
-        已下发表示命令被接受，最终状态以设备反馈为准。已执行的动作不会自动回滚。
-      </small>
+      {run.status === "failed" && <small>已执行的动作不会自动回滚。</small>}
     </div>
   );
 }
@@ -185,7 +183,6 @@ export function History<T extends Log>({
           <div className="flow-log-inspector">{current && render(current)}</div>
         </div>
       )}
-      <p className="flow-hint">显示服务器保留的记录；预览不会生成执行记录。</p>
     </section>
   );
 }

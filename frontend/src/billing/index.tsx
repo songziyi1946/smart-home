@@ -100,32 +100,10 @@ export default function Billing({
       setNumber("");
     } else setFormError("保存未完成，请查看页面提示后重试。");
   }
-  const energy = (
-    <section className="panel ledger-energy">
-      <h2>能源用量</h2>
-      <div>
-        {[
-          { name: "用电量", Icon: Zap },
-          { name: "用水量", Icon: Droplets },
-          { name: "燃气用量", Icon: Flame },
-        ].map(({ name, Icon }) => (
-          <article key={name}>
-            <Icon size={18} />
-            <span>{name}</span>
-            <strong>暂无数据</strong>
-          </article>
-        ))}
-      </div>
-      <p>尚未接入计量数据，记账金额不代表能源用量。</p>
-    </section>
-  );
   const payments = (
-    <section className="panel ledger-payments">
+    <section className="ledger-payments">
       <header>
-        <div>
-          <h2>缴费与查询</h2>
-          <p>打开渠道网站办理，本站不收款、不查询欠费。</p>
-        </div>
+        <h2>缴费渠道</h2>
       </header>
       <div className="ledger-channels">
         {categories.map((c) => {
@@ -137,34 +115,25 @@ export default function Billing({
               href={channel.href}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`${c} · ${channel.name}（新窗口）`}
+              title={channel.area}
+              aria-label={`${c} · ${channel.name}（${channel.area}，新窗口）`}
             >
               <Icon size={21} />
               <span>
                 <strong>{c}</strong>
-                <small>
-                  {channel.name} · {channel.area}
-                </small>
+                <small>{channel.name}</small>
               </span>
               <ArrowUpRight size={16} />
             </a>
           );
         })}
       </div>
-      <p className="ledger-hint">
-        水务与燃气入口目前适用于杭州，请按实际服务地区办理。打开渠道不会生成缴费成功记录。
-      </p>
     </section>
   );
   const accounts = (
-    <section className="panel ledger-accounts">
+    <section className="ledger-accounts">
       <header>
-        <div>
-          <h2>
-            缴费账户 <small>{state.accounts.length}</small>
-          </h2>
-          <p>户号仅显示脱敏信息，余额与欠费暂无数据。</p>
-        </div>
+        <h2>缴费账户</h2>
         <Button disabled={busy} onClick={() => open("account")}>
           添加账户
         </Button>
@@ -191,22 +160,14 @@ export default function Billing({
           ))}
         </ul>
       ) : (
-        <StatusPanel
-          compact
-          kind="empty"
-          title="暂无缴费账户"
-          description="可以直接使用渠道入口，也可以添加户号备查。"
-        />
+        <p className="ledger-empty">暂无缴费账户</p>
       )}
     </section>
   );
   const records = (
     <section className="panel ledger-records">
       <header>
-        <div>
-          <h2>费用记录</h2>
-          <p>手工记录，不等同于渠道账单或支付凭证。</p>
-        </div>
+        <h2>手工账单</h2>
         <Button disabled={busy} onClick={() => open("expense")}>
           记一笔
         </Button>
@@ -241,7 +202,7 @@ export default function Billing({
           </select>
         </label>
         {(historyMonth || historyCategory !== "all") && (
-          <button
+          <Button
             onClick={() => {
               setHistoryMonth("");
               setHistoryCategory("all");
@@ -249,24 +210,22 @@ export default function Billing({
             }}
           >
             清除筛选
-          </button>
+          </Button>
         )}
-      </div>
-      <div className="ledger-record-total">
-        <span>{history.length} 笔记录</span>
-        <strong>
-          {history.length ? money(historySummary.cents) : "暂无记录"}
-        </strong>
       </div>
       {history.length ? (
         <>
+          <div className="ledger-record-total">
+            <span>{history.length} 笔记录</span>
+            <strong>{money(historySummary.cents)}</strong>
+          </div>
           <ul className="ledger-record-list">
             {history.slice(0, limit).map((e) => (
               <li key={e.id}>
                 <span className="ledger-record-date">{e.date}</span>
                 <div>
                   <strong>{e.category}</strong>
-                  <small>{e.note || "未填写备注"}</small>
+                  {e.note && <small>{e.note}</small>}
                 </div>
                 <strong>{money(e.cents)}</strong>
               </li>
@@ -297,7 +256,6 @@ export default function Billing({
       <section className="panel ledger-editor">
         <header>
           <div>
-            <small>能源与缴费 / {dialog === "account" ? "账户" : "费用"}</small>
             <h2>{dialog === "account" ? "添加缴费账户" : "记录一笔支出"}</h2>
           </div>
           <Button
@@ -311,11 +269,6 @@ export default function Billing({
             返回
           </Button>
         </header>
-        <p className="ledger-hint">
-          {dialog === "account"
-            ? "账户用于户号备查，添加后不会自动连接服务商。"
-            : "填写实际发生的支出；这里不会发起支付，也不会验证缴费结果。"}
-        </p>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -408,7 +361,7 @@ export default function Billing({
       </section>
     );
   return (
-    <div className={"ledger-page " + (mobile ? "ledger-mobile" : "")}>
+    <div className="ledger-page">
       {mobile && (
         <nav className="ledger-tabs" aria-label="费用页面视图">
           {[
@@ -430,123 +383,120 @@ export default function Billing({
         <>
           <section className="panel ledger-overview">
             <header>
-              <div>
-                <span className="ledger-eyebrow">家庭费用 · 手工记录</span>
-                <h2>把日常支出，看清楚</h2>
-              </div>
-              <label className="ledger-month">
-                统计月份
-                <input
-                  aria-label="统计月份"
-                  type="month"
-                  required
-                  value={month}
-                  onInput={(e) => {
-                    if (e.currentTarget.value) setMonth(e.currentTarget.value);
-                  }}
-                />
-              </label>
-            </header>
-            <div className="ledger-summary">
-              <div>
-                <span>所选月份已记录</span>
-                <strong>
-                  {monthly.count ? money(monthly.cents) : "暂无记录"}
-                </strong>
-                <small>{monthly.count} 笔支出 · 非待缴金额</small>
-              </div>
-              <div className="ledger-summary-actions">
-                {mobile && (
-                  <Button type="primary" onClick={() => setView("pay")}>
-                    去缴费
-                  </Button>
-                )}
+              <h2>费用概况</h2>
+              <div className="ledger-overview-tools">
+                <label>
+                  统计月份
+                  <input
+                    type="month"
+                    required
+                    value={month}
+                    onInput={(e) => {
+                      if (e.currentTarget.value)
+                        setMonth(e.currentTarget.value);
+                    }}
+                  />
+                </label>
                 <Button
+                  type="primary"
                   disabled={busy}
                   icon={<Plus size={16} />}
                   onClick={() => open("expense")}
                 >
                   记一笔
                 </Button>
-                {!mobile && (
-                  <Button
-                    onClick={() =>
+                <Button
+                  onClick={() => {
+                    if (mobile) setView("pay");
+                    else
                       document
                         .getElementById("ledger-payment-area")
-                        ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                    }
-                  >
-                    查看缴费入口
-                  </Button>
-                )}
+                        ?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                  }}
+                >
+                  缴费入口
+                </Button>
               </div>
-            </div>
-            <div className="ledger-category-summary">
-              {monthly.categories.map((c) => {
-                const Icon = iconFor(c.category);
-                return (
-                  <button
-                    key={c.category}
-                    onClick={() => {
-                      setHistoryMonth(month);
-                      setHistoryCategory(c.category);
-                      setLimit(20);
-                      if (mobile) setView("history");
-                      else
-                        document
-                          .getElementById("ledger-history-area")
-                          ?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "start",
-                          });
-                    }}
-                  >
-                    <span>
-                      <Icon size={16} />
-                      {c.category}
-                    </span>
-                    <strong>{c.count ? money(c.cents) : "暂无记录"}</strong>
-                  </button>
-                );
-              })}
+            </header>
+            <div className="ledger-summary">
+              <div>
+                <span>已记支出</span>
+                <strong>{monthly.count ? money(monthly.cents) : "—"}</strong>
+              </div>
+              <div>
+                <span>支出笔数</span>
+                <strong>{monthly.count}</strong>
+              </div>
+              <p className="ledger-meter-empty">
+                <Zap size={15} aria-hidden />
+                能源计量尚未接入
+              </p>
             </div>
           </section>
-          {!mobile && (
-            <div className="ledger-desktop-grid">
-              <div className="ledger-stack">
-                <section className="panel ledger-trend">
-                  <header>
-                    <div>
-                      <h2>近 6 个月已记录费用</h2>
-                      <p>截至 {month}，只统计已录入的支出。</p>
-                    </div>
-                  </header>
-                  {months.some((m) => m.count > 0) ? (
-                    <ul>
-                      {months.map((m) => (
-                        <li key={m.key}>
-                          <span>{m.key}</span>
-                          <div>
-                            <i style={{ width: (m.cents / max) * 100 + "%" }} />
-                          </div>
-                          <strong>
-                            {m.count ? money(m.cents) : "暂无记录"}
-                          </strong>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="ledger-empty">这段时间暂无费用记录</p>
-                  )}
-                </section>
-                {energy}
-              </div>
-              <div className="ledger-stack" id="ledger-payment-area">
-                {payments}
-                {accounts}
-              </div>
+          <section className="panel ledger-analysis">
+            <div className="ledger-trend">
+              <header>
+                <h2>近 6 个月支出</h2>
+              </header>
+              {months.some((m) => m.count > 0) ? (
+                <ul>
+                  {months.map((m) => (
+                    <li key={m.key}>
+                      <span>{m.key}</span>
+                      <div aria-hidden>
+                        <i style={{ width: (m.cents / max) * 100 + "%" }} />
+                      </div>
+                      <strong>{m.count ? money(m.cents) : "—"}</strong>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="ledger-empty">这段时间暂无费用记录</p>
+              )}
             </div>
-          )}
+            {monthly.count > 0 && (
+              <div className="ledger-breakdown">
+                <header>
+                  <h2>月度分类支出</h2>
+                </header>
+                <div className="ledger-category-summary">
+                  {monthly.categories
+                    .filter((c) => c.count > 0)
+                    .map((c) => {
+                      const Icon = iconFor(c.category);
+                      return (
+                        <button
+                          key={c.category}
+                          onClick={() => {
+                            setHistoryMonth(month);
+                            setHistoryCategory(c.category);
+                            setLimit(20);
+                            if (mobile) setView("history");
+                            else
+                              document
+                                .getElementById("ledger-history-area")
+                                ?.scrollIntoView({
+                                  behavior: "smooth",
+                                  block: "start",
+                                });
+                          }}
+                        >
+                          <span>
+                            <Icon size={16} />
+                            {c.category}
+                          </span>
+                          <strong>{money(c.cents)}</strong>
+                          <ArrowUpRight size={15} aria-hidden />
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+          </section>
           {mobile && (
             <>
               <section className="panel ledger-recent">
@@ -569,28 +519,23 @@ export default function Billing({
                       ))}
                   </ul>
                 ) : (
-                  <p className="ledger-hint">
-                    暂无记录，记一笔后会显示在这里。
-                  </p>
+                  <p className="ledger-empty">暂无最近支出</p>
                 )}
               </section>
-              <details className="ledger-energy-disclosure">
-                <summary>能源用量 · 暂无数据</summary>
-                {energy}
-              </details>
             </>
           )}
         </>
       )}
-      {mobile && view === "pay" && (
-        <>
-          {state.accounts.length > 0 && accounts}
+      {(!mobile || view === "pay") && (
+        <div className="panel ledger-payment-area" id="ledger-payment-area">
           {payments}
-          {state.accounts.length === 0 && accounts}
-          <Button disabled={busy} onClick={() => open("expense")}>
-            缴费后记一笔
-          </Button>
-        </>
+          {accounts}
+        </div>
+      )}
+      {mobile && view === "pay" && (
+        <Button disabled={busy} onClick={() => open("expense")}>
+          缴费后记一笔
+        </Button>
       )}
       {(!mobile || view === "history") && (
         <div id="ledger-history-area">{records}</div>

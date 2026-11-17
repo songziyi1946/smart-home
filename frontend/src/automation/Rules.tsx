@@ -189,8 +189,7 @@ export default function Rules({
         <section className="panel flow-editor">
           <div className="flow-heading">
             <div>
-              <small>自动化 / {draft.id ? "编辑规则" : "创建规则"}</small>
-              <h2>何时发生，家里如何响应</h2>
+              <h2>{draft.id ? "编辑规则" : "创建规则"}</h2>
             </div>
             <Button
               disabled={pending}
@@ -230,7 +229,7 @@ export default function Rules({
                 />
               </label>
               <section className="flow-editor-step">
-                <h3>
+                <h3 title="精确匹配值变化。首次发现和离线恢复不会触发。">
                   <b>当</b>设备状态发生变化
                 </h3>
                 <div className="flow-form-pair">
@@ -342,9 +341,6 @@ export default function Rules({
                     }
                   />
                 )}
-                <p className="flow-hint">
-                  精确匹配值变化，不是阈值判断。首次发现和离线恢复不会触发。
-                </p>
               </section>
               <section className="flow-editor-step">
                 <h3>
@@ -368,7 +364,7 @@ export default function Rules({
                     />
                   </label>
                   <label className="flow-field">
-                    结束时间
+                    结束时间（不含）
                     <input
                       type="time"
                       required
@@ -384,10 +380,6 @@ export default function Rules({
                     />
                   </label>
                 </div>
-                <p className="flow-hint">
-                  {windowText(draft.condition.start, draft.condition.end)}
-                  ，包含开始时刻，不包含结束时刻。
-                </p>
               </section>
               <section className="flow-editor-step">
                 <h3>
@@ -432,7 +424,7 @@ export default function Rules({
                     }
                   />
                 </label>
-                <label className="flow-field">
+                <label className="flow-field" title="冷却期间跳过重复触发。执行失败后不会自动重试。">
                   冷却时间（秒）
                   <input
                     type="number"
@@ -450,9 +442,6 @@ export default function Rules({
                     }
                   />
                 </label>
-                <p className="flow-hint">
-                  单次执行，冷却期间跳过重复触发；失败不会自动重试。
-                </p>
               </details>
               <div className="flow-save">
                 <label className="flow-checkbox">
@@ -482,9 +471,6 @@ export default function Rules({
         <aside className="panel flow-preview">
           <h2>规则预览</h2>
           <Steps rule={draft} state={state} />
-          <div className="flow-notice">
-            只检查条件，不执行场景，不改变设备。
-          </div>
           <ValueField
             label="模拟变化前的值"
             capability={draft.trigger.capability}
@@ -496,7 +482,7 @@ export default function Rules({
             }}
           />
           <label className="flow-field">
-            模拟时刻（{Intl.DateTimeFormat().resolvedOptions().timeZone}）
+            模拟时刻（留空为当前时间） · {Intl.DateTimeFormat().resolvedOptions().timeZone}
             <input
               type="datetime-local"
               value={at}
@@ -505,7 +491,6 @@ export default function Rules({
                 setAt(e.currentTarget.value);
               }}
             />
-            <small>留空使用当前时刻；条件按规则时区判断。</small>
           </label>
           <Button
             type="primary"
@@ -534,7 +519,6 @@ export default function Rules({
                 })}{" "}
                 · {preview.timeZone}
               </small>
-              <p>{preview.note}</p>
             </div>
           )}
         </aside>
@@ -542,10 +526,14 @@ export default function Rules({
     );
   return (
     <div className={"flow-page " + (mobile ? "flow-mobile" : "")}>
-      <div className="flow-heading">
-        <div>
-          <h2>{mobile ? "管理规则" : "让家在合适的时候响应"}</h2>
-          {!mobile && <p>看清触发、条件与动作，再决定是否启用。</p>}
+      <div className="flow-toolbar">
+        <div className="flow-tabs">
+          <button aria-pressed={tab === "rules"} onClick={() => setTab("rules")}>
+            我的规则 · {state.automations.length}
+          </button>
+          <button aria-pressed={tab === "logs"} onClick={() => setTab("logs")}>
+            执行记录
+          </button>
         </div>
         {canManage && (
           <Button
@@ -556,14 +544,6 @@ export default function Rules({
             创建规则
           </Button>
         )}
-      </div>
-      <div className="flow-tabs">
-        <button aria-pressed={tab === "rules"} onClick={() => setTab("rules")}>
-          我的规则 · {state.automations.length}
-        </button>
-        <button aria-pressed={tab === "logs"} onClick={() => setTab("logs")}>
-          执行记录
-        </button>
       </div>
       {tab === "logs" ? (
         <History
@@ -712,14 +692,20 @@ export default function Rules({
               kind="empty"
               title="暂无自动化规则"
               description={
-                canManage
-                  ? "先创建场景，再选择触发设备和时间条件。"
-                  : "家庭管理员创建规则后，可在这里查看。"
+                !canManage
+                  ? "家庭管理员创建规则后，可在这里查看。"
+                  : !state.scenes.length
+                    ? "请先创建一个可调用的场景。"
+                    : !state.devices.length
+                      ? "请先接入一个触发设备。"
+                      : undefined
               }
               action={
-                <a className="quiet-button" href="#scenes">
-                  查看场景
-                </a>
+                canManage && !state.scenes.length ? (
+                  <a className="quiet-button" href="#scenes">
+                    查看场景
+                  </a>
+                ) : undefined
               }
             />
           )}

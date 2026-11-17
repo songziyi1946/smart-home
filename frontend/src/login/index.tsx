@@ -37,7 +37,7 @@ export default function Login({ setupRequired, onLogin, onSetupChange }: {
   return <div className="auth-viewport"><section className="panel auth-panel">
     <div className="auth-brand"><LockKeyhole size={30} /><span>Home OS</span></div>
     <h1>{setupRequired ? '创建你的家庭' : joining ? '加入家庭' : '欢迎回家'}</h1>
-    <p className="muted">{setupRequired ? '设置家庭名称和管理员账户，开始连接家人。' : joining ? '输入家庭管理员提供的一次性邀请码，设置你自己的账户。' : '使用你的家庭账户登录，设备控制权限随身份生效。'}</p>
+    {joining && <p className="muted">请输入家庭管理员提供的一次性邀请码。</p>}
     <form onSubmit={event => void submit(event)}>
       {setupRequired && <label className="form-field"><span>家庭名称</span><Input aria-label="家庭名称" value={homeName} onChange={setHomeName} maxLength={40} placeholder="例如：我们的家" required /></label>}
       {!setupRequired && joining && <label className="form-field"><span>家庭邀请码</span><Input aria-label="家庭邀请码" value={code} onChange={setCode} minLength={12} maxLength={12} pattern="[A-Fa-f0-9]{12}" autoComplete="off" required /></label>}

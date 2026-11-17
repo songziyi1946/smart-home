@@ -44,18 +44,6 @@ export default function Devices({
     onFilters({ ...filters, ...part });
   return (
     <div className="desktop-devices-page">
-      <div className="desktop-page-intro">
-        <div>
-          <h2>{mobile ? "查找与管理设备" : "让每个设备，各就其位"}</h2>
-          <p>按房间、能力和连接状态查找。控制结果以设备反馈为准。</p>
-        </div>
-        {role === "admin" && (
-          <button className="quiet-button" onClick={() => setHelp(true)}>
-            <PlugZap size={17} />
-            设备接入说明
-          </button>
-        )}
-      </div>
       <section className="panel device-directory">
         <div className="directory-search">
           <label>
@@ -83,6 +71,12 @@ export default function Devices({
               <List size={18} />
             </button>
           </div>
+          {role === "admin" && (
+            <button className="quiet-button" onClick={() => setHelp(true)}>
+              <PlugZap size={17} />
+              设备接入说明
+            </button>
+          )}
         </div>
         {mobile && (
           <button
@@ -171,7 +165,7 @@ export default function Devices({
               仅收藏
             </label>
             <button
-              className="desktop-text-link"
+              className="quiet-button"
               onClick={() => onFilters({ ...emptyFilters })}
             >
               重置筛选
@@ -180,8 +174,7 @@ export default function Devices({
         )}
         <div className="directory-count">
           <SlidersHorizontal size={15} />
-          {devices.length} / {state.devices.length} 项设备状态
-          <span>按实体记录统计，不等同于物理设备数量</span>
+          {devices.length} / {state.devices.length} 项设备记录
         </div>
         {devices.length ? (
           <div
@@ -241,10 +234,6 @@ export default function Devices({
           <li>由部署管理员在服务端配置连接和房间映射。</li>
           <li>返回这里查看发现的设备；未分配房间的设备也会列出。</li>
         </ol>
-        <p>
-          此处不收集连接
-          Token。在线接入向导、设备重命名与房间分配尚未提供；不要把这里当作已经保存配置的入口。
-        </p>
       </Modal>
     </div>
   );
