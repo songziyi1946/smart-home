@@ -13,6 +13,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve, sep } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { execFile } from 'node:child_process';
 
 const app = express();
 app.use(express.json({ limit: '32kb' }));
@@ -246,7 +247,16 @@ const server = app.listen(port, '127.0.0.1', error => {
     process.exitCode = 1;
     return;
   }
-  console.log(`Smart Home API: http://127.0.0.1:${server.address().port}${skipLogin ? '（本地免登录）' : ''}`);
+  const url = `http://127.0.0.1:${server.address().port}`;
+  console.log(`Smart Home API: ${url}${skipLogin ? '（本地免登录）' : ''}`);
+  if (process.argv.includes('--open-browser')) {
+    const [command, ...args] = process.platform === 'win32'
+      ? ['cmd.exe', '/d', '/c', 'start', '', url]
+      : ['open', url];
+    execFile(command, args, { windowsHide: true }, error => {
+      if (error) console.error(`请在浏览器中打开 ${url}`);
+    });
+  }
 });
 
 for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => { automation.close(); stream.close(); ha?.close(); server.closeAllConnections(); server.close(()=>store.close()); });

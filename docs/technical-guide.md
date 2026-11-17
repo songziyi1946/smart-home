@@ -46,7 +46,7 @@ npm ci --prefix frontend
 
 ## 启动方式与配置
 
-只在本机使用时，按[首页的步骤](../README.md#在电脑上试用)构建一次，由后端直接提供网页。若 3101 端口被占用，在启动前设置 `SMART_HOME_API_PORT`，并在浏览器访问新端口。例如在 macOS/Linux 中执行 `export SMART_HOME_API_PORT=3102`，在 PowerShell 中执行 `$env:SMART_HOME_API_PORT = '3102'`。
+只在本机使用时，可以[下载体验包](../README.md#在电脑上试用)，也可以[从源码构建](../README.md#从源码运行)一次，由后端直接提供网页。若 3101 端口被占用，在启动前设置 `SMART_HOME_API_PORT`，并在浏览器访问新端口。例如在 macOS/Linux 中执行 `export SMART_HOME_API_PORT=3102`，在 PowerShell 中执行 `$env:SMART_HOME_API_PORT = '3102'`。
 
 开发时，在两个终端中分别启动后端和前端（从项目根目录执行）：
 
@@ -97,7 +97,9 @@ ESLint/格式化暂不引入：本阶段用类型检查、测试和构建作为�
 git archive --format=zip --output=../smart-home-source.zip HEAD
 ```
 
-此命令只包含 HEAD 中已提交的文件，交付前先确认需要的修改已提交。接收方解压后可按[首页的启动步骤](../README.md#在电脑上试用)运行；不要直接压缩包含本地依赖、构建产物或家庭数据的整个工作目录。
+此命令只包含 HEAD 中已提交的文件，交付前先确认需要的修改已提交。接收方解压后可按[源码启动步骤](../README.md#从源码运行)运行；不要直接压缩包含本地依赖、构建产物或家庭数据的整个工作目录。
+
+在 macOS 或 Linux 上用项目指定的 Node.js 和 npm 运行 `bash scripts/experience/package.sh`，可从当前提交生成 GitHub Releases 的三个体验包，输出到 `dist/experience`。包中包含前端构建产物、打包后的后端、第三方许可和经 SHA-256 校验的 Node.js 官方运行时。
 
 ## 登录与鉴权
 
