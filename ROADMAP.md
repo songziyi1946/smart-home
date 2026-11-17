@@ -126,7 +126,7 @@ Restarting the backend preserves normalized household data and event history; do
 
 Business state, normalized Provider cache and authentication records now use SQLite through backend/infrastructure/sqlite-store.mjs. Legacy state.json/auth.json are imported once in a transaction with protected content-addressed backups. Device capabilities and scene actions have separate rows; complex versioned rules/logs remain JSON columns. APIs, SSE and UI contracts remain unchanged. Interrupted runs are recovered without replaying physical commands; Provider cache is offline until revalidated.
 
-The runtime baseline is Node 26.13.1 / npm 11.20.0. On that version, 40 backend, 12 frontend and 7 simulator tests passed, plus typecheck/build and real HA/MQTT E2E. E2E restarted the backend and verified restored devices/scenes/rules/logs, one-time migration, SSE resync and another successful low-brightness automation execution.
+The initial SQLite validation used Node 26.13.1 / npm 11.20.0. On that version, 40 backend, 12 frontend and 7 simulator tests passed, plus typecheck/build and real HA/MQTT E2E. E2E restarted the backend and verified restored devices/scenes/rules/logs, one-time migration, SSE resync and another successful low-brightness automation execution.
 
 ## Phase 3 — Create the Provider layer before connecting Xiaomi
 

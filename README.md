@@ -30,7 +30,7 @@ Mac 体验包需要 macOS 13.5 或更新版本。首次启动时，如果系统�
 ## 从源码运行
 
 1. 点击[下载源码 ZIP](https://github.com/songziyi1946/smart-home/archive/refs/heads/master.zip)并解压。也可以在 GitHub 仓库点击 **Code → Download ZIP**。
-2. 安装 [Node.js 26.13.1](https://nodejs.org/en/download)（包含运行命令所需的 npm）。
+2. 安装 [Node.js 24.18.0](https://nodejs.org/en/download/archive/v24.18.0)（包含运行命令所需的 npm）。
 3. 在解压后的项目文件夹中打开终端（Windows 可用 PowerShell，macOS 可用「终端」），依次执行：
 
    ```sh

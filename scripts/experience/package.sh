@@ -21,7 +21,7 @@ npm ci --prefix backend --omit=dev --omit=optional --ignore-scripts
 
 package="$scratch/Smart Home"
 mkdir -p "$package/backend" "$package/frontend" "$package/runtime"
-frontend/node_modules/.bin/esbuild backend/server.mjs --bundle --platform=node --format=esm --target=node26 \
+frontend/node_modules/.bin/esbuild backend/server.mjs --bundle --platform=node --format=esm --target="node${version%%.*}" \
   --banner:js='import { createRequire } from "node:module"; const require = createRequire(import.meta.url);' \
   --outfile="$package/backend/server.mjs"
 find backend/node_modules frontend/node_modules -type f \( -iname 'license*' -o -iname 'copying*' -o -iname 'notice*' \) -print0 |

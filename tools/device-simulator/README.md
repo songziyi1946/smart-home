@@ -4,7 +4,7 @@
 
 ## 安装与启动
 
-仓库使用 Node 26.13.1、npm 11.20.0。源码目录采用紧凑结构，未按每台设备拆文件：
+仓库使用 Node 24.18.0、npm 11.16.0。源码目录采用紧凑结构，未按每台设备拆文件：
 
 - `src/core.ts`：VirtualDevice、确定性时钟、状态校验、延迟命令、动态设备、场景和 Reset。
 - `src/mqtt.ts`：Discovery、主题解析、状态编码、MQTT 重连和 Availability。

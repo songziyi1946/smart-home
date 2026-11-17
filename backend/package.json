@@ -13,8 +13,8 @@
     "zod": "^3.25.0"
   },
   "engines": {
-    "node": ">=26.13.1",
+    "node": ">=24.18.0",
     "npm": ">=11"
   },
-  "packageManager": "npm@11.20.0"
+  "packageManager": "npm@11.16.0"
 }

@@ -35,7 +35,7 @@ App 通过同源 SSE `/api/events` 接收服务端 WS 状态事件和本地保�
 
 ## 安装教程
 
-使用 Node.js 26.13.1（`.nvmrc`）和 npm 11.20.0，两个子项目均使用 npm，提交各自的 `package-lock.json`。不要混用 Yarn/pnpm 或复制其他机器的 `node_modules`。
+使用 Node.js 24.18.0（`.nvmrc`）和随附的 npm 11.16.0。两个子项目均使用 npm，提交各自的 `package-lock.json`。不要混用 Yarn/pnpm 或复制其他机器的 `node_modules`。
 
 从项目根目录安装锁定依赖：
 
@@ -165,7 +165,7 @@ API：`POST /api/automations`，`PUT /api/automations/:id`（携带version），
 
 ## SQLite 持久化与旧数据迁移
 
-使用 Node.js 26.13.1 / npm 11.20.0 和内置 `node:sqlite`，不增加原生 npm 模块。仓储位于 `backend/infrastructure/sqlite-store.mjs`，schema 版本为1（`PRAGMA user_version`）。
+SQLite 仓储使用 Node.js 内置的 `node:sqlite`，无需额外安装原生 npm 模块。仓储位于 `backend/infrastructure/sqlite-store.mjs`，schema 版本为1（`PRAGMA user_version`）。
 
 首次启动在 `SMART_HOME_DATA_DIR`（默认 `backend/data`）创建 `home.sqlite`；若有 `state.json` / `auth.json`，先保存内容摘要命名的 `.pre-sqlite-*.bak` 备份，原文件不改写。数据库与备份权限0600。在同一事务中导入业务及账号数据并写入迁移标记，保留设备 ID、动作顺序、规则版本、日志、费用和欢迎语。
 

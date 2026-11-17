@@ -389,7 +389,7 @@ Simulator tests: `npm test --prefix tools/device-simulator`; real HA/MQTT lab in
 
 Tests use `tsx + node:test` with explicit TypeScript support. The current entry covers `src/*.test.mjs` and `src/vr/*.test.mjs`; extend it when adding tests in other directories.
 
-Use npm for both packages, commit both `package-lock.json` files, and install with `npm ci --prefix backend` / `npm ci --prefix frontend`. Node.js 26.13.1 is recorded in `.nvmrc`; use npm 11.20.0. Do not reintroduce Yarn/pnpm lockfiles.
+Use npm for both packages, commit both `package-lock.json` files, and install with `npm ci --prefix backend` / `npm ci --prefix frontend`. The `.nvmrc` pins Node.js 24.18.0, which bundles npm 11.16.0. Do not reintroduce Yarn/pnpm lockfiles.
 
 CI is defined in `.github/workflows/ci.yml`. It runs on GitHub only; the current Gitee origin needs a GitHub mirror with Actions enabled or equivalent CI configured separately. `.env.example` documents optional runtime configuration; `.env` is explicitly loaded by the shell as described in README.
 
