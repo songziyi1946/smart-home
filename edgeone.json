@@ -1,0 +1,6 @@
+{
+  "nodeVersion": "24.18.0",
+  "installCommand": "npm ci --prefix frontend",
+  "buildCommand": "npm run build --prefix frontend",
+  "outputDirectory": "./frontend/dist"
+}

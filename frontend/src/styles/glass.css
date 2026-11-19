@@ -1,0 +1,65 @@
+body {
+  background-image:
+    radial-gradient(ellipse at 12% 8%, var(--page-glow-green), transparent 55%),
+    radial-gradient(ellipse at 92% 35%, var(--page-glow-warm), transparent 58%);
+  background-attachment: fixed;
+}
+/* Keep opaque surfaces as the fallback for browsers without backdrop filters. */
+@supports (backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px)) {
+  .panel,
+  .desktop-device,
+  .desktop-room-card,
+  .mobile-device,
+  .mobile-secondary-link,
+  .mobile-nav {
+    background: var(--glass-surface);
+    -webkit-backdrop-filter: blur(20px) saturate(125%);
+    backdrop-filter: blur(20px) saturate(125%);
+  }
+  .sidebar {
+    background: var(--glass-sidebar);
+    -webkit-backdrop-filter: blur(24px) saturate(125%);
+    backdrop-filter: blur(24px) saturate(125%);
+  }
+  .mobile-device.is-active {
+    background: color-mix(in srgb, var(--accent-soft) 80%, transparent);
+  }
+  .auth-viewport {
+    background: transparent;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .panel,
+  .desktop-device,
+  .desktop-room-card,
+  .mobile-device,
+  .mobile-secondary-link,
+  .mobile-nav {
+    background: var(--panel);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .mobile-device.is-active {
+    background: var(--accent-soft);
+  }
+  .sidebar {
+    background: var(--color-sidebar);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+.mobile-device.is-active,
+.desktop-device.is-active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent), 0 4px 14px #25332912;
+}
+.mobile-device.is-active .mobile-device-main > svg,
+.desktop-device.is-active .desktop-device-symbol {
+  color: var(--accent);
+}
+.mobile-device:not(.is-active),
+.desktop-device:not(.is-active) {
+  border-color: color-mix(in srgb, var(--muted) 38%, var(--panel));
+}

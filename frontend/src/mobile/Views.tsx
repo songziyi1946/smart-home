@@ -1,25 +1,14 @@
+export {default as QuickScenes} from '../home/QuickActions';
 import {StatusPanel} from '../ui/StatusPanel';
-import {AlertCircle,ChevronRight,House,Layers,Moon,LogOut,Box,Star,Leaf} from 'lucide-react';
-import type {DeviceSnapshot,State,Mutate} from '../types';import DeviceCard from './DeviceCard';import {roomOptions} from '../deviceControls/model';import {metricReading,occupancyReading,latestFailures} from '../homeTelemetry';
+import {ChevronRight,Box,Star,Leaf} from 'lucide-react';
+import type {DeviceSnapshot,State,Mutate} from '../types';import DeviceCard from './DeviceCard';import {roomOptions} from '../deviceControls/model';import {metricReading,occupancyReading} from '../homeTelemetry';
 export function EnvironmentSummary({devices}:{devices:DeviceSnapshot[]}){
  const anchor=metricReading(devices,'temperature')??metricReading(devices,'humidity')??metricReading(devices,'co2')??metricReading(devices,'pm25');const selected=anchor?devices.filter(d=>d.roomId===anchor.device.roomId):devices;
  const readings=Object.fromEntries((['temperature','humidity','pm25','co2'] as const).map(key=>[key,metricReading(selected,key)]));
  return <details className="mobile-environment"><summary><Leaf size={18}/><span>{anchor?anchor.device.room+'环境':'环境信息'}<small>{readings.temperature?`${readings.temperature.value}°C`:'温度暂无数据'} · {readings.humidity?`${readings.humidity.value}%`:'湿度暂无数据'}</small></span><ChevronRight size={16}/></summary><div className="environment-expanded">{([['temperature','温度','°C'],['humidity','湿度','%'],['pm25','PM2.5','μg/m³'],['co2','CO₂','ppm']] as const).map(([key,label,unit])=><div key={key}><small>{label}</small><strong>{readings[key]?`${readings[key].value} ${unit}`:'暂无数据'}</strong><small>{readings[key]?.source??'未接入或离线'}</small></div>)}</div></details>;
 }
-export function QuickScenes({state,busy,mutate}:{state:State;busy:boolean;mutate:Mutate}){const running=state.sceneRuns.some(run=>run.status==='running');return <><div className="mobile-section-heading"><h2>常用场景</h2><a href="#scenes">全部场景 <ChevronRight size={14}/></a></div>{state.scenes.length?<div className="mobile-scenes">{state.scenes.slice(0,3).map(scene=>{const Icon=scene.id==='home'?House:scene.id==='away'?LogOut:scene.id==='sleep'?Moon:Layers;return <button disabled={busy||running} key={scene.id} onClick={()=>void mutate('/scenes/'+scene.id,'POST',{})}><Icon size={20}/><span>{scene.name}</span></button>;})}</div>:<StatusPanel compact kind="empty" title="暂无场景" description="在场景页查看或创建生活场景。" action={<a className="quiet-button" href="#scenes">查看场景</a>}/>}</>;}
 type DeviceProps={busy:boolean;mutate:Mutate;onOpen:(id:string)=>void};
-export function MobileHome({state,favorites,onFavorites,onRoom,onOffline,...props}:{state:State;favorites:string[];onFavorites:()=>void;onRoom:(id:string)=>void;onOffline:()=>void}&DeviceProps){
- const offline=state.devices.filter(d=>!d.state.online),latestFailed=latestFailures(state.sceneRuns,run=>run.sceneId).find(run=>state.scenes.some(scene=>scene.id===run.sceneId));const devices=favorites.map(id=>state.devices.find(d=>d.id===id)).filter((d):d is DeviceSnapshot=>!!d).slice(0,6);
- return <div className="mobile-home">
-  {!!offline.length&&<button className="mobile-attention" onClick={onOffline}><AlertCircle size={20}/><span><strong>{offline.length} 项设备需要关注</strong><small>{offline[0].name}离线{offline.length>1?'等':''} · 查看设备状态</small></span><ChevronRight size={18}/></button>}
-  {latestFailed&&<a className="mobile-attention" href="#scenes"><AlertCircle size={20}/><span><strong>场景执行失败</strong><small>{latestFailed.name} · {latestFailed.reason??'查看执行详情'}</small></span><ChevronRight size={18}/></a>}
-  <QuickScenes state={state} busy={props.busy} mutate={props.mutate}/>
-  <div className="mobile-section-heading"><h2>常用设备</h2><button onClick={onFavorites}><Star size={14}/>管理收藏</button></div>
-  {devices.length?<div className="mobile-device-grid">{devices.map(device=><DeviceCard key={device.id} device={device} busy={props.busy} mutate={props.mutate} onOpen={()=>props.onOpen(device.id)}/>)}</div>:<StatusPanel compact kind="empty" title="暂无常用设备" description="选择经常使用的设备，便于快速控制。" action={<button className="quiet-button" onClick={onFavorites}>选择设备</button>}/>}
-  <div className="mobile-section-heading"><h2>房间</h2><button onClick={()=>onRoom('all')}>查看全部 <ChevronRight size={14}/></button></div><div className="mobile-room-links">{roomOptions(state.devices).map(room=><button key={room.id} onClick={()=>onRoom(room.id)}>{room.name}<ChevronRight size={14}/></button>)}</div>
-  <EnvironmentSummary devices={state.devices}/><p className="mobile-occupancy">{occupancyReading(state.devices).text} · {occupancyReading(state.devices).source}</p>
- </div>;
-}
+export {default as MobileHome} from './Today';
 export function RoomsPage({state,roomId,onRoom,offlineOnly,onOfflineChange,...props}:{state:State;roomId:string;onRoom:(id:string)=>void;offlineOnly:boolean;onOfflineChange:(value:boolean)=>void}&DeviceProps){
  const rooms=roomOptions(state.devices),selected=rooms.some(r=>r.id===roomId)?roomId:'all';const devices=state.devices.filter(d=>(selected==='all'||d.roomId===selected)&&(!offlineOnly||!d.state.online));
  return <div className="rooms-page"><div className="room-chip-row" aria-label="按房间查看"><button aria-pressed={selected==='all'} onClick={()=>onRoom('all')}>全部</button>{rooms.map(room=><button key={room.id} aria-pressed={selected===room.id} onClick={()=>onRoom(room.id)}>{room.name}</button>)}</div><div className="mobile-section-heading"><h2>{selected==='all'?'全部设备':rooms.find(r=>r.id===selected)?.name}</h2><button aria-pressed={offlineOnly} onClick={()=>onOfflineChange(!offlineOnly)}>{offlineOnly?'显示全部':'只看离线'}</button></div><p className="muted">{devices.length} 项设备</p>

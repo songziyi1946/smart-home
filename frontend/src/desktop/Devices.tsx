@@ -18,8 +18,6 @@ export default function Devices({
   state,
   busy,
   mutate,
-  favorites,
-  onFavorite,
   onOpen,
   filters,
   onFilters,
@@ -28,8 +26,6 @@ export default function Devices({
   state: State;
   busy: boolean;
   mutate: Mutate;
-  favorites: string[];
-  onFavorite: (id: string) => void;
   onOpen: (id: string) => void;
   filters: DeviceFilters;
   onFilters: (filters: DeviceFilters) => void;
@@ -39,7 +35,7 @@ export default function Devices({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [list, setList] = useState(false),
     [help, setHelp] = useState(false);
-  const devices = filterDevices(state.devices, filters, favorites);
+  const devices = filterDevices(state.devices, {...filters, favoritesOnly: false}, []);
   const update = (part: Partial<DeviceFilters>) =>
     onFilters({ ...filters, ...part });
   return (
@@ -156,14 +152,6 @@ export default function Devices({
                 <option value="home-assistant">Home Assistant</option>
               </select>
             </label>
-            <label className="favorites-filter">
-              <input
-                type="checkbox"
-                checked={filters.favoritesOnly}
-                onChange={(e) => update({ favoritesOnly: e.target.checked })}
-              />
-              仅收藏
-            </label>
             <button
               className="quiet-button"
               onClick={() => onFilters({ ...emptyFilters })}
@@ -186,8 +174,6 @@ export default function Devices({
                 device={d}
                 busy={busy}
                 mutate={mutate}
-                favorite={favorites.includes(d.id)}
-                onFavorite={() => onFavorite(d.id)}
                 onOpen={() => onOpen(d.id)}
               />
             ))}

@@ -1,18 +1,17 @@
-import {onlineSummary} from '../homeTelemetry';
 import {useEffect,useState} from 'react';import type {ReactNode} from 'react';
 import {Moon,Sun,House,PanelLeftClose,PanelLeftOpen,Wifi,WifiOff,RefreshCw} from 'lucide-react';
 import type {Page,State,User} from '../types';import type {ConnectionStatus} from '../connection';import {connectionMessage} from '../connection';
 import TodayAlmanac from '../calendar';import {nav,visibleNavigation} from './navigation';
 type LayoutProps={page:Page;role:User['role'];householdName:string;mobile:boolean;state?:State;busy:boolean;nightMode:boolean;onNightModeChange:(value:boolean)=>void;connection:ConnectionStatus;lastReceived?:number;onReconnect:()=>void;children:ReactNode};
 export default function Layout({page,role,householdName,mobile,state,busy,nightMode,onNightModeChange,connection,lastReceived,onReconnect,children}:LayoutProps){
- const [compact,setCompact]=useState(false);const items=visibleNavigation(role),online=state?onlineSummary(state.devices):undefined;
+ const [compact,setCompact]=useState(false);const items=visibleNavigation(role);
  const status=connectionMessage(connection,!!state);const live=connection==='live';
  const title=mobile&&page==='home'?householdName:page==='account'?'家庭与成员':nav.find(item=>item.id===page)?.name;
  const toggleLabel=compact?'展开导航':'收起导航';
  return <div className={'shell'+(compact?' shell-compact':'')}>
   <a className="skip-link" href="#main-content" onClick={e=>{e.preventDefault();document.getElementById('main-content')?.focus();}}>跳转到内容</a>
   <aside className="sidebar">
-   <a className="brand" href="#home" title={householdName} aria-label={householdName+' · 家庭总览'}><span><House size={22} aria-hidden/></span><strong>{householdName}</strong></a>
+   <a className="brand" href="#home" title={householdName} aria-label={householdName+' · 家庭总览'}><span><House size={22} aria-hidden/></span><div className="brand-label"><small>Home OS</small><strong>{householdName}</strong></div></a>
    <nav id="main-navigation" aria-label="主导航">
     {items.map(({id,name,icon:Icon})=>{
       const selected=page===id||(id==='profile'&&page==='account');
@@ -25,10 +24,9 @@ export default function Layout({page,role,householdName,mobile,state,busy,nightM
     </button>
    </footer>
   </aside>
-  <div className="workspace"><header className="top"><div className="home-title"><h1>{title}</h1></div><div className="header-tools"><span className={'connection-pill connection-'+connection} role="status">{live?<Wifi size={15}/>:<WifiOff size={15}/>}<span>{status.label}</span></span><button className="theme-toggle" aria-label={nightMode?'切换到日间模式':'切换到夜间模式'} aria-pressed={nightMode} onClick={()=>onNightModeChange(!nightMode)}>{nightMode?<Sun size={18}/>:<Moon size={18}/>}</button><DashboardClock/></div></header>
+  <div className="workspace"><header className="top"><div className="home-title"><h1>{title}</h1></div><div className="header-tools"><button className="theme-toggle" aria-label={nightMode?'切换到日间模式':'切换到夜间模式'} aria-pressed={nightMode} onClick={()=>onNightModeChange(!nightMode)}>{nightMode?<Sun size={18}/>:<Moon size={18}/>}</button><DashboardClock/></div></header>
   <main id="main-content" tabIndex={-1} aria-busy={busy||!state}>
    {!live&&state&&<div className={'connection-banner connection-'+connection} role={connection==='error'?'alert':'status'}><WifiOff size={20} aria-hidden/><div><strong>{status.label}</strong><p>{status.detail}{lastReceived?' 上次同步 '+new Date(lastReceived).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):''}</p></div><button className="quiet-button" onClick={onReconnect}><RefreshCw size={16}/>重新连接</button></div>}
-   {page==='home'&&online&&<div className="household-summary"><span>{!live&&'上次记录 · '}<b>{online.online}/{online.total}</b>设备在线</span>{online.simulated>0&&<small>含 {online.simulated} 项模拟数据</small>}</div>}
    {children}
   </main></div>
   <nav className="mobile-nav" aria-label="移动导航">{(['home','rooms','scenes','profile'] as const).map(id=>{const item=nav.find(i=>i.id===id)!;const Icon=item.icon;const selected=page===id||(id==='profile'&&['account','devices','automation','billing','vr'].includes(page));return <a key={id} href={'#'+id} className={selected?'selected':''} aria-current={selected?'page':undefined}><Icon size={21}/><span>{id==='profile'?'我的':item.shortName}</span></a>;})}</nav>

@@ -2,12 +2,12 @@ import Devices from './desktop/Devices';
 import {emptyFilters} from './desktop/model';
 import type {DeviceFilters} from './desktop/model';
 import './desktop/style.css';
-import {Drawer} from '@arco-design/web-react';
-import {useMobile,readFavorites} from './mobile/hooks';
+import './home/style.css';
+import {useMobile} from './mobile/hooks';
 import {MobileHome,RoomsPage} from './mobile/Views';
 import DevicePanel from './deviceControls/Panel';
-import {defaultFavorites} from './deviceControls/model';
 import './mobile/style.css';
+import './mobile/today.css';
 import {StatusPanel,PageSkeleton} from './ui/StatusPanel';
 import type {ConnectionStatus} from './connection';
 import Scenes from './scenes';
@@ -40,18 +40,12 @@ export default function App() {
   const openDirectory=(patch:Partial<DeviceFilters>={})=>{setDeviceFilters({...emptyFilters,...patch});location.hash='devices';};
   const [mobileRoom,setMobileRoom]=useState('all');
   const [offlineOnly,setOfflineOnly]=useState(false);
-  const [favoriteDialog,setFavoriteDialog]=useState(false);
-  const [favoriteConfig,setFavoriteConfig]=useState<{key:string;value:string[]|null}>({key:'',value:null});
   const [page, setPage] = useState(currentPage);
   useEffect(()=>{window.scrollTo(0,0);setSelectedDevice(undefined);},[page]);
   const [room, setRoom] = useState('客厅');
   const [nightMode, setNightMode] = useState(() => {try{return window.localStorage.getItem('smart-home-theme') === 'dark';}catch{return false;}});
   const [state, setState] = useState<State>();
   const [session, setSession] = useState<Session>();
-  const favoriteKey=session?`home-os:favorites:${session.household.id}:${session.user.id}`:'';
-  useEffect(()=>{setFavoriteConfig({key:favoriteKey,value:favoriteKey?readFavorites(favoriteKey):null});setSelectedDevice(undefined);setFavoriteDialog(false);},[favoriteKey]);
-  const favoriteIds=(favoriteConfig.key===favoriteKey?favoriteConfig.value:null)??defaultFavorites(state?.devices??[]);
-  const toggleFavorite=(id:string)=>{const ids=favoriteIds.includes(id)?favoriteIds.filter(value=>value!==id):[...favoriteIds,id];if(ids.length>12)return;setFavoriteConfig({key:favoriteKey,value:ids});try{localStorage.setItem(favoriteKey,JSON.stringify(ids));}catch{setNotice({text:'收藏仅保留在当前页面，浏览器不允许持久保存。',error:true});}};
   const openRoom=(id:string)=>{setMobileRoom(id);setOfflineOnly(false);location.hash='rooms';};
   const [authChecked, setAuthChecked] = useState(false);
   const [setupRequired, setSetupRequired] = useState(false);
@@ -194,8 +188,8 @@ export default function App() {
   const householdName = session.localPreview ? '我的家' : session.household.name.trim() || '我的家';
   const controlsBusy=busy||connection!=='live';
   const pages = state ? {
-    home: mobile?<MobileHome state={state} favorites={favoriteIds} onFavorites={()=>setFavoriteDialog(true)} onRoom={openRoom} onOffline={()=>{setMobileRoom('all');setOfflineOnly(true);location.hash='rooms';}} busy={controlsBusy} mutate={mutate} onOpen={openDevice}/>:<Home state={state} busy={controlsBusy} mutate={mutate} favorites={favoriteIds} onFavorites={()=>setFavoriteDialog(true)} onFavorite={toggleFavorite} onOpen={openDevice} onRoom={openRoom} onOffline={()=>openDirectory({status:'offline'})} onDevices={()=>openDirectory()}/>,
-    devices: <Devices state={state} busy={controlsBusy} mutate={mutate} favorites={favoriteIds} onFavorite={toggleFavorite} onOpen={openDevice} filters={deviceFilters} onFilters={setDeviceFilters} role={session.user.role}/>,
+    home: mobile?<MobileHome state={state} live={connection==='live'} canViewAutomation={session.user.role!=='guest'} onRoom={openRoom} onOffline={()=>{setMobileRoom('all');setOfflineOnly(true);location.hash='rooms';}} busy={controlsBusy} mutate={mutate} onOpen={openDevice}/>:<Home state={state} live={connection==='live'} canViewAutomation={session.user.role!=='guest'} busy={controlsBusy} mutate={mutate} onOpen={openDevice} onRoom={openRoom} onOffline={()=>openDirectory({status:'offline'})} onDevices={()=>openDirectory()}/>,
+    devices: <Devices state={state} busy={controlsBusy} mutate={mutate} onOpen={openDevice} filters={deviceFilters} onFilters={setDeviceFilters} role={session.user.role}/>,
     rooms: <RoomsPage state={state} roomId={mobileRoom} onRoom={setMobileRoom} offlineOnly={offlineOnly} onOfflineChange={setOfflineOnly} busy={controlsBusy} mutate={mutate} onOpen={openDevice}/>,
     account: <Profile onDevices={()=>openRoom('all')} key="account" initialSection="members" state={state} session={session} householdName={householdName} busy={controlsBusy} pending={busy} onLogout={()=>void logout()} onSessionExpired={()=>clearSession()}/>,
     scenes: <Scenes state={state} canManage={session.user.role==='admin'} busy={controlsBusy} pending={busy} mutate={mutate}/>,
@@ -208,7 +202,6 @@ export default function App() {
   return <Layout mobile={mobile} householdName={householdName} connection={connection} lastReceived={lastReceived} onReconnect={reconnect} page={activePage} role={session.user.role} state={state} busy={busy} nightMode={nightMode} onNightModeChange={setNightMode}>
     {notice && <div className={'notice' + (notice.error ? ' error' : '')} role={notice.error ? 'alert' : 'status'}>{notice.text}<button aria-label="关闭提示" onClick={() => setNotice(undefined)}>×</button></div>}
     {pages ? pages[activePage] : connection==='connecting'?<PageSkeleton/>:<StatusPanel kind={connection==='offline'?'offline':'error'} title="暂未取得家庭状态" description="连接恢复后将自动同步。" onRetry={reconnect} retryLabel="重新连接"/>}
-    <DevicePanel device={state?.devices.find(d=>d.id===selectedDevice)} visible={!!selectedDevice} mobile={mobile} busy={controlsBusy} mutate={mutate} onClose={closeDevice} favorite={favoriteIds.includes(selectedDevice??'')} onFavorite={()=>selectedDevice&&toggleFavorite(selectedDevice)}/>
-    <Drawer visible={favoriteDialog} title={<div className="control-sheet-heading"><span>常用设备</span><button aria-label="关闭收藏管理" onClick={()=>setFavoriteDialog(false)}>关闭</button></div>} closable={false} placement={mobile?'bottom':'right'} height={mobile?'75dvh':undefined} width={mobile?undefined:400} onCancel={()=>setFavoriteDialog(false)} footer={null} focusLock autoFocus><small title="收藏仅保存在此浏览器，首页展示前 6 项">{favoriteIds.length} / 12 项已收藏</small><div className="favorite-list">{state?.devices.length===0&&<StatusPanel compact kind="empty" title="暂无可收藏设备" description="接入设备后，可选择常用设备。" action={<a className="quiet-button" href="#profile" onClick={()=>setFavoriteDialog(false)}>查看家庭设置</a>}/>} {state?.devices.map(device=><label key={device.id}><input type="checkbox" checked={favoriteIds.includes(device.id)} disabled={!favoriteIds.includes(device.id)&&favoriteIds.length>=12} onChange={()=>toggleFavorite(device.id)}/><span>{device.name}<small>{device.room}{device.state.online?'':' · 离线'}</small></span></label>)}{favoriteIds.filter(id=>!state?.devices.some(d=>d.id===id)).map(id=><label key={id}><input type="checkbox" checked onChange={()=>toggleFavorite(id)}/><span>已移除或暂未发现的设备<small>{id}</small></span></label>)}</div></Drawer>
+    <DevicePanel device={state?.devices.find(d=>d.id===selectedDevice)} visible={!!selectedDevice} mobile={mobile} busy={controlsBusy} mutate={mutate} onClose={closeDevice}/>
   </Layout>;
 }

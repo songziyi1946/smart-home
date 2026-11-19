@@ -1,4 +1,4 @@
-import type {DeviceSnapshot} from './types';
+import type {DeviceSnapshot, State} from './types';
 export type Metric = 'temperature' | 'humidity' | 'pm25' | 'co2';
 export function sourceLabel(device: DeviceSnapshot) {
   return device.state.source === 'simulator' || device.state.source === 'mock' ? '模拟数据' : 'Home Assistant';
@@ -27,3 +27,12 @@ export function onlineSummary(devices: DeviceSnapshot[]) {
 }
 
 export function latestFailures<T extends {status:string}>(runs:T[],key:(run:T)=>string){const seen=new Set<string>();return runs.filter(run=>{const id=key(run);if(seen.has(id))return false;seen.add(id);return run.status==='failed';});}
+
+export function attention(state: State) {
+  return {
+    offline: state.devices.filter(device => !device.state.online),
+    lowBattery: state.devices.filter(device => device.state.online && typeof device.state.values.battery === 'number' && device.state.values.battery < 20),
+    scenes: latestFailures(state.sceneRuns, run => run.sceneId).filter(run => state.scenes.some(scene => scene.id === run.sceneId)),
+    automations: latestFailures(state.automationRuns, run => run.ruleId).filter(run => state.automations.some(rule => rule.id === run.ruleId)),
+  };
+}

@@ -13,8 +13,6 @@ export default function DevicePanel({
   busy,
   mutate,
   onClose,
-  favorite,
-  onFavorite,
 }: {
   device?: DeviceSnapshot;
   visible: boolean;
@@ -22,8 +20,6 @@ export default function DevicePanel({
   busy: boolean;
   mutate: Mutate;
   onClose: () => void;
-  favorite: boolean;
-  onFavorite: () => void;
 }) {
   const lastDevice = useRef<DeviceSnapshot>();
   if (device) lastDevice.current = device;
@@ -105,14 +101,7 @@ export default function DevicePanel({
               <span>
                 {device.room} · {sourceLabel(device)}
               </span>
-              <button
-                className="quiet-button"
-                onClick={onFavorite}
-                aria-pressed={favorite}
-              >
-                <Star size={16} fill={favorite ? "currentColor" : "none"} />
-                {favorite ? "已收藏" : "收藏"}
-              </button>
+
             </div>
             {!device.state.online && (
               <p className="control-offline" role="status">

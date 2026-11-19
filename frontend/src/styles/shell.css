@@ -26,9 +26,6 @@
 .connection-pill:not(.connection-live) {color:var(--color-warning);}
 main {width:100%;max-width:var(--content-width);margin:0 auto;padding:0 var(--space-8) var(--space-12);}
 main:focus {outline:none;}
-.household-summary {display:flex;align-items:center;gap:var(--space-5);flex-wrap:wrap;margin-bottom:var(--space-6);font-size:var(--font-sm);color:var(--muted);}
-.household-summary>span {display:flex;align-items:baseline;gap:6px;}.household-summary b {font-weight:600;color:var(--color-text);}
-.household-summary small {padding:3px 8px;border:1px solid var(--line);border-radius:var(--radius-pill);font-size:11px;}
 .connection-banner {display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);margin-bottom:var(--space-5);border:1px solid var(--line);border-radius:var(--radius-card);background:var(--color-warning-soft);color:var(--color-warning);}
 .connection-banner>svg {flex-shrink:0;}.connection-banner>div{flex:1;min-width:0;}.connection-banner p{font-size:var(--font-sm);margin:4px 0 0;}.connection-banner strong{font-weight:600;}
 .quiet-button {display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);padding:0 var(--control-padding);min-height:var(--control-height);border:1px solid var(--line);border-radius:var(--radius-control);background:var(--panel);color:var(--color-text);white-space:nowrap;}
@@ -51,7 +48,7 @@ main:focus {outline:none;}
  .shell,.shell-compact{display:block;}.sidebar{display:none;}.workspace{padding-bottom:calc(84px + env(safe-area-inset-bottom));}
  .top{padding:24px 16px 16px;gap:12px;align-items:flex-start;}.home-title h1{font-size:25px;}
  .header-tools{gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:54%;}.connection-pill{order:3;flex-basis:100%;justify-content:flex-end;font-size:11px;}.dashboard-clock{border:0;padding:0;}.dashboard-clock strong{font-size:17px;}.dashboard-clock small{font-size:10px;}.theme-toggle{width:44px;height:44px;}
- main{padding:0 16px 24px;}.household-summary{gap:8px 16px;margin-bottom:16px;font-size:12px;}
+ main{padding:0 16px 24px;}
  .mobile-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:fixed;z-index:20;inset:auto 0 0;min-height:calc(68px + env(safe-area-inset-bottom));padding:6px 12px calc(6px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);}
  .mobile-nav a,.mobile-nav button{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;min-height:48px;font-size:11px;border:0;border-radius:var(--radius-control);color:var(--muted);background:transparent;}.mobile-nav .selected{background:var(--accent-soft);color:var(--accent);font-weight:600;}
  .connection-banner{flex-wrap:wrap;align-items:flex-start;}.connection-banner .quiet-button{margin-left:32px;}.page-skeleton{grid-template-columns:1fr;}.skeleton-card{min-height:160px;}
@@ -60,3 +57,25 @@ main:focus {outline:none;}
 @media(max-width:767px){.connection-banner>div{flex-basis:calc(100% - 32px);}.connection-banner .quiet-button{margin-top:4px;}}
 .status-compact{padding:24px 16px;}.status-compact .status-illustration{width:44px;height:44px;border-radius:var(--radius-control);}.status-compact h2{font-size:17px;margin:0;}.status-panel a.quiet-button{color:var(--color-text);}
 @media(max-width:767px){.notice button{min-width:44px;min-height:44px}.arco-modal-footer .arco-btn{min-height:44px}.status-panel{padding:24px 16px}}
+
+.brand-label {min-width:0;display:grid;gap:2px;}
+.brand-label small {font-size:11px;letter-spacing:.08em;color:var(--muted);}
+.brand-label strong {font-size:17px;}
+.shell-compact .brand-label {display:none;}
+@media(min-width:768px) and (max-width:1199px){.brand-label{display:none;}}
+
+@media (max-width: 767px) {
+  .top {align-items: center;padding-top: calc(16px + env(safe-area-inset-top));padding-bottom: 16px;}
+  .home-title h1 {font-size: 24px;line-height: 1.3;}
+  .header-tools {flex-wrap: nowrap;max-width: none;flex-shrink: 0;gap: 10px;}
+  .dashboard-clock strong {font-size: 16px;}
+  .dashboard-clock small {font-size: 10px;}
+  .theme-toggle {border-radius: 14px;}
+  .mobile-nav {padding-inline: 16px;gap: 8px;}
+  .mobile-nav a {border-radius: 14px;}
+  .mobile-nav .selected {box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);}
+}
+@media (max-width: 359px) {
+  .header-tools {gap: 6px;}
+  .home-title h1 {font-size: 21px;}
+}
