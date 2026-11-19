@@ -308,6 +308,10 @@
   font-size: 13px;
   color: var(--muted);
 }
+.arco-drawer.voice-drawer {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
 .voice-drawer .arco-drawer-body {
   max-height: 85dvh;
   overflow: auto;

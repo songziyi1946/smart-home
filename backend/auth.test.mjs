@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
-import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
+import { scryptSync } from 'node:crypto';
+import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createAuth, validateOrigin, authorizeHousehold, filterHouseholdState } from './auth.mjs';
@@ -31,6 +32,44 @@ async function fixture(t, options = {}) {
   } };
 }
 const account = { username: 'test_admin', password: 'test-password-82!', displayName: '测试管理员', homeName: '测试家庭' };
+
+test('eight-character passwords support setup, login and invitation joining with length boundaries enforced', async t => {
+  const f = await fixture(t);
+  const eight = { ...account, password: 'test-8pw' };
+  for (const password of ['1234567', 'x'.repeat(33)]) {
+    assert.equal((await f.request('/auth/setup', { method: 'POST', body: { ...eight, password } })).status, 400);
+  }
+  const owner = await f.request('/auth/setup', { method: 'POST', body: eight });
+  assert.equal(owner.status, 200);
+  for (const password of ['1234567', 'x'.repeat(129)]) {
+    assert.equal((await f.request('/auth/login', { method: 'POST', body: { ...eight, password } })).status, 400);
+  }
+  f.restart();
+  const login = await f.request('/auth/login', { method: 'POST', body: eight });
+  assert.equal(login.status, 200);
+  const invitation = await f.request('/auth/invitations', {
+    method: 'POST', cookie: login.cookie.split(';')[0], body: { role: 'member' },
+  });
+  assert.equal(invitation.status, 201);
+  const member = { ...eight, username: 'short_password_member', code: invitation.body.code };
+  assert.equal((await f.request('/auth/join', { method: 'POST', body: { ...member, password: '1234567' } })).status, 400);
+  assert.equal((await f.request('/auth/join', { method: 'POST', body: { ...member, password: 'x'.repeat(33) } })).status, 400);
+  assert.equal((await f.request('/auth/join', { method: 'POST', body: member })).status, 200);
+  assert.equal((await f.request('/auth/login', { method: 'POST', body: member })).status, 200);
+});
+
+test('32-character setup passwords work and historical longer passwords still authenticate', async t => {
+  const f = await fixture(t);
+  const maximum = { ...account, password: 'x'.repeat(32) };
+  assert.equal((await f.request('/auth/setup', { method: 'POST', body: maximum })).status, 200);
+  assert.equal((await f.request('/auth/login', { method: 'POST', body: maximum })).status, 200);
+  const historical = { ...account, password: 'x'.repeat(64) };
+  const stored = JSON.parse(readFileSync(f.file, 'utf8'));
+  stored.users[0].passwordHash = scryptSync(historical.password, stored.users[0].salt, 64).toString('hex');
+  writeFileSync(f.file, JSON.stringify(stored), { mode: 0o600 });
+  f.restart();
+  assert.equal((await f.request('/auth/login', { method: 'POST', body: historical })).status, 200);
+});
 
 test('setup, credentials, authenticated access, logout and persisted user', async t => {
   const f = await fixture(t);

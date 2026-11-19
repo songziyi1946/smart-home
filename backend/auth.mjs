@@ -9,9 +9,9 @@ const scrypt = promisify(deriveKey);
 const cookieName = 'smart_home_session';
 const credentials = z.object({
   username: z.string().trim().regex(/^[A-Za-z0-9_-]{3,32}$/),
-  password: z.string().min(12).max(128),
+  password: z.string().min(8).max(128),
 });
-const identity = credentials.extend({ displayName: z.string().trim().min(1).max(40) });
+const identity = credentials.extend({ password: z.string().min(8).max(32), displayName: z.string().trim().min(1).max(40) });
 const publicUser = ({ passwordHash, salt, disabled, ...user }) => user;
 const digest = (token) => createHash('sha256').update(token).digest('hex');
 

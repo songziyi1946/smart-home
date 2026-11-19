@@ -83,13 +83,14 @@ select:disabled {
   }
 }
 
-/* The password wrapper owns focus styling, including its visibility toggle. */
+/* Plain inputs and composite inputs share one focus ring on their outer edge. */
+.arco-input:focus,
 .arco-input-inner-wrapper:focus-within {
   outline: none;
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
-.arco-input-inner-wrapper .arco-input:focus-visible {
+.arco-input-inner-wrapper .arco-input:focus {
   outline: none;
   box-shadow: none;
 }
