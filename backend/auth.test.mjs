@@ -1,3 +1,4 @@
+import { deploymentSecurity } from './app/deployment-security.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
@@ -11,6 +12,7 @@ async function fixture(t, options = {}) {
   const directory = mkdtempSync(join(tmpdir(), 'smart-home-auth-'));
   const file = join(directory, 'auth.json');
   const app = express();
+  if (options.trustProxy) app.set('trust proxy', options.trustProxy);
   let auth = createAuth({ file, ...options });
   app.use(express.json());
   app.use('/api', validateOrigin);
@@ -23,15 +25,33 @@ async function fixture(t, options = {}) {
   const server = await new Promise((resolve, reject) => { const value = app.listen(0, '127.0.0.1', error => error ? reject(error) : resolve(value)); });
   t.after(() => { server.closeAllConnections(); server.close(); rmSync(directory, { recursive: true, force: true }); });
   const url = 'http://127.0.0.1:' + server.address().port;
-  return { file, restart() { auth = createAuth({ file, ...options }); }, async request(path, { method = 'GET', body, cookie, origin } = {}) {
+  return { file, restart() { auth = createAuth({ file, ...options }); }, async request(path, { method = 'GET', body, cookie, origin, forwardedProto, bootstrapToken } = {}) {
     const response = await fetch(url + '/api' + path, { method, headers: {
       ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       ...(cookie ? { Cookie: cookie } : {}), ...(origin ? { Origin: origin } : {}),
+      ...(forwardedProto ? { 'X-Forwarded-Proto': forwardedProto } : {}),
+      ...(bootstrapToken ? { 'X-Bootstrap-Token': bootstrapToken } : {}),
     }, body: body === undefined ? undefined : JSON.stringify(body) });
     return { status: response.status, body: await response.json(), cookie: response.headers.get('set-cookie'), cache: response.headers.get('cache-control') };
   } };
 }
 const account = { username: 'test_admin', password: 'test-password-82!', displayName: '测试管理员', homeName: '测试家庭' };
+
+test('trusted HTTPS proxy issues Secure cookies and preserves origin protection', async t => {
+  const f = await fixture(t, { trustProxy: 'loopback' });
+  const created = await f.request('/auth/setup', { method: 'POST', body: account, forwardedProto: 'https' });
+  assert.equal(created.status, 200);
+  assert.match(created.cookie, /; Secure/);
+  assert.match(created.cookie, /HttpOnly/);
+  const cookie = created.cookie.split(';')[0];
+  assert.equal((await f.request('/auth/logout', { method: 'POST', body: {}, cookie, origin: 'https://untrusted.example', forwardedProto: 'https' })).status, 403);
+  const logout = await f.request('/auth/logout', { method: 'POST', body: {}, cookie, forwardedProto: 'https' });
+  assert.equal(logout.status, 200);
+  assert.match(logout.cookie, /; Secure/);
+  const local = await fixture(t);
+  const direct = await local.request('/auth/setup', { method: 'POST', body: account, forwardedProto: 'https' });
+  assert.doesNotMatch(direct.cookie, /; Secure/);
+});
 
 test('eight-character passwords support setup, login and invitation joining with length boundaries enforced', async t => {
   const f = await fixture(t);
@@ -200,4 +220,42 @@ test('guest scene visibility includes definitions but only their own execution r
  const state={devices:[],scenes:[{id:'public',name:'阅读',actions:[]}],sceneRuns:[{actorId:'owner',name:'private-run'},{actorId:'visitor',name:'my-run'}]};
  const filtered=filterHouseholdState(state,{id:'visitor',role:'guest'});
  assert.equal(filtered.scenes.length,1);assert.equal(filtered.sceneRuns.length,1);assert.equal(filtered.sceneRuns[0].name,'my-run');assert.equal(filtered.sceneRuns[0].actorId,undefined);assert.equal(JSON.stringify(filtered).includes('private-run'),false);
+});
+
+
+test('deployment bootstrap is closed by default, one-time, and preserves existing accounts', async t => {
+  const token = 'fixture-only-bootstrap-token-32-characters';
+  const closed = await fixture(t, deploymentSecurity({ NODE_ENV: 'production' }));
+  assert.equal((await closed.request('/auth/setup', { method: 'POST', body: account })).status, 403);
+  const policy = deploymentSecurity({ SMART_HOME_DEPLOYMENT_MODE: 'https', SMART_HOME_BOOTSTRAP_TOKEN: token });
+  const f = await fixture(t, policy);
+  assert.equal((await f.request('/auth/setup', { method: 'POST', body: account })).status, 403);
+  assert.equal((await f.request('/auth/setup', { method: 'POST', body: account, bootstrapToken: 'wrong' })).status, 403);
+  const created = await f.request('/auth/setup', { method: 'POST', body: account, bootstrapToken: token });
+  assert.equal(created.status, 200);
+  assert.match(created.cookie, /; Secure/);
+  assert.equal((await f.request('/auth/setup', { method: 'POST', body: account, bootstrapToken: token })).status, 409);
+  // The token authorizes only initial creation; it never authenticates business requests.
+  assert.equal((await f.request('/protected', { bootstrapToken: token })).status, 401);
+  f.restart();
+  const login = await f.request('/auth/login', { method: 'POST', body: account });
+  assert.equal(login.status, 200);
+  assert.match(login.cookie, /; Secure/);
+  const logout = await f.request('/auth/logout', { method: 'POST', body: {}, cookie: login.cookie.split(';')[0] });
+  assert.match(logout.cookie, /; Secure/);
+  const local = await fixture(t, deploymentSecurity({}));
+  const localSetup = await local.request('/auth/setup', { method: 'POST', body: account });
+  assert.equal(localSetup.status, 200);
+  assert.doesNotMatch(localSetup.cookie, /; Secure/);
+});
+
+test('local setup requires local peer and local Host, independent of forwarded values', () => {
+  const policy = deploymentSecurity({});
+  const req = (peer, hostname) => ({ socket: { remoteAddress: peer }, hostname, get: () => undefined });
+  assert.equal(policy.allowSetup(req('127.0.0.1', 'localhost')), true);
+  assert.equal(policy.allowSetup(req('127.0.0.1', 'public.example')), false);
+  assert.equal(policy.allowSetup(req('192.0.2.1', 'localhost')), false);
+  assert.equal(deploymentSecurity({ NODE_ENV: 'production' }).allowSetup(req('127.0.0.1', 'localhost')), false);
+  assert.throws(() => deploymentSecurity({ SMART_HOME_DEPLOYMENT_MODE: 'typo' }));
+  assert.throws(() => deploymentSecurity({ SMART_HOME_BOOTSTRAP_TOKEN: 'short' }));
 });

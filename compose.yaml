@@ -1,0 +1,50 @@
+name: smart-home
+services:
+  app:
+    build: .
+    image: smart-home:${SMART_HOME_IMAGE_TAG:-local}
+    user: "${SMART_HOME_UID:-1000}:${SMART_HOME_GID:-1000}"
+    init: true
+    restart: unless-stopped
+    environment:
+      SMART_HOME_DEPLOYMENT_MODE: https
+      SMART_HOME_BOOTSTRAP_TOKEN: ${SMART_HOME_BOOTSTRAP_TOKEN:-}
+      HA_URL: ${HA_URL:-}
+      HA_TOKEN: ${HA_TOKEN:-}
+      HA_ENTITY_PREFIX: ${HA_ENTITY_PREFIX:-}
+    volumes:
+      - ${SMART_HOME_HOST_DATA_DIR:-./data}:/data
+    ports:
+      - "127.0.0.1:${SMART_HOME_LOCAL_PORT:-3101}:3101"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3101/api/auth/session').then(r=>process.exit([200,401].includes(r.status)?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      SMART_HOME_DOMAIN: ${SMART_HOME_DOMAIN:?Set SMART_HOME_DOMAIN to the public hostname}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  caddy_data:
+  caddy_config:

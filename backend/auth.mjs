@@ -15,7 +15,7 @@ const identity = credentials.extend({ password: z.string().min(8).max(32), displ
 const publicUser = ({ passwordHash, salt, disabled, ...user }) => user;
 const digest = (token) => createHash('sha256').update(token).digest('hex');
 
-export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, now = Date.now }) {
+export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, now = Date.now, allowSetup = () => true, secureCookies = false }) {
   const stored = repository ? repository.load() : existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null;
   let data = stored && (stored.users ? stored : {
     household: { id: randomUUID(), name: '我的家' }, users: [stored], invitations: [],
@@ -26,7 +26,7 @@ export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, 
   const attempts = new Map();
   const router = Router();
   const getToken = (req) => (req.headers.cookie ?? '').split(';').map(value => value.trim()).find(value => value.startsWith(cookieName + '='))?.slice(cookieName.length + 1);
-  const cookieOptions = (req) => ({ httpOnly: true, sameSite: 'strict', secure: req.secure, path: '/' });
+  const cookieOptions = (req) => ({ httpOnly: true, sameSite: 'strict', secure: secureCookies || req.secure, path: '/' });
   const active = user => user && !user.disabled && (!user.accessExpiresAt || user.accessExpiresAt > now());
   function save() {
     if(repository){try{repository.save(data);}catch(error){data=repository.load();throw error;}return;}
@@ -93,6 +93,7 @@ export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, 
   });
   router.post('/setup', throttle, async (req, res) => {
     if (data) return res.status(409).json({ message: '家庭已创建，请登录或通过邀请加入' });
+    if (!allowSetup(req)) return res.status(403).json({ message: "首次创建家庭需要在本机初始化，或提供部署者的初始化授权" });
     const input = identity.extend({ homeName: z.string().trim().min(1).max(40) }).parse(req.body);
     const user = await makeUser(input, 'admin');
     const household = { id: randomUUID(), name: input.homeName };

@@ -1,0 +1,14 @@
+.git
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+backend/data
+data
+deploy/compose.env
+**/*.log
+**/*.sqlite*
+**/*.blend
+**/build_*.py
+outputs
+.DS_Store

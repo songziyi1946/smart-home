@@ -48,4 +48,6 @@ Mac 体验包需要 macOS 13.5 或更新版本。首次启动时，如果系统�
 
 如果已经在使用 Home Assistant，可以按[设备接入说明](docs/technical-guide.md#home-assistant-与虚拟设备)连接支持的设备。可用的控制和读数取决于实际设备；模拟数据会单独标明。
 
-遇到启动问题，或需要改端口、备份数据，请查看[开发与部署指南](docs/technical-guide.md)。
+遇到启动问题，或需要改端口、备份数据、使用 Docker Compose 配置常驻运行与 HTTPS，请查看[开发与部署指南](docs/technical-guide.md)。
+
+首次公开部署前请阅读 [初始化、安全 Cookie 与隔离演示](docs/technical-guide.md#首次初始化安全-cookie-与隔离演示)。HTTPS 模式默认关闭首次注册入口，须先私下初始化家庭；不要直接公开未初始化的 local/免登录服务。

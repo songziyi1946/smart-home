@@ -466,3 +466,7 @@ The frontend consumes `/api/events` through EventSource; do not reintroduce peri
 
 - Desktop home is composed in `frontend/src/home/index.tsx`; desktop-only directory/cards/selectors live in `frontend/src/desktop/`. Keep desktop attention and mobile attention consistent through shared state selectors.
 - `#devices` provides read/control/filter/favorite workflows only. Do not imply device rename, room assignment or online connection configuration is persisted until those APIs exist.
+
+## Deployment security
+
+`backend/app/deployment-security.mjs` owns explicit local/https policy. Production defaults to https: Secure cookies are unconditional, first setup requires temporary bootstrap authorization, and --skip-login is rejected. Do not reintroduce broad Express trust proxy or infer security from arbitrary forwarded headers. Local first setup requires a loopback peer and local Host; preserve Vite/SSH-tunnel and packaged local startup. Bootstrap credentials must stay server-only and out of logs/URLs. Never read or modify existing runtime data to test this policy; use temporary fixtures. `backend/data/state.json` is ignored runtime migration input, not a source fixture.

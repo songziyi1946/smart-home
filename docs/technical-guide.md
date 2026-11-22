@@ -206,3 +206,34 @@ SQLite 仓储使用 Node.js 内置的 `node:sqlite`，无需额外安装原生 n
 语音录入使用浏览器 `SpeechRecognition` 或 `webkitSpeechRecognition`，语言为 `zh-CN`。需要支持该接口的浏览器、HTTPS（本机 localhost 可用）和麦克风权限；普通局域网 HTTP 地址提供文字录入兜底。浏览器可能使用在线识别服务，界面在开始录音前告知。每次点击开始才启动识别，关闭、离开首页、切换到后台或达到 60 秒时清理录音。识别文字可编辑，仅作为本次首页内存中的演示草稿保留；离开首页或刷新会清除，不写入数据库或日志，也不触发安排或设备命令。
 
 新建家庭及邀请加入时密码长度为 8–32 位；登录兼容历史账号的 8–128 位密码。
+
+## Docker Compose 常驻部署
+
+仓库根目录包含多阶段 Dockerfile、compose.yaml 和 deploy/Caddyfile。应用以非 root 用户运行，Caddy 提供自动 HTTPS 和 SSE 反向代理。两项服务使用 unless-stopped 自动重启，Docker 守护进程需设置开机启动。
+
+在服务器复制 deploy/compose.env.example 为 deploy/compose.env，设置域名、数据目录及目录所有者 UID/GID。部署现有家庭时先停止旧 Node 进程并备份整个数据目录（包括 SQLite WAL 文件），再挂载同一目录。不要同时启动两个写入同一数据库的应用实例。
+
+首次创建数据目录时使用配置的 UID/GID 设置所有者及 700 权限；示例中的路径用于当前服务器。HA_URL、HA_TOKEN 可通过部署环境变量配置，HA_URL 必须是容器可到达的地址。
+
+```sh
+id smarthome
+docker compose --env-file deploy/compose.env config --quiet
+docker compose --env-file deploy/compose.env up -d --build
+docker compose --env-file deploy/compose.env ps
+docker compose --env-file deploy/compose.env logs --tail 50
+```
+
+域名需解析至服务器公网 IP，云安全组需允许 TCP 80、443。Caddy 的证书与配置使用命名卷保存；家庭业务数据使用独立宿主机目录挂载。更新代码后再次执行 up -d --build。重启服务使用 docker compose --env-file deploy/compose.env restart。删除容器后重建仍使用原有数据目录；备份和恢复需在应用停止时复制整个目录。
+
+应用仅将 3101 映射到服务器回环地址，可继续使用原 SSH 转发排查。手机直接使用 HTTPS 域名。容器通过 SMART_HOME_API_HOST 监听容器网络，默认本地开发仍绑定 127.0.0.1。Compose 显式使用 SMART_HOME_DEPLOYMENT_MODE=https，登录/退出 Cookie 始终带 Secure；不信任 X-Forwarded-* 请求头，也不启用 Express trust proxy。HTTPS 在同一部署的 Caddy 终止，应用端口只映射到宿主回环地址。此配置需要真实 HTTPS；HTTP 隧道上的登录 Cookie 不会发送。首次初始化流程见下节。
+
+
+## 首次初始化、安全 Cookie 与隔离演示
+
+`SMART_HOME_DEPLOYMENT_MODE` 只接受 `local` / `https`。未设置时，NODE_ENV=production 默认 https，其余默认 local。https 模式禁止 --skip-login，默认拒绝首次管理员创建（403），不会影响已有 SQLite 家庭登录。local 模式仅允许直接连接来自回环地址、且 Host 为 localhost / 127.0.0.1 / [::1] 的首次创建；Vite 同源代理保留 Host，默认开发与直接 Node 的 SSH 隧道初始化不变。不要在公开部署中使用 local 或免登录模式。
+
+推荐先通过 SSH 隧道，在仅绑定 127.0.0.1 的 Node 进程中使用 local 模式初始化家庭，再停止该进程，挂载同一数据目录启动 https 部署，最后开放 Caddy 公网入口。既有数据库无需重新初始化。容器的 NAT 对端不一定是回环地址，因此容器内不要靠 local 模式绕过初始化限制。
+
+若直接使用容器初始化：先仅启动 app（不要启动 Caddy/公网入口），临时配置 SMART_HOME_BOOTSTRAP_TOKEN 为密码管理器生成的至少32字符随机值；通过 SSH 隧道对 /api/auth/setup 发送 JSON（homeName、username、displayName、password），额外带 X-Bootstrap-Token 请求头。仅首次创建接受此授权；家庭存在后始终返回409，Token不能访问业务 API。不要把 Token 放在 URL、日志或仓库中，也不要把真实密码写进 shell 历史。完成后移除 Token，重建 app，再启动 Caddy，通过正式 HTTPS 重新登录。HTTP 隧道初始化返回的 Secure Cookie 不用于登录。管理员可在已有页面发出限时访客邀请，访客仍只能控制设备/场景，不能管理家庭、自动化或账单。
+
+演示请使用一个全新的临时 SMART_HOME_DATA_DIR，清除 HA_URL、HA_TOKEN、HA_ROOMS_FILE、HA_ENTITY_PREFIX 等集成环境变量，只使用内置 MockProvider；不要复制现有 backend/data 或家庭数据库。运行数据 state.json 已从 Git 索引移除但保留本机文件；历史提交不因此消失，如曾提交真实信息需另行评估历史清理。新环境已有不含账单账号的内置种子，无需运行时 JSON 文件。测试只使用临时目录，不接触实际家庭数据。

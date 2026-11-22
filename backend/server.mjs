@@ -1,3 +1,4 @@
+import { deploymentSecurity } from './app/deployment-security.mjs';
 import {isDeepStrictEqual} from 'node:util';
 import {SQLiteStore} from './infrastructure/sqlite-store.mjs';
 import { initializeAutomations, validateRule, evaluateRule, createAutomationEngine } from './domain/automations/engine.mjs';
@@ -16,6 +17,9 @@ import { randomUUID } from 'node:crypto';
 import { execFile } from 'node:child_process';
 
 const app = express();
+const security = deploymentSecurity();
+// HTTPS deployment is explicit: never trust arbitrary forwarded headers.
+if (security.mode === 'https' && process.argv.includes('--skip-login')) throw new Error('HTTPS deployment cannot skip login');
 app.use(express.json({ limit: '32kb' }));
 const dir = process.env.SMART_HOME_DATA_DIR
   ? pathToFileURL(resolve(process.env.SMART_HOME_DATA_DIR) + sep)
@@ -99,7 +103,7 @@ if (skipLogin) {
     localPreview: true, user: localUser, household: { id: 'local', name: '本地家庭' },
   }));
 } else {
-  const auth = createAuth({ repository: {load:()=>store.loadAuth(),save:data=>store.saveAuth(data),create:data=>store.saveAuth(data,{create:true})} });
+  const auth = createAuth({ allowSetup: security.allowSetup, secureCookies: security.secureCookies, repository: {load:()=>store.loadAuth(),save:data=>store.saveAuth(data),create:data=>store.saveAuth(data,{create:true})} });
   activeAdmin = auth.isActiveAdmin;
   sessionFor = auth.sessionFor; subscribeAuth = auth.subscribeSessions;
   app.use('/api/auth', auth.router);
@@ -239,7 +243,7 @@ app.use((error, _req, res, _next) => {
   res.status(500).json({ message: '保存失败，请重试' });
 });
 const port = Number(process.env.SMART_HOME_API_PORT || 3101);
-const server = app.listen(port, '127.0.0.1', error => {
+const server = app.listen(port, process.env.SMART_HOME_API_HOST || '127.0.0.1', error => {
   if (error) {
     console.error(error.code === 'EADDRINUSE'
       ? `Smart Home API 端口 ${port} 已被占用，请为前后端设置相同的 SMART_HOME_API_PORT。`

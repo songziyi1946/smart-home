@@ -1,0 +1,5 @@
+{$SMART_HOME_DOMAIN} {
+    reverse_proxy app:3101 {
+        flush_interval -1
+    }
+}

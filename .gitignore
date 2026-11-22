@@ -30,3 +30,11 @@ tools/device-simulator/.lab-auth.json
 # SQLite runtime data and migration backups
 backend/data/*.sqlite*
 backend/data/*.pre-sqlite-*.bak
+
+# Container runtime data
+/data/
+deploy/compose.env
+
+# Runtime state (migration input is local only)
+backend/data/state.json
+backend/data/state.json.tmp
