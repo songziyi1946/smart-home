@@ -1,3 +1,4 @@
+import {clientAddressPolicy} from './app/client-address.mjs';
 import { deploymentSecurity } from './app/deployment-security.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,12 +26,14 @@ async function fixture(t, options = {}) {
   const server = await new Promise((resolve, reject) => { const value = app.listen(0, '127.0.0.1', error => error ? reject(error) : resolve(value)); });
   t.after(() => { server.closeAllConnections(); server.close(); rmSync(directory, { recursive: true, force: true }); });
   const url = 'http://127.0.0.1:' + server.address().port;
-  return { file, restart() { auth = createAuth({ file, ...options }); }, async request(path, { method = 'GET', body, cookie, origin, forwardedProto, bootstrapToken } = {}) {
+  return { file, restart() { auth = createAuth({ file, ...options }); }, async request(path, { method = 'GET', body, cookie, origin, forwardedProto, bootstrapToken, clientIP, forwardedFor } = {}) {
     const response = await fetch(url + '/api' + path, { method, headers: {
       ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       ...(cookie ? { Cookie: cookie } : {}), ...(origin ? { Origin: origin } : {}),
       ...(forwardedProto ? { 'X-Forwarded-Proto': forwardedProto } : {}),
       ...(bootstrapToken ? { 'X-Bootstrap-Token': bootstrapToken } : {}),
+      ...(clientIP ? {'X-Smart-Home-Client-IP':clientIP} : {}),
+      ...(forwardedFor ? {'X-Forwarded-For':forwardedFor} : {}),
     }, body: body === undefined ? undefined : JSON.stringify(body) });
     return { status: response.status, body: await response.json(), cookie: response.headers.get('set-cookie'), cache: response.headers.get('cache-control') };
   } };
@@ -258,4 +261,27 @@ test('local setup requires local peer and local Host, independent of forwarded v
   assert.equal(deploymentSecurity({ NODE_ENV: 'production' }).allowSetup(req('127.0.0.1', 'localhost')), false);
   assert.throws(() => deploymentSecurity({ SMART_HOME_DEPLOYMENT_MODE: 'typo' }));
   assert.throws(() => deploymentSecurity({ SMART_HOME_BOOTSTRAP_TOKEN: 'short' }));
+});
+
+
+test('trusted Caddy sources have separate login quotas and spoofed X-Forwarded-For cannot reset them', async t => {
+  let time = Date.now();
+  const f = await fixture(t, {now:()=>time,clientAddress:clientAddressPolicy({SMART_HOME_TRUSTED_PROXY_IP:'127.0.0.1'})});
+  assert.equal((await f.request('/auth/setup',{method:'POST',body:account,clientIP:'198.51.100.10'})).status,200);
+  for(let i=0;i<10;i++)assert.equal((await f.request('/auth/login',{method:'POST',body:{...account,password:'wrong-password'},clientIP:'198.51.100.10',forwardedFor:`203.0.113.${i}`})).status,401);
+  assert.equal((await f.request('/auth/login',{method:'POST',body:account,clientIP:'198.51.100.10'})).status,429);
+  assert.equal((await f.request('/auth/login',{method:'POST',body:account,clientIP:'198.51.100.11'})).status,200);
+  // Another client's success cannot clear the attacking source's quota.
+  assert.equal((await f.request('/auth/login',{method:'POST',body:account,clientIP:'198.51.100.10'})).status,429);
+  assert.equal((await f.request('/auth/login',{method:'POST',body:account})).status,400);
+  assert.equal((await f.request('/auth/login',{method:'POST',body:account,clientIP:'198.51.100.1, 203.0.113.1'})).status,400);
+  time+=15*60*1000+1;
+  assert.equal((await f.request('/auth/login',{method:'POST',body:account,clientIP:'198.51.100.10'})).status,200);
+});
+
+test('untrusted peers cannot rotate login quotas with a spoofed client address', async t => {
+  const f=await fixture(t,{clientAddress:clientAddressPolicy({SMART_HOME_TRUSTED_PROXY_IP:'192.0.2.3'})});
+  assert.equal((await f.request('/auth/setup',{method:'POST',body:account})).status,200);
+  for(let i=0;i<10;i++)assert.equal((await f.request('/auth/login',{method:'POST',body:{...account,password:'wrong-password'},clientIP:`198.51.100.${i}`,forwardedFor:`198.51.100.${i}`})).status,401);
+  assert.equal((await f.request('/auth/login',{method:'POST',body:account,clientIP:'203.0.113.10'})).status,429);
 });

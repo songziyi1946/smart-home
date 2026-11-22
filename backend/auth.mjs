@@ -1,3 +1,4 @@
+import {createAuthThrottle} from './app/auth-throttle.mjs';
 import { Router } from 'express';
 import { randomBytes, randomUUID, scrypt as deriveKey, timingSafeEqual, createHash } from 'node:crypto';
 import { promisify } from 'node:util';
@@ -15,7 +16,7 @@ const identity = credentials.extend({ password: z.string().min(8).max(32), displ
 const publicUser = ({ passwordHash, salt, disabled, ...user }) => user;
 const digest = (token) => createHash('sha256').update(token).digest('hex');
 
-export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, now = Date.now, allowSetup = () => true, secureCookies = false }) {
+export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, now = Date.now, allowSetup = () => true, secureCookies = false, clientAddress }) {
   const stored = repository ? repository.load() : existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null;
   let data = stored && (stored.users ? stored : {
     household: { id: randomUUID(), name: '我的家' }, users: [stored], invitations: [],
@@ -23,7 +24,8 @@ export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, 
   const sessions = new Map();
   const sessionListeners = new Set();
   const notifySessions = () => { for (const listener of sessionListeners) listener(); };
-  const attempts = new Map();
+  const limiter = createAuthThrottle({now,clientAddress});
+  const throttle = limiter.middleware;
   const router = Router();
   const getToken = (req) => (req.headers.cookie ?? '').split(';').map(value => value.trim()).find(value => value.startsWith(cookieName + '='))?.slice(cookieName.length + 1);
   const cookieOptions = (req) => ({ httpOnly: true, sameSite: 'strict', secure: secureCookies || req.secure, path: '/' });
@@ -56,18 +58,6 @@ export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, 
     notifySessions();
     res.cookie(cookieName, token, { ...cookieOptions(req), maxAge: expiresAt - now() });
     res.json(sessionInfo(user, value));
-  }
-  function throttle(req, res, next) {
-    for (const [key, value] of attempts) if (value.until <= now()) attempts.delete(key);
-    const key = req.ip;
-    const attempt = attempts.get(key) ?? { count: 0, until: now() + 15 * 60 * 1000 };
-    if (attempt.count >= 10) {
-      res.set('Retry-After', String(Math.ceil((attempt.until - now()) / 1000)));
-      return res.status(429).json({ message: '尝试次数过多，请稍后再试' });
-    }
-    attempt.count++;
-    attempts.set(key, attempt);
-    next();
   }
   function requireAuth(req, res, next) {
     const current = session(req);
@@ -105,7 +95,7 @@ export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, 
       throw error;
     }
     data = initial;
-    attempts.delete(req.ip);
+    limiter.reset(req);
     signIn(req, res, user);
   });
   router.post('/login', throttle, async (req, res) => {
@@ -115,7 +105,7 @@ export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, 
     if (!active(user) || !timingSafeEqual(actual, Buffer.from(user.passwordHash, 'hex'))) {
       return res.status(401).json({ message: '用户名或密码错误，或家庭访问权限已失效' });
     }
-    attempts.delete(req.ip);
+    limiter.reset(req);
     signIn(req, res, user);
   });
   router.post('/join', throttle, async (req, res) => {
@@ -130,7 +120,7 @@ export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, 
     data.users.push(user);
     data.invitations = data.invitations.filter(item => item !== invite);
     save();
-    attempts.delete(req.ip);
+    limiter.reset(req);
     signIn(req, res, user);
   });
   router.get('/members', requireAuth, ownerOnly, (_req, res) => {
@@ -173,7 +163,7 @@ export function authorizeHousehold(req, res, next) {
   const role = req.user.role;
   const path = req.path.toLowerCase();
   if(role!=='admin' && /^\/automations(\/|$)/.test(path) && req.method!=='GET')return res.status(403).json({message:'自动化管理需要家庭管理员权限'});
-  if(role !== 'admin' && ((path === '/scenes' && req.method === 'POST') || (['PUT','PATCH','DELETE'].includes(req.method) && /^\/scenes(\/|$)/.test(path)))) return res.status(403).json({message:'场景管理需要家庭管理员权限'});
+  if(role !== 'admin' && ((/^\/scenes\/?$/.test(path) && req.method === 'POST') || (['PUT','PATCH','DELETE'].includes(req.method) && /^\/scenes(\/|$)/.test(path)))) return res.status(403).json({message:'场景管理需要家庭管理员权限'});
   if (role === 'guest' && !(
     (req.method === 'GET' && (path === '/state' || path === '/events')) ||
     (req.method === 'PATCH' && /^\/devices\/[^/]+$/.test(path)) ||

@@ -4,6 +4,11 @@
 **/.env
 **/.env.*
 backend/data
+backend/data.key
+**/*.key
+**/secrets
+**/*.homeos.enc
+**/.home-encrypted-*
 data
 deploy/compose.env
 **/*.log

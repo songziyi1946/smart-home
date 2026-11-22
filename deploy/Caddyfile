@@ -1,5 +1,7 @@
 {$SMART_HOME_DOMAIN} {
     reverse_proxy app:3101 {
+        # Always overwrite client input. No CDN/forwarded-header trust is enabled.
+        header_up X-Smart-Home-Client-IP {remote_host}
         flush_interval -1
     }
 }

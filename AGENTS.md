@@ -389,7 +389,7 @@ Simulator tests: `npm test --prefix tools/device-simulator`; real HA/MQTT lab in
 
 Tests use `tsx + node:test` with explicit TypeScript support. The current entry covers `src/*.test.mjs` and `src/vr/*.test.mjs`; extend it when adding tests in other directories.
 
-Use npm for both packages, commit both `package-lock.json` files, and install with `npm ci --prefix backend` / `npm ci --prefix frontend`. The `.nvmrc` pins Node.js 24.18.0, which bundles npm 11.16.0. Do not reintroduce Yarn/pnpm lockfiles.
+Use npm for both packages, commit both `package-lock.json` files, and install with `npm ci --prefix backend` / `npm ci --prefix frontend`. The `.nvmrc` pins Node.js 24.22.3, which bundles npm 11.19.1. Do not reintroduce Yarn/pnpm lockfiles.
 
 CI is defined in `.github/workflows/ci.yml`. It runs on GitHub only; the current Gitee origin needs a GitHub mirror with Actions enabled or equivalent CI configured separately. `.env.example` documents optional runtime configuration; `.env` is explicitly loaded by the shell as described in README.
 
@@ -470,3 +470,15 @@ The frontend consumes `/api/events` through EventSource; do not reintroduce peri
 ## Deployment security
 
 `backend/app/deployment-security.mjs` owns explicit local/https policy. Production defaults to https: Secure cookies are unconditional, first setup requires temporary bootstrap authorization, and --skip-login is rejected. Do not reintroduce broad Express trust proxy or infer security from arbitrary forwarded headers. Local first setup requires a loopback peer and local Host; preserve Vite/SSH-tunnel and packaged local startup. Bootstrap credentials must stay server-only and out of logs/URLs. Never read or modify existing runtime data to test this policy; use temporary fixtures. `backend/data/state.json` is ignored runtime migration input, not a source fixture.
+
+
+## Encrypted storage and proxy identity
+
+SQLite schema v2 encrypts business/auth/provider payloads and scene commands using AES-256-GCM with record-bound AAD. Table structure, IDs, capabilities and revisions remain visible. Production/https requires SMART_HOME_DATA_KEY_FILE, a private 600 file outside the household data directory; local new stores generate a sibling key. Never log/commit/package keys. Missing/wrong keys must fail closed, never regenerate for an existing database. Legacy JSON import makes authenticated encrypted backups and removes matching plaintext only after commit. Existing schema v1 SQLite requires explicit offline maintenance.mjs migrate; no live downgrade or plaintext fallback. Use maintenance.mjs backup/restore; restore refuses existing targets. Application and maintenance share an OS-released SQLite lock. Test only temporary data/key fixtures.
+
+Caddy overwrites X-Smart-Home-Client-IP with its direct remote_host. Only the single exact SMART_HOME_TRUSTED_PROXY_IP may provide this header; Compose pins that Caddy address. Other peers ignore forwarded headers. Do not enable broad Express trust proxy or use the identity header for setup/Host/cookie trust. Test separate client quotas, spoofed headers, malformed trusted headers and expiry.
+
+
+## Container security verification
+
+Docker pins the public cgr.dev/chainguard/wolfi-base image by digest and installs signed nodejs-24=24.22.3-r2 packages, retaining Node 24.22.3. Wolfi uses glibc; never mix Alpine/musl packages into this image or copy host node_modules. Node requires shared OpenSSL libraries and the system CA store; preserve these. Container build tools bootstrap npm 11.20.0 from an archive verified by ADD --checksum, with brace-expansion 5.0.11 and undici 6.29.1 fixes for bundled dependencies; local Node still bundles npm 11.19.1. Runtime branches before npm installation and removes apk-tools, so package managers are absent from its layers. Preserve non-root UID/GID 1000 and explicit node-based maintenance/health commands. The backend-test Docker target verifies Linux behavior; tools/container-smoke.mjs uses only an isolated network and tmpfs fixtures, checking the Node version against .nvmrc. CI scans the unmodified upstream os-base, build tools and final runtime with Grype, failing on High/Critical including unfixed findings. Do not suppress base-image diagnostics or infer safety from npm audit, a distribution name or image size. Rebuild with --pull --no-cache for current system patches and scan all three targets; update the pinned base digest and Node package deliberately.

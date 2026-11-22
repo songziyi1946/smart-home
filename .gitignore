@@ -38,3 +38,9 @@ deploy/compose.env
 # Runtime state (migration input is local only)
 backend/data/state.json
 backend/data/state.json.tmp
+
+# Local storage keys, encrypted backups and interrupted migration staging
+backend/data.key
+*.key
+*.homeos.enc
+.home-encrypted-*/

@@ -35,7 +35,9 @@ App 通过同源 SSE `/api/events` 接收服务端 WS 状态事件和本地保�
 
 ## 安装教程
 
-使用 Node.js 24.18.0（`.nvmrc`）和随附的 npm 11.16.0。两个子项目均使用 npm，提交各自的 `package-lock.json`。不要混用 Yarn/pnpm 或复制其他机器的 `node_modules`。
+使用 Node.js 24.22.3（`.nvmrc`）和随附的 npm 11.19.1。两个子项目均使用 npm，提交各自的 `package-lock.json`。不要混用 Yarn/pnpm 或复制其他机器的 `node_modules`。
+
+生产环境保持 Node 24 LTS 分支，定期验证并同步最新安全补丁到 `.nvmrc`、Dockerfile、各包的 engines/packageManager 和 edgeone.json。当前 engines 限定为 `>=24.22.3 <25`，避免未经验证的主版本进入部署。Node 20 已结束官方维护，Node 22 的维护期限更短；不以降低主版本作为稳定性或安全性的默认方案。
 
 从项目根目录安装锁定依赖：
 
@@ -165,11 +167,11 @@ API：`POST /api/automations`，`PUT /api/automations/:id`（携带version），
 
 ## SQLite 持久化与旧数据迁移
 
-SQLite 仓储使用 Node.js 内置的 `node:sqlite`，无需额外安装原生 npm 模块。仓储位于 `backend/infrastructure/sqlite-store.mjs`，schema 版本为1（`PRAGMA user_version`）。
+SQLite 仓储使用 Node.js 内置的 `node:sqlite`，无需额外安装原生 npm 模块。仓储位于 `backend/infrastructure/sqlite-store.mjs`，schema 版本为2（`PRAGMA user_version`）。
 
-首次启动在 `SMART_HOME_DATA_DIR`（默认 `backend/data`）创建 `home.sqlite`；若有 `state.json` / `auth.json`，先保存内容摘要命名的 `.pre-sqlite-*.bak` 备份，原文件不改写。数据库与备份权限0600。在同一事务中导入业务及账号数据并写入迁移标记，保留设备 ID、动作顺序、规则版本、日志、费用和欢迎语。
+首次启动在 `SMART_HOME_DATA_DIR`（默认 `backend/data`）创建 `home.sqlite`；若只有旧 `state.json` / `auth.json`，先保存 `.pre-sqlite-*.bak.enc` 加密备份，事务导入并校验后移除旧明文源文件。失败不会删除源文件；提交后清理被中断会在下次启动续办。数据库与备份权限0600，数据目录（包括已有目录）收紧为0700。保留设备 ID、动作顺序、规则版本、日志、费用和欢迎语。已有未加密 schema v1 数据库不会直接启动，必须先按下文停服迁移。
 
-成功后始终以 SQLite 为准，不因旧 JSON 仍存在或被编辑而重复导入。损坏 JSON、无效数据或更高版本 schema 会明确失败，不会清空数据后静默启动。迁移失败可修复输入后重试。
+成功后始终以 SQLite 为准，不重复导入旧 JSON。损坏 JSON、错误密钥、密文篡改或更高版本 schema 会明确失败，不会清空数据或回退到明文。若已导入的源文件被重新放回且内容不同，拒绝自动删除，需部署者先安全归档。
 
 设备、状态、场景、规则、日志、账单、家庭、用户、邀请各自存表；能力和场景动作独立存行，规则与日志的版本化复杂内容使用 JSON 列，未知旧配置在 settings 中保留。不是把整份状态作为单个 JSON blob 存库。
 
@@ -177,7 +179,11 @@ SQLite 仓储使用 Node.js 内置的 `node:sqlite`，无需额外安装原生 n
 
 重启保留执行日志，将未完成执行标为中断/结果未知，不重放硬件命令。HA 缓存与 lastSeenAt 保留，但在线状态重新确认。会话仍在内存，重启需登录；密码哈希、家庭与邀请保留。HA Token 不入库。
 
-备份时停止后端，再复制整个数据目录（含 home.sqlite 和可能存在的 -wal/-shm 文件），恢复也在停机状态下进行。不要只复制正在写入的主文件。旧 JSON 备份只代表迁移时刻，不能用来恢复迁移后的新增操作。
+数据库各表的业务/认证 JSON payload 及场景命令使用 AES-256-GCM 加密，每次写入生成独立随机 nonce，AAD 绑定表名、主键或动作位置，防止密文跨记录替换。WAL 和临时 SQL 数据也只包含密文业务字段；表结构、关联 ID、能力名称、记录数量及修订号仍可见，这不是 SQLCipher 的整文件加密。加密实现使用 [Node.js crypto](https://nodejs.org/docs/latest-v24.x/api/crypto.html)。物理磁盘旧块及云盘历史快照不受本次迁移的安全擦除保证，需通过加密磁盘/快照生命周期控制处理。
+
+密钥为32随机字节，存于数据目录之外的独立0600文件（64位十六进制文本），通过 `SMART_HOME_DATA_KEY_FILE` 指定。生产或 https 缺少此配置会拒绝启动；开发环境的新数据目录自动生成同级 `<数据目录>.key` 文件。已有数据库丢失密钥时不会生成替代密钥。不要把密钥与数据/备份一同上传或打包，密钥丢失无法恢复，需在密码管理器或独立受控位置保留恢复副本。
+
+后端启动和维护操作共享独立 SQLite 排他锁，阻止维护期间启动第二个服务；锁由操作系统在进程退出/崩溃时释放。备份需停服，使用下文工具生成经过认证加密的 `.homeos.enc` 文件；恢复只写入一个尚不存在的新目录，不覆盖现有家庭。旧 JSON 的 `.bak.enc` 只是原始导入材料，不代表当前完整家庭备份。
 
 ## 桌面与移动端体验
 
@@ -209,11 +215,13 @@ SQLite 仓储使用 Node.js 内置的 `node:sqlite`，无需额外安装原生 n
 
 ## Docker Compose 常驻部署
 
-仓库根目录包含多阶段 Dockerfile、compose.yaml 和 deploy/Caddyfile。应用以非 root 用户运行，Caddy 提供自动 HTTPS 和 SSE 反向代理。两项服务使用 unless-stopped 自动重启，Docker 守护进程需设置开机启动。
+仓库根目录包含多阶段 Dockerfile、compose.yaml 和 deploy/Caddyfile。基础镜像使用可公开拉取的 `cgr.dev/chainguard/wolfi-base`，以 digest 固定内容；通过其签名包仓库安装 `nodejs-24=24.22.3-r2`，Node 版本仍为24.22.3。Wolfi 使用 glibc，新增原生依赖需在对应 Linux 架构验证，不得混入 Alpine/musl 包或宿主机 node_modules，参见 [Wolfi 官方说明](https://www.chainguard.dev/docs/open-source/wolfi)。构建时通过 apk 安装系统安全更新；Node 使用系统共享 OpenSSL 和 CA 证书库，必须保留这些运行依赖。
 
-在服务器复制 deploy/compose.env.example 为 deploy/compose.env，设置域名、数据目录及目录所有者 UID/GID。部署现有家庭时先停止旧 Node 进程并备份整个数据目录（包括 SQLite WAL 文件），再挂载同一目录。不要同时启动两个写入同一数据库的应用实例。
+构建工具使用 SHA-256 校验的 npm 11.20.0 官方归档，并将其内部 brace-expansion / undici 分别固定为5.0.11 / 6.29.1修复版本。运行阶段从安装 npm 之前分支，既不安装 npm/Yarn/Corepack，也移除 apk-tools；更新依赖或系统包需重建镜像。应用以 UID/GID 1000 的非 root 用户运行，Compose 可覆盖实际服务 UID/GID；维护命令继续显式使用 `node backend/maintenance.mjs`。Caddy 提供自动 HTTPS 和 SSE 反向代理。两项服务使用 unless-stopped 自动重启，Docker 守护进程需设置开机启动。
 
-首次创建数据目录时使用配置的 UID/GID 设置所有者及 700 权限；示例中的路径用于当前服务器。HA_URL、HA_TOKEN 可通过部署环境变量配置，HA_URL 必须是容器可到达的地址。
+在服务器复制 deploy/compose.env.example 为 deploy/compose.env，设置域名、数据目录及目录所有者 UID/GID。部署现有家庭时先停止旧服务，再执行下文加密迁移；迁移工具会先保存并校验加密恢复备份，再以新建的加密数据库替换旧文件。不要同时启动两个写入同一数据库的应用实例。
+
+首次创建数据目录时使用配置的 UID/GID 设置所有者及 700 权限；示例中的域名和路径为占位值，需替换为自己的配置。部署环境文件设为 600 权限，不要提交。HA_URL、HA_TOKEN 可通过部署环境变量配置，HA_URL 必须是容器可到达的地址；跨主机连接使用 HTTPS 或受保护的专用网络。
 
 ```sh
 id smarthome
@@ -223,14 +231,83 @@ docker compose --env-file deploy/compose.env ps
 docker compose --env-file deploy/compose.env logs --tail 50
 ```
 
-域名需解析至服务器公网 IP，云安全组需允许 TCP 80、443。Caddy 的证书与配置使用命名卷保存；家庭业务数据使用独立宿主机目录挂载。更新代码后再次执行 up -d --build。重启服务使用 docker compose --env-file deploy/compose.env restart。删除容器后重建仍使用原有数据目录；备份和恢复需在应用停止时复制整个目录。
+域名需解析至服务器公网 IP，云安全组需允许 TCP 80、443。Caddy 的证书与配置使用命名卷保存；家庭业务数据使用独立宿主机目录挂载。更新代码后再次执行 up -d --build。重启服务使用 docker compose --env-file deploy/compose.env restart。删除容器后重建仍使用原有数据目录；备份和恢复需在应用停止时使用下文加密维护工具。
 
 应用仅将 3101 映射到服务器回环地址，可继续使用原 SSH 转发排查。手机直接使用 HTTPS 域名。容器通过 SMART_HOME_API_HOST 监听容器网络，默认本地开发仍绑定 127.0.0.1。Compose 显式使用 SMART_HOME_DEPLOYMENT_MODE=https，登录/退出 Cookie 始终带 Secure；不信任 X-Forwarded-* 请求头，也不启用 Express trust proxy。HTTPS 在同一部署的 Caddy 终止，应用端口只映射到宿主回环地址。此配置需要真实 HTTPS；HTTP 隧道上的登录 Cookie 不会发送。首次初始化流程见下节。
 
 
+
+## 镜像漏洞验证
+
+编辑器在 FROM 上展示的是上游基础镜像的漏洞统计。后续 RUN 安装安全更新不能改变该上游镜像的统计，因此需同时检查原始基础镜像、构建工具、最终运行镜像。当前 Dockerfile 的 `os-base` 阶段仅引用固定 digest 的 Wolfi 基础镜像，不执行补丁或删除操作；CI 也扫描这一阶段，避免只验证最终产物却继续引用带高危漏洞的基础镜像。npm audit 不覆盖系统包，不得关闭诊断、过滤未修复项或删除包数据库来隐藏扫描结果。
+
+以下三个镜像均应通过 `--fail-on high`（同时检查 High 和 Critical）。基础镜像需有独立扫描结果，即使编辑器尚未显示新镜像的诊断，也不能视为自动通过：
+
+```sh
+docker build --pull --target os-base -t smart-home:os-base .
+grype docker:smart-home:os-base --fail-on high
+docker build --no-cache --target node-base -t smart-home:build-tools .
+grype docker:smart-home:build-tools --fail-on high
+docker build --target backend-test -t smart-home:backend-check .
+docker build --target runtime -t smart-home:security-check .
+node tools/container-smoke.mjs smart-home:security-check
+grype docker:smart-home:security-check --fail-on high
+```
+
+本次验证（2026-11-22，linux/amd64，Grype 0.122.1，数据库 v6.1.10 / 2026-11-22），未配置漏洞忽略规则：
+
+| 扫描对象 | 严重 Critical | 高危 High | 中危 Medium | 低危 Low |
+| --- | ---: | ---: | ---: | ---: |
+| 固定 digest 的原始 Wolfi 基础镜像 / os-base | 0 | 0 | 1 | 1 |
+| Node + npm 构建工具 | 0 | 0 | 10 | 1 |
+| 最终运行镜像 | 0 | 0 | 1 | 1 |
+
+运行镜像剩余记录为 glibc-2.44 的 CVE-2026-115819（中危）与 CVE-2026-100290（低危），并非完全没有漏洞。后端60项测试在新 Linux/glibc 镜像内通过，前端生产构建成功；隔离启动验证了 Node 版本、非 root、SQLite 加密、初始化授权、Secure Cookie 及包管理器缺失，最终镜像的外部 HTTPS 请求也通过正常证书验证。编辑器仍显示旧 `node:...alpine...` 引用时，保存并重载 Dockerfile 后刷新诊断；若新引用仍有告警，应检查其实际 CVE 与扫描库时间，不能直接视为误报或关闭诊断。
+
+Grype 的 high 阈值同时拦截 High 和 Critical，不忽略尚无修复的漏洞。扫描结果随数据库、架构和上游补丁变化；一次扫描通过不代表永久无漏洞。GitHub CI 会同时验证 Linux 后端测试、原始基础镜像、构建工具和运行镜像；Gitee 部署仍需自行执行这些检查。服务器更新需先按加密迁移要求处理现有数据库，再运行 `docker compose --env-file deploy/compose.env build --pull --no-cache app` 并重建容器，单独 restart 不会更新镜像。运行容器没有 npm，依赖更新必须重建镜像；维护命令继续使用 node。
+
+## 加密迁移、备份与恢复操作
+
+以下路径是示例。以实际服务 UID/GID 创建 secrets 目录（0700）并拥有其中的密钥（0600）；不要改变已有家庭数据路径以绕过迁移。使用项目固定的 Node 版本，在仓库根目录生成一次密钥，命令不会输出密钥，也拒绝覆盖已有密钥：
+
+```sh
+node backend/maintenance.mjs keygen --key-file /srv/smart-home/secrets/data.key
+```
+
+将 `SMART_HOME_DATA_KEY_HOST_FILE=/srv/smart-home/secrets/data.key` 写入 `deploy/compose.env`；该路径必须位于 `SMART_HOME_HOST_DATA_DIR` 之外，密钥所属 UID 与 app 用户一致。Compose secret 的本机文件权限以宿主为准，不能依靠 Compose 自动修改为0600。构建新代码后停止旧 app，首次对 schema v1 执行一次迁移（纯新家庭跳过 migrate）：
+
+```sh
+docker compose --env-file deploy/compose.env build app
+docker compose --env-file deploy/compose.env stop app
+docker compose --env-file deploy/compose.env run --rm --no-deps app node backend/maintenance.mjs migrate --data-dir /data --key-file /run/secrets/data_key --file /data/before-encryption.homeos.enc
+docker compose --env-file deploy/compose.env up -d
+```
+
+若旧版本为直接运行 Node，先停止该进程再执行维护，不能同时运行旧版本和新容器。迁移遇到 `home.sqlite-wal` / `-shm` / `-journal` 会拒绝，应先确认旧进程完全停止并用 SQLite 正常 checkpoint/关闭，不能直接删除这些文件。加密备份含完整快照和旧数据库/原 JSON 的加密副本，校验新库后清理旧 JSON 与旧 `.bak`，原数据库以原子 rename 替换；失败前不会用一个不完整的新库覆盖原库。磁盘历史副本需另外处理。
+
+日常停服备份（每次使用不同文件名，示例文件不允许重复覆盖）：
+
+```sh
+docker compose --env-file deploy/compose.env stop app
+docker compose --env-file deploy/compose.env run --rm --no-deps app node backend/maintenance.mjs backup --data-dir /data --key-file /run/secrets/data_key --file /data/household-2026-11-22.homeos.enc
+docker compose --env-file deploy/compose.env up -d app
+```
+
+可将 `.homeos.enc` 单独传到备份存储；恢复时使用独立保管的同一密钥。通过具备 Node 24 的维护主机运行下列命令；恢复目录必须不存在，恢复成功后将其设置为实际服务的数据目录并校正 UID/GID：
+
+```sh
+node backend/maintenance.mjs restore --key-file /srv/smart-home/secrets/data.key --data-dir /srv/smart-home/restored-data --file /srv/backups/household-2026-11-22.homeos.enc
+```
+
+初次迁移后的旧程序无法读取 schema v2。应用回退只能选择支持 schema v2 的版本，维护工具不提供明文降级。工具不输出家庭数据/密钥；错误只输出通用失败信息，已有恢复目标不被覆盖。
+
 ## 首次初始化、安全 Cookie 与隔离演示
 
 `SMART_HOME_DEPLOYMENT_MODE` 只接受 `local` / `https`。未设置时，NODE_ENV=production 默认 https，其余默认 local。https 模式禁止 --skip-login，默认拒绝首次管理员创建（403），不会影响已有 SQLite 家庭登录。local 模式仅允许直接连接来自回环地址、且 Host 为 localhost / 127.0.0.1 / [::1] 的首次创建；Vite 同源代理保留 Host，默认开发与直接 Node 的 SSH 隧道初始化不变。不要在公开部署中使用 local 或免登录模式。
+
+`--skip-login` 同样校验回环对端和本地 Host，不接受伪造的 X-Forwarded-*；NODE_ENV=production 即使显式指定 local 也拒绝免登录，并在打开数据库之前退出。应用所有响应禁止 iframe 嵌入和 MIME 嗅探，关闭 Referrer 及 Express 版本标识。登录限流通过 `SMART_HOME_TRUSTED_PROXY_IP` 只接受一个明确的直连代理 IP；Caddy 用 `{remote_host}` 覆盖 `X-Smart-Home-Client-IP`，不接受浏览器伪造的原值。其余连接忽略全部转发头、按直连对端限流。缺失/非法代理身份头返回400。不同客户端地址拥有独立的10次/15分钟配额，成功登录只清理自己的计数；共享公网 NAT 地址的客户端仍共享额度。内存计数有上限且会过期，重启后重置，不代替入口对分布式流量的防护。Compose 使用固定的 Caddy 容器地址（默认172.30.47.3）匹配此信任；若网段冲突，需一起修改子网、app 和 Caddy 三个地址。不启用 Express trust proxy，不影响 Host、Secure Cookie 或初始化授权。参见 [Caddy header_up](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#headers)。
+
+SQLite 敏感内容和完整恢复备份均已加密，密钥通过只读 Compose secret 文件挂载，不放入镜像、业务数据、环境变量或日志。宿主及 Docker 管理员仍属于信任边界，拥有读取运行中密钥的能力；HA/初始化环境凭据也对其可见。升级不会自动迁移服务器或更新运行中的容器。
 
 推荐先通过 SSH 隧道，在仅绑定 127.0.0.1 的 Node 进程中使用 local 模式初始化家庭，再停止该进程，挂载同一数据目录启动 https 部署，最后开放 Caddy 公网入口。既有数据库无需重新初始化。容器的 NAT 对端不一定是回环地址，因此容器内不要靠 local 模式绕过初始化限制。
 

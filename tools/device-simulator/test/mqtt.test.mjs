@@ -1,6 +1,6 @@
-import test from 'node:test';import assert from 'node:assert/strict';import aedes from 'aedes';import mqtt from 'mqtt';import {createServer} from 'node:net';import {once} from 'node:events';import {Simulator} from '../src/core.ts';import {connectSimulator,base} from '../src/mqtt.ts';
+import test from 'node:test';import assert from 'node:assert/strict';import {Aedes} from 'aedes';import mqtt from 'mqtt';import {createServer} from 'node:net';import {once} from 'node:events';import {Simulator} from '../src/core.ts';import {connectSimulator,base} from '../src/mqtt.ts';
 test('MQTT discovery, state publishing, offline command rejection and availability',async t=>{
- const broker=aedes(),server=createServer(broker.handle);server.listen(0,'127.0.0.1');await once(server,'listening');
+ const broker=await Aedes.createBroker(),server=createServer(broker.handle);server.listen(0,'127.0.0.1');await once(server,'listening');
  const url='mqtt://127.0.0.1:'+server.address().port,client=await mqtt.connectAsync(url),sim=new Simulator(),messages=new Map();let adapter;
  t.after(async()=>{await adapter?.close();await client.endAsync();await new Promise(r=>broker.close(r));await new Promise(r=>server.close(r));});
  client.on('message',(topic,bytes)=>messages.set(topic,bytes.toString()));await client.subscribeAsync(['homeassistant/#','smart-home-simulator/#']);adapter=connectSimulator(sim,{url,log:()=>{}});

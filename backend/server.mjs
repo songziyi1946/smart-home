@@ -1,4 +1,7 @@
-import { deploymentSecurity } from './app/deployment-security.mjs';
+import {clientAddressPolicy} from './app/client-address.mjs';
+import {loadStorageKey} from './infrastructure/encryption.mjs';
+import {acquireDataLock} from './infrastructure/data-lock.mjs';
+import { deploymentSecurity, isLocalRequest } from './app/deployment-security.mjs';
 import {isDeepStrictEqual} from 'node:util';
 import {SQLiteStore} from './infrastructure/sqlite-store.mjs';
 import { initializeAutomations, validateRule, evaluateRule, createAutomationEngine } from './domain/automations/engine.mjs';
@@ -18,8 +21,19 @@ import { execFile } from 'node:child_process';
 
 const app = express();
 const security = deploymentSecurity();
+const clientAddress = clientAddressPolicy();
 // HTTPS deployment is explicit: never trust arbitrary forwarded headers.
-if (security.mode === 'https' && process.argv.includes('--skip-login')) throw new Error('HTTPS deployment cannot skip login');
+if (!security.allowSkipLogin && process.argv.includes('--skip-login')) throw new Error('Production or HTTPS deployment cannot skip login');
+app.disable('x-powered-by');
+app.use((_req, res, next) => {
+  res.set({
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Content-Security-Policy': "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+    'Referrer-Policy': 'no-referrer',
+  });
+  next();
+});
 app.use(express.json({ limit: '32kb' }));
 const dir = process.env.SMART_HOME_DATA_DIR
   ? pathToFileURL(resolve(process.env.SMART_HOME_DATA_DIR) + sep)
@@ -38,7 +52,9 @@ const initial = {
   expenses: [],
 };
 const normalize = input => initializeAutomations(initializeScenes(initializeDevices({...structuredClone(initial),...input})));
-const store = new SQLiteStore(fileURLToPath(dir),{initialState:initial,normalize});
+const releaseDataLock = acquireDataLock(fileURLToPath(dir));
+const encryptionKey = loadStorageKey(fileURLToPath(dir));
+const store = new SQLiteStore(fileURLToPath(dir),{initialState:initial,normalize,encryptionKey});
 const storedState=store.loadState();
 let state=normalize(storedState);
 if(!isDeepStrictEqual(state,storedState))store.saveState(state);
@@ -88,11 +104,11 @@ const testTime=process.env.SMART_HOME_AUTOMATION_TEST_TIME;
 if(testTime && (process.env.NODE_ENV!=='test' || !skipLogin || !Number.isFinite(Date.parse(testTime)))) throw new Error('自动化测试时钟仅允许 NODE_ENV=test 的本机免登录测试');
 app.use('/api', validateOrigin);
 if (skipLogin) {
-  sessionFor = req => ['127.0.0.1', 'localhost'].includes(req.hostname) ? {user:req.user,expiresAt:Infinity} : undefined;
+  sessionFor = req => isLocalRequest(req) ? {user:req.user,expiresAt:Infinity} : undefined;
   activeAdmin = id => id === 'local';
   const localUser = { id: 'local', username: 'local', displayName: '本地预览', role: 'admin' };
   app.use('/api', (req, res, next) => {
-    if (req.hostname !== '127.0.0.1' && req.hostname !== 'localhost') {
+    if (!isLocalRequest(req)) {
       return res.status(403).json({ message: '免登录模式仅限本机访问' });
     }
     req.user = localUser;
@@ -103,7 +119,7 @@ if (skipLogin) {
     localPreview: true, user: localUser, household: { id: 'local', name: '本地家庭' },
   }));
 } else {
-  const auth = createAuth({ allowSetup: security.allowSetup, secureCookies: security.secureCookies, repository: {load:()=>store.loadAuth(),save:data=>store.saveAuth(data),create:data=>store.saveAuth(data,{create:true})} });
+  const auth = createAuth({ clientAddress, allowSetup: security.allowSetup, secureCookies: security.secureCookies, repository: {load:()=>store.loadAuth(),save:data=>store.saveAuth(data),create:data=>store.saveAuth(data,{create:true})} });
   activeAdmin = auth.isActiveAdmin;
   sessionFor = auth.sessionFor; subscribeAuth = auth.subscribeSessions;
   app.use('/api/auth', auth.router);
@@ -263,4 +279,4 @@ const server = app.listen(port, process.env.SMART_HOME_API_HOST || '127.0.0.1', 
   }
 });
 
-for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => { automation.close(); stream.close(); ha?.close(); server.closeAllConnections(); server.close(()=>store.close()); });
+for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => { automation.close(); stream.close(); ha?.close(); server.closeAllConnections(); server.close(()=>{store.close();releaseDataLock();}); });

@@ -8,12 +8,19 @@ services:
     restart: unless-stopped
     environment:
       SMART_HOME_DEPLOYMENT_MODE: https
+      SMART_HOME_DATA_KEY_FILE: /run/secrets/data_key
+      SMART_HOME_TRUSTED_PROXY_IP: ${SMART_HOME_CADDY_IP:-172.30.47.3}
       SMART_HOME_BOOTSTRAP_TOKEN: ${SMART_HOME_BOOTSTRAP_TOKEN:-}
       HA_URL: ${HA_URL:-}
       HA_TOKEN: ${HA_TOKEN:-}
       HA_ENTITY_PREFIX: ${HA_ENTITY_PREFIX:-}
     volumes:
       - ${SMART_HOME_HOST_DATA_DIR:-./data}:/data
+    secrets:
+      - data_key
+    networks:
+      home:
+        ipv4_address: ${SMART_HOME_APP_IP:-172.30.47.2}
     ports:
       - "127.0.0.1:${SMART_HOME_LOCAL_PORT:-3101}:3101"
     healthcheck:
@@ -41,6 +48,9 @@ services:
     depends_on:
       app:
         condition: service_healthy
+    networks:
+      home:
+        ipv4_address: ${SMART_HOME_CADDY_IP:-172.30.47.3}
     logging:
       options:
         max-size: "10m"
@@ -48,3 +58,11 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+networks:
+  home:
+    ipam:
+      config:
+        - subnet: ${SMART_HOME_DOCKER_SUBNET:-172.30.47.0/24}
+secrets:
+  data_key:
+    file: ${SMART_HOME_DATA_KEY_HOST_FILE:?Set SMART_HOME_DATA_KEY_HOST_FILE outside the data directory}

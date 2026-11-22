@@ -27,6 +27,11 @@ jobs:
           npm ci --prefix backend
           npm ci --prefix frontend
           npm ci --prefix tools/device-simulator
+      - name: Dependency security audit
+        run: |
+          npm audit --audit-level=moderate --prefix backend
+          npm audit --audit-level=moderate --prefix frontend
+          npm audit --audit-level=moderate --prefix tools/device-simulator
       - name: Backend tests
         run: npm test --prefix backend
       - name: Simulator tests
@@ -39,3 +44,48 @@ jobs:
         run: npm test --prefix frontend
       - name: Frontend build
         run: npm run build --prefix frontend
+
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Build and verify Linux backend
+        run: docker build --pull --target backend-test -t smart-home:backend-check .
+      - name: Build base, tools and production image
+        run: |
+          docker build --target os-base -t smart-home:os-base .
+          docker build --target node-base -t smart-home:build-tools .
+          docker build --target runtime -t smart-home:security-check .
+      - name: Verify isolated production startup
+        run: node tools/container-smoke.mjs smart-home:security-check
+      - name: Scan upstream base image
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7
+        with:
+          image: smart-home:os-base
+          grype-version: v0.122.1
+          severity-cutoff: high
+          fail-build: true
+          only-fixed: false
+          output-format: table
+      - name: Scan build tools
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7
+        with:
+          image: smart-home:build-tools
+          grype-version: v0.122.1
+          severity-cutoff: high
+          fail-build: true
+          only-fixed: false
+          output-format: table
+      - name: Scan production image
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7
+        with:
+          image: smart-home:security-check
+          grype-version: v0.122.1
+          severity-cutoff: high
+          fail-build: true
+          only-fixed: false
+          output-format: table

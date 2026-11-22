@@ -30,7 +30,7 @@ Mac 体验包需要 macOS 13.5 或更新版本。首次启动时，如果系统�
 ## 从源码运行
 
 1. 点击[下载源码 ZIP](https://github.com/songziyi1946/smart-home/archive/refs/heads/master.zip)并解压。也可以在 GitHub 仓库点击 **Code → Download ZIP**。
-2. 安装 [Node.js 24.18.0](https://nodejs.org/en/download/archive/v24.18.0)（包含运行命令所需的 npm）。
+2. 安装 [Node.js 24.22.3](https://nodejs.org/en/download/archive/v24.22.3)（包含运行命令所需的 npm）。
 3. 在解压后的项目文件夹中打开终端（Windows 可用 PowerShell，macOS 可用「终端」），依次执行：
 
    ```sh
@@ -51,3 +51,5 @@ Mac 体验包需要 macOS 13.5 或更新版本。首次启动时，如果系统�
 遇到启动问题，或需要改端口、备份数据、使用 Docker Compose 配置常驻运行与 HTTPS，请查看[开发与部署指南](docs/technical-guide.md)。
 
 首次公开部署前请阅读 [初始化、安全 Cookie 与隔离演示](docs/technical-guide.md#首次初始化安全-cookie-与隔离演示)。HTTPS 模式默认关闭首次注册入口，须先私下初始化家庭；不要直接公开未初始化的 local/免登录服务。
+
+服务器升级提醒：已有 SQLite 家庭需先停服执行[加密迁移](docs/technical-guide.md#加密迁移备份与恢复操作)，并单独保存数据密钥；不能直接用新容器打开旧明文数据库。

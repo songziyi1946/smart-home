@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { legacySeedDevices } from './providers/mock/seed.mjs';
@@ -32,7 +32,7 @@ async function launch(directory) {
 test('real HTTP device routes preserve auth, validation, snapshots and persistence across restart', async t => {
   const directory = mkdtempSync(join(tmpdir(), 'smart-home-devices-'));
   let server;
-  t.after(async () => { await server?.stop(); rmSync(directory, { recursive: true, force: true }); });
+  t.after(async () => { await server?.stop(); rmSync(directory, { recursive: true, force: true }); rmSync(directory+'.key',{force:true}); });
   const statePath = join(directory, 'state.json');
   writeFileSync(statePath, JSON.stringify({ devices: legacySeedDevices, accounts: [], expenses: [], rules: [], events: [], greetings: {}, speaker: '', lightOn: false }));
   server = await launch(directory);
@@ -48,6 +48,12 @@ test('real HTTP device routes preserve auth, validation, snapshots and persisten
   const credentials = { username: 'device_admin', password: 'device-test-password', displayName: '测试', homeName: '家庭' };
   cookie = (await request('/auth/setup', 'POST', credentials)).cookie;
   const initial = await request('/state');
+  const headers = (await fetch(server.url + '/api/state')).headers;
+  assert.equal(headers.get('x-frame-options'), 'DENY');
+  assert.equal(headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(headers.get('referrer-policy'), 'no-referrer');
+  assert.match(headers.get('content-security-policy'), /frame-ancestors 'none'/);
+  assert.equal(headers.get('x-powered-by'), null);
   assert.equal(initial.body.devices.length, 9);
   assert.equal(initial.body.deviceStates, undefined);
   assert.deepEqual(initial.body.devices[0].state.values, { power: true, brightness: 80 });
@@ -82,7 +88,12 @@ test('real HTTP device routes preserve auth, validation, snapshots and persisten
   const memberInvite=await request('/auth/invitations','POST',{role:'member',guestHours:1});
   const member=await request('/auth/join','POST',{...credentials,username:'scene_member',code:memberInvite.body.code},'');
   assert.equal((await request('/scenes','POST',sceneBody,member.cookie)).status,403);
-  const createdScene=await request('/scenes','POST',sceneBody);
+  for (const path of ['/scenes/', '/SCENES/']) {
+    for (const person of [member, guest]) {
+      assert.equal((await request(path,'POST',sceneBody,person.cookie)).status,403);
+    }
+  }
+  const createdScene=await request('/scenes/','POST',sceneBody);
   assert.equal(createdScene.status,201);
   const custom=createdScene.body.scenes.find(s=>s.name==='阅读');
   assert.equal((await request('/scenes/'+custom.id,'PUT',{...sceneBody,version:1},guest.cookie)).status,403);
@@ -103,16 +114,17 @@ test('real HTTP device routes preserve auth, validation, snapshots and persisten
   assert.equal(executed.body.run.status,'completed');
   const updated=await request('/scenes/'+custom.id,'PUT',{...sceneBody,name:'阅读新版',version:1});assert.equal(updated.status,200);
   assert.equal((await request('/scenes/'+custom.id,'PUT',{...sceneBody,version:1})).status,409);
-  const db=new DatabaseSync(join(directory,'home.sqlite'),{readOnly:true});assert.equal(JSON.parse(db.prepare('SELECT payload FROM scenes WHERE key=?').get(custom.id).payload).name,'阅读新版');db.close();
+  const db=new DatabaseSync(join(directory,'home.sqlite'),{readOnly:true});assert.equal(db.prepare('SELECT payload FROM scenes WHERE key=?').get(custom.id).payload.includes('阅读新版'),false);db.close();
   const retainedRule=await request('/automations','POST',ruleBody);assert.equal(retainedRule.status,201);
   await server.stop();
   server = await launch(directory);
   cookie = (await request('/auth/login', 'POST', credentials)).cookie;
   assert.equal((await request('/state')).body.devices.find(d => d.id === 'ceiling').state.values.brightness, 35);
-  assert.ok((await request('/state')).body.scenes.some(s=>s.id===custom.id));
+  assert.ok((await request('/state')).body.scenes.some(s=>s.id===custom.id && s.name==='阅读新版'));
   assert.equal((await request('/state')).body.automations.length,1);
   assert.ok((await request('/state')).body.sceneRuns.some(r=>r.sceneId===custom.id));
-  assert.equal(JSON.parse(readFileSync(statePath,'utf8')).devices[0].level,80,'legacy JSON remains untouched');
+  assert.equal(existsSync(statePath),false,'legacy plaintext removed after encrypted import');
+  assert.ok(readdirSync(directory).some(name=>name.endsWith('.bak.enc')));
   assert.equal((await request('/scenes/'+custom.id,'DELETE',{})).status,200);
   assert.equal((await request('/scenes/'+custom.id,'POST',{})).status,404);
   for (const scene of ['home', 'away', 'sleep']) assert.equal((await request('/scenes/' + scene, 'POST')).status, 200);

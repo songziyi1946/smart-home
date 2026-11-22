@@ -77,7 +77,7 @@ try{
  assert.ok(latestState.scenes.some((s:any)=>s.id===nightId));assert.equal(latestState.devices.find((d:any)=>d.id==='legacy-night-light').state.values.brightness,43);
  for(const run of checkpoint.sceneRuns)assert.ok(latestState.sceneRuns.some((r:any)=>r.id===run.id));
  for(const run of checkpoint.automationRuns)assert.ok(latestState.automationRuns.some((r:any)=>r.id===run.id));
- assert.equal(JSON.parse(await readFile(join(dir,'state.json'),'utf8')).devices[0].level,37);
+ await assert.rejects(readFile(join(dir,'state.json'),'utf8'),{code:'ENOENT'});
  assert.equal((await readdir(dir)).filter(name=>name.startsWith('state.json.pre-sqlite-')).length,1);
  await wait(async()=>!!(await find(lamp))?.state.online,'HA revalidation after SQLite restart');
  await command(lamp,'power',false);await wait(async()=>(await find(lamp))?.state.values.power===false,'restart light baseline');await post('/devices/sim_living_room_motion/state',{occupancy:false});await wait(async()=>(await find(motion))?.state.values.occupancy===false,'restart motion baseline');
@@ -86,4 +86,4 @@ try{
  await wait(async()=>(await find(lamp))?.state.values.power===true&&(await find(lamp))?.state.values.brightness===15,'restored physical feedback');
  console.log('PASS: JSON migration once, SQLite restart retains devices/scenes/rules/logs, SSE reconnect and restored automation physical execution');
  if(process.argv.includes('--restart-ha')){const restart=spawn('docker',['compose','-f','tools/device-simulator/compose.yml','restart','homeassistant'],{cwd:new URL('../../../',import.meta.url),stdio:'ignore'});await once(restart,'exit');assert.equal(restart.exitCode,0);await wait(async()=>!!(await find(lamp))?.state.online,'HA restart recovery');await command(lamp,'power',true);await wait(async()=>(await find(lamp))?.state.values.power===true,'command after restart');console.log('PASS: actual HA container restart and command recovery');}
-}finally{streamAbort?.abort();clearInterval(timer);control.closeAllConnections();control.close();await adapter.close();if(backend.exitCode===null){const done=once(backend,'exit');backend.kill();await done;}await rm(dir,{recursive:true,force:true});}
+}finally{streamAbort?.abort();clearInterval(timer);control.closeAllConnections();control.close();await adapter.close();if(backend.exitCode===null){const done=once(backend,'exit');backend.kill();await done;}await rm(dir,{recursive:true,force:true});await rm(dir+'.key',{force:true});}
