@@ -57,9 +57,20 @@ select:disabled {
   padding-inline: var(--control-padding);
   border-radius: var(--radius-control);
 }
+.arco-btn.arco-btn-icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+}
 .arco-btn-size-default.arco-btn-icon-only {
   width: var(--control-height);
   height: var(--control-height);
+}
+.arco-btn-size-small.arco-btn-icon-only {
+  width: var(--control-compact-height);
+  height: var(--control-compact-height);
 }
 @media (max-width: 767px), (pointer: coarse) {
   :root {

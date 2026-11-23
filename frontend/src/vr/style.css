@@ -1,22 +1,17 @@
 .vr-page { display: flex; flex-direction: column; gap: 16px; position: relative; }
 .vr-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .vr-toolbar .button-row { margin: 0; }
-.vr-toolbar .arco-btn { display: inline-flex; align-items: center; gap: 6px; }
+.vr-toolbar .arco-btn { display: inline-flex; align-items: center; justify-content: center; }
 .vr-mode-switch { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
 .vr-mode-switch button { min-height: 36px; border: 0; border-radius: 8px; padding: 8px 16px; background: transparent; color: var(--muted); }
 .vr-mode-switch button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
-.vr-panorama-select { min-height: 36px; max-width: 100%; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--color-text); }
+.vr-panorama-select { max-width: 100%; }
 .vr-stage-panorama { background: #181d20; }
 .vr-canvas[hidden] { display: none; }
 .vr-panorama-tools { position: absolute; right: 18px; bottom: 18px; display: flex; gap: 6px; }
 .vr-panorama-tools button { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 9px; background: #fffffff0; color: var(--accent); }
 .vr-panorama-tools button:disabled { opacity: .55; cursor: not-allowed; }
 .vr-message .vr-panorama-retry { position: static; display: block; font-size: 14px; margin-top: 10px; border: 1px solid currentColor; border-radius: 6px; padding: 5px 12px; }
-.vr-panorama-views { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
-.vr-panorama-views button { padding: 3px; border: 2px solid transparent; border-radius: 9px; background: var(--control); color: var(--muted); overflow: hidden; }
-.vr-panorama-views button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
-.vr-panorama-views img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 5px; }
-.vr-panorama-views span { display: block; font-size: 12px; padding: 6px 0; }
 .vr-workspace { display: grid; grid-template-columns: minmax(0, 1fr) clamp(360px, 27vw, 400px); gap: 20px; min-width: 0; }
 .vr-workspace-compact { grid-template-columns: minmax(0, 1fr); }
 .vr-stage { position: relative; min-width: 0; height: max(580px, calc(100dvh - 220px)); overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: radial-gradient(ellipse at 50% 42%, #f4f2eb, #e5e5dc); }

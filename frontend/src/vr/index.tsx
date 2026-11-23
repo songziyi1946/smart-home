@@ -8,7 +8,7 @@ import { belongsToRoom } from '../constants';
 import SpaceMap from './SpaceMap';
 import DeviceRow from '../home/DeviceRow';
 import Panorama from './Panorama';
-import { panoramaForRoom, panoramaRooms, panoramaScenes, panoramaThumbnail, type PanoramaScene } from './panoramas';
+import { panoramaForRoom, panoramaRooms, panoramaScenes, type PanoramaScene } from './panoramas';
 import type { Mutate, State } from '../types';
 import './style.css';
 
@@ -21,7 +21,6 @@ export default function VR({ state, busy, mutate, selectedRoom, onRoomChange, ni
   const [displayMode, setDisplayMode] = useState<'panorama' | 'model'>('panorama');
   const [panoramaId, setPanoramaId] = useState(panoramaScenes[0].id);
   const panoramaScene = panoramaForRoom(selectedRoom, panoramaId);
-  const panoramaViews = panoramaScenes.filter(scene => scene.roomId === panoramaScene?.roomId);
   const [status, setStatus] = useState<ViewerStatus>({ mode: 'orbit', position: [viewpoints[0].position[0], viewpoints[0].position[2]], heading: 0, modelState: 'loading' });
   const [error, setError] = useState('');
   const night = nightMode;
@@ -112,9 +111,8 @@ export default function VR({ state, busy, mutate, selectedRoom, onRoomChange, ni
   async function triggerScene(id: string) { await mutate('/scenes/' + id, 'POST', {}); }
   const roomPanel = <>
     {displayMode === 'panorama' ? <>
-      <div className="vr-section-title"><strong>全景房间</strong><span>{panoramaScenes.length} 个视点</span></div>
+      <div className="vr-section-title"><strong>全景房间</strong></div>
       <div className="vr-room-buttons" aria-label="全景房间导航">{panoramaRooms.map(scene => <button key={scene.roomId} aria-pressed={panoramaScene?.roomId === scene.roomId} onClick={() => selectPanorama(scene)}>{scene.room}</button>)}</div>
-      {panoramaViews.length > 1 && <div className="vr-panorama-views" aria-label="房间视点">{panoramaViews.map(scene => <button key={scene.id} aria-pressed={panoramaScene?.id === scene.id} onClick={() => selectPanorama(scene)}><img src={panoramaThumbnail(scene)} alt="" loading="lazy" /><span>{scene.label}</span></button>)}</div>}
     </> : <>
     <div className="vr-section-title"><strong>空间导航</strong><Button size="small" onClick={() => { setPanelOpen(false); setMapOpen(true); }} disabled={!!modelName}>放大导航</Button></div>
     {!modelName && <SpaceMap room={selectedRoom} onSelect={selectRoom} status={status} />}
@@ -141,7 +139,6 @@ export default function VR({ state, busy, mutate, selectedRoom, onRoomChange, ni
           <select className="vr-panorama-select" aria-label="全景房间" value={panoramaScene?.roomId ?? ''} onChange={event => { const scene = panoramaRooms.find(item => item.roomId === event.target.value); if (scene) selectPanorama(scene); }}>
             <option value="" disabled>选择全景房间</option>{panoramaRooms.map(scene => <option key={scene.roomId} value={scene.roomId}>{scene.room}</option>)}
           </select>
-          {panoramaViews.length > 1 && <select className="vr-panorama-select" aria-label="全景视点" value={panoramaScene?.id} onChange={event => { const scene = panoramaViews.find(item => item.id === event.target.value); if (scene) selectPanorama(scene); }}>{panoramaViews.map(scene => <option key={scene.id} value={scene.id}>{scene.label}</option>)}</select>}
         </> : <>
         <Button icon={<Settings2 size={16} />} onClick={() => setSettingsOpen(true)}>场景设置</Button>
         <Button disabled={!ready} type={status.mode === 'walk' ? 'primary' : 'secondary'} icon={<Footprints size={16} />} onClick={() => viewer.current?.setMode('walk')}>进入漫游</Button>
