@@ -105,3 +105,25 @@ select:disabled {
   outline: none;
   box-shadow: none;
 }
+
+/* Autofill must not paint a separate blue rectangle inside password controls. */
+.auth-panel {
+  --auth-input-fill: var(--control);
+}
+.auth-panel .form-field > .arco-input:hover,
+.auth-panel .arco-input-inner-wrapper:hover {
+  --auth-input-fill: var(--color-fill-3);
+}
+.auth-panel .form-field > .arco-input:focus,
+.auth-panel .arco-input-inner-wrapper:focus-within {
+  --auth-input-fill: var(--panel);
+  background-color: var(--auth-input-fill);
+}
+.auth-panel .arco-input:is(:autofill, :-webkit-autofill) {
+  -webkit-text-fill-color: var(--color-text);
+  caret-color: var(--color-text);
+  box-shadow: inset 0 0 0 1000px var(--auth-input-fill);
+}
+.auth-panel .form-field > .arco-input:is(:autofill, :-webkit-autofill):focus {
+  box-shadow: inset 0 0 0 1px var(--accent), inset 0 0 0 1000px var(--auth-input-fill);
+}
