@@ -39,8 +39,10 @@ RUN npm ci --omit=dev --prefix backend && npm cache clean --force
 FROM backend-deps AS backend-test
 COPY backend/ backend/
 COPY packages/ packages/
+COPY tools/create-household.mjs tools/create-household.mjs
 COPY deploy/Caddyfile deploy/Caddyfile
 COPY compose.yaml compose.yaml
+USER node
 RUN npm test --prefix backend
 
 FROM node-runtime AS runtime

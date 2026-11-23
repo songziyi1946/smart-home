@@ -4,7 +4,7 @@ export const nav = [
  {id:'rooms',name:'房间',shortName:'房间',icon:LayoutGrid},
  {id:'devices',name:'设备管理',shortName:'设备',icon:SlidersHorizontal},
  {id:'scenes',name:'生活场景',shortName:'场景',icon:Layers},
- {id:'vr',name:'空间漫游',shortName:'空间',icon:Box},
+ {id:'vr',name:'家庭空间',shortName:'空间',icon:Box},
  {id:'automation',name:'自动化',shortName:'自动化',icon:Zap},
  {id:'billing',name:'能源与缴费',shortName:'缴费',icon:ReceiptText},
  {id:'profile',name:'家庭设置',shortName:'设置',icon:Settings},

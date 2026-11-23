@@ -40,6 +40,46 @@ async function fixture(t, options = {}) {
 }
 const account = { username: 'test_admin', password: 'test-password-82!', displayName: '测试管理员', homeName: '测试家庭' };
 
+test('household rename is admin-only, strictly validated and persisted without changing identity', async t => {
+  const f = await fixture(t);
+  assert.equal((await f.request('/auth/household', { method: 'PATCH', body: { name: '新家' } })).status, 401);
+  const owner = await f.request('/auth/setup', { method: 'POST', body: account });
+  const cookie = owner.cookie.split(';')[0];
+  for (const role of ['member', 'guest']) {
+    const invite = await f.request('/auth/invitations', { method: 'POST', cookie, body: { role } });
+    const person = await f.request('/auth/join', { method: 'POST', body: { ...account, username: 'rename_' + role, code: invite.body.code } });
+    assert.equal((await f.request('/auth/household', { method: 'PATCH', cookie: person.cookie.split(';')[0], body: { name: '越权修改' } })).status, 403);
+  }
+  for (const body of [{ name: '  ' }, { name: 'x'.repeat(41) }, { name: '合法名称', id: 'another-home' }]) {
+    assert.equal((await f.request('/auth/household', { method: 'PATCH', cookie, body })).status, 400);
+  }
+  const renamed = await f.request('/auth/household', { method: 'PATCH', cookie, body: { name: '  爱情小窝  ' } });
+  assert.equal(renamed.status, 200);
+  assert.equal(renamed.body.household.name, '爱情小窝');
+  assert.equal(renamed.body.household.id, owner.body.household.id);
+  assert.equal(renamed.body.user.id, owner.body.user.id);
+  assert.equal(renamed.cache, 'no-store');
+  f.restart();
+  const login = await f.request('/auth/login', { method: 'POST', body: account });
+  assert.equal(login.body.household.name, '爱情小窝');
+});
+
+test('a failed household rename leaves the authenticated session and stored name unchanged', async t => {
+  let stored = null, failWrites = false;
+  const repository = {
+    load: () => structuredClone(stored),
+    create: value => { stored = structuredClone(value); },
+    save: value => { if (failWrites) throw Error('fixture write failure'); stored = structuredClone(value); },
+  };
+  const f = await fixture(t, { repository });
+  const owner = await f.request('/auth/setup', { method: 'POST', body: account });
+  const cookie = owner.cookie.split(';')[0];
+  failWrites = true;
+  assert.equal((await f.request('/auth/household', { method: 'PATCH', cookie, body: { name: '未保存的新名称' } })).status, 400);
+  assert.equal((await f.request('/auth/session', { cookie })).body.household.name, account.homeName);
+  assert.equal(stored.household.name, account.homeName);
+});
+
 test('trusted HTTPS proxy issues Secure cookies and preserves origin protection', async t => {
   const f = await fixture(t, { trustProxy: 'loopback' });
   const created = await f.request('/auth/setup', { method: 'POST', body: account, forwardedProto: 'https' });

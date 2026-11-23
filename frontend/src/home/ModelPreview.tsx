@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createViewer, type Viewer } from '../vr/viewer';
 import { viewpointForRoom } from '../vr/plan';
+import '../vr/style.css';
 
 export default function ModelPreview({ room, overview }: { room: string; overview: boolean }) {
   const host = useRef<HTMLDivElement>(null);
@@ -13,7 +14,7 @@ export default function ModelPreview({ room, overview }: { room: string; overvie
     return () => { viewer.current?.dispose(); viewer.current = undefined; };
   }, []);
   useEffect(() => {
-    if (overview || !viewpoint) viewer.current?.setMode('orbit');
+    if (overview || !viewpoint) viewer.current?.overview();
     else viewer.current?.view(viewpoint.id);
   }, [overview, viewpoint]);
   return <div className="home-model-preview">

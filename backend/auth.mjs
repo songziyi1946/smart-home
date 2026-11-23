@@ -30,10 +30,11 @@ export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, 
   const getToken = (req) => (req.headers.cookie ?? '').split(';').map(value => value.trim()).find(value => value.startsWith(cookieName + '='))?.slice(cookieName.length + 1);
   const cookieOptions = (req) => ({ httpOnly: true, sameSite: 'strict', secure: secureCookies || req.secure, path: '/' });
   const active = user => user && !user.disabled && (!user.accessExpiresAt || user.accessExpiresAt > now());
-  function save() {
-    if(repository){try{repository.save(data);}catch(error){data=repository.load();throw error;}return;}
-    writeFileSync(file + '.tmp', JSON.stringify(data, null, 2), { mode: 0o600 });
+  function save(next = data) {
+    if(repository){try{repository.save(next);}catch(error){data=repository.load();throw error;}data=next;return;}
+    writeFileSync(file + '.tmp', JSON.stringify(next, null, 2), { mode: 0o600 });
     renameSync(file + '.tmp', file);
+    data = next;
   }
   function session(req) {
     const token = getToken(req);
@@ -67,7 +68,7 @@ export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, 
     next();
   }
   function ownerOnly(req, res, next) {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: '仅家庭管理员可以管理成员和邀请' });
+    if (req.user.role !== 'admin') return res.status(403).json({ message: '仅家庭管理员可以管理家庭设置、成员和邀请' });
     next();
   }
   async function makeUser(input, role, accessExpiresAt) {
@@ -79,6 +80,12 @@ export function createAuth({ file, repository, sessionTTL = 8 * 60 * 60 * 1000, 
   router.get('/session', (req, res) => {
     const current = session(req);
     if (!current) return res.status(401).json({ message: '请先登录', setupRequired: !data });
+    res.json(sessionInfo(current.user, current.value));
+  });
+  router.patch('/household', requireAuth, ownerOnly, (req, res) => {
+    const { name } = z.object({ name: z.string().trim().min(1).max(40) }).strict().parse(req.body);
+    const current = session(req);
+    save({ ...data, household: { ...data.household, name } });
     res.json(sessionInfo(current.user, current.value));
   });
   router.post('/setup', throttle, async (req, res) => {

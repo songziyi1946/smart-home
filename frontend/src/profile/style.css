@@ -2,6 +2,12 @@
   display: grid;
   gap: 24px;
 }
+.settings-home-name { display: inline-flex; align-items: center; gap: 6px; }
+.settings-name-editor { display: grid; gap: 10px; width: min(320px, 100%); }
+.settings-name-editor .settings-actions { justify-content: flex-end; }
+.settings-install header h2 { display: flex; align-items: center; gap: 8px; }
+.settings-install p { font-size: 14px; color: var(--muted); }
+.settings-install > small { display: block; margin-top: 12px; }
 .settings-page h2 {
   font-size: 18px;
   margin: 0;

@@ -1,4 +1,4 @@
-name: smart-home
+name: ${SMART_HOME_INSTANCE_NAME:-smart-home}
 services:
   app:
     build: .
@@ -39,8 +39,8 @@ services:
     environment:
       SMART_HOME_DOMAIN: ${SMART_HOME_DOMAIN:?Set SMART_HOME_DOMAIN to the public hostname}
     ports:
-      - "80:80"
-      - "443:443"
+      - "${SMART_HOME_HTTP_PORT:-80}:80"
+      - "${SMART_HOME_HTTPS_PORT:-443}:443"
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

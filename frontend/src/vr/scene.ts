@@ -1,7 +1,8 @@
 import * as T from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import modelUrl from './models/panorama-home.glb?url';
-import { CEILING_HEIGHT, designModel, footprint, obstacles, wallFootprints } from './plan';
+import { CEILING_HEIGHT, designModel, footprint, wallFootprints } from './plan';
+import type { RoomSummary } from './room-state';
 
 export type ModelLoadState = 'loading' | 'ready' | 'error';
 
@@ -25,26 +26,21 @@ export function buildHome(invalidate: () => void, onLoadState: (state: ModelLoad
     const cap = new T.Mesh(new T.BoxGeometry(width, .015, depth), capMaterial);
     cap.position.set(x, cutHeight, z); wallTops.add(cap);
   }
-  const lamps: T.SpotLight[] = [];
+  const lamps = new Map<string, T.SpotLight>();
   for (const room of designModel.rooms) {
     const [x0, z0, x1, z1] = room.bounds;
     const light = new T.SpotLight('#ffecd0', 25, 7, 1.1, .6, 1.4);
     light.position.set((x0 + x1) / 2, CEILING_HEIGHT - .15, (z0 + z1) / 2);
     light.target.position.set(light.position.x, 0, light.position.z);
-    root.add(light, light.target); lamps.push(light);
+    light.visible = false; root.add(light, light.target); lamps.set(room.id, light);
   }
+  const selection = new T.Group(); root.add(selection);
   let model: T.Group | undefined;
-  let disposed = false, generation = 0, cutaway = true, roof = true, lights = true;
-  const glowMaterials = new Map<T.MeshStandardMaterial, number>();
+  let disposed = false, generation = 0;
   function presentation() {
-    cutPlane.constant = cutaway ? cutHeight : CEILING_HEIGHT + 1;
-    wallTops.visible = cutaway;
     model?.traverse(object => {
-      if (object.userData.presentation === 'ceiling') object.visible = !cutaway && roof;
-      if (object.userData.presentation === 'overhead') object.visible = !cutaway;
+      if (object.userData.presentation === 'ceiling' || object.userData.presentation === 'overhead') object.visible = false;
     });
-    for (const lamp of lamps) lamp.visible = lights;
-    for (const [material, intensity] of glowMaterials) material.emissiveIntensity = lights ? intensity : 0;
     invalidate();
   }
   function load() {
@@ -54,7 +50,6 @@ export function buildHome(invalidate: () => void, onLoadState: (state: ModelLoad
     new GLTFLoader().load(modelUrl, ({ scene: loaded }) => {
       if (disposed || generation !== version) { disposeObject(loaded); return; }
       if (model) { root.remove(model); disposeObject(model); }
-      glowMaterials.clear();
       model = loaded;
       model.traverse(object => {
         if (!(object instanceof T.Mesh)) return;
@@ -70,7 +65,8 @@ export function buildHome(invalidate: () => void, onLoadState: (state: ModelLoad
         object.receiveShadow = true;
         for (const material of materials) {
           if (material.transparent) material.depthWrite = false;
-          if (material instanceof T.MeshStandardMaterial && material.name.startsWith('Glow_')) glowMaterials.set(material, material.emissiveIntensity);
+          // Decorative cove meshes are not mapped to actual devices.
+          if (material instanceof T.MeshStandardMaterial && material.name.startsWith('Glow_')) material.emissiveIntensity = 0;
         }
       });
       root.add(model); fallback.visible = false; presentation(); onLoadState('ready');
@@ -80,10 +76,28 @@ export function buildHome(invalidate: () => void, onLoadState: (state: ModelLoad
   }
   load();
   return {
-    root, obstacles, reload: load,
-    setLights(value: boolean) { lights = value; presentation(); },
-    setCutaway(value: boolean, showCeiling: boolean) { cutaway = value; roof = showCeiling; presentation(); },
-    dispose() { disposed = true; generation++; glowMaterials.clear(); },
+    root, reload: load,
+    setRoomStates(summaries: RoomSummary[]) {
+      for (const [id, light] of lamps) {
+        const lighting = summaries.find(summary => summary.id === id)?.lighting;
+        light.visible = typeof lighting === 'number' && lighting > 0;
+        light.intensity = 25 * (lighting ?? 0);
+      }
+      invalidate();
+    },
+    selectRoom(id?: string) {
+      disposeObject(selection); selection.clear();
+      const room = designModel.rooms.find(value => value.id === id);
+      if (room) {
+        const [x0, z0, x1, z1] = room.bounds;
+        const geometry = new T.BoxGeometry(x1 - x0, .02, z1 - z0);
+        const fill = new T.Mesh(geometry, new T.MeshBasicMaterial({ color: '#4ba58d', transparent: true, opacity: .2, depthWrite: false }));
+        const outline = new T.LineSegments(new T.EdgesGeometry(geometry), new T.LineBasicMaterial({ color: '#3d8e79' }));
+        selection.add(fill, outline); selection.position.set((x0 + x1) / 2, .04, (z0 + z1) / 2);
+      }
+      invalidate();
+    },
+    dispose() { disposed = true; generation++; },
   };
 }
 
@@ -92,7 +106,7 @@ export function disposeObject(root: T.Object3D) {
   root.traverse(object => {
     if (object instanceof T.InstancedMesh) object.dispose();
     if (object instanceof T.Light && 'shadow' in object) (object as T.SpotLight | T.DirectionalLight).shadow?.dispose();
-    if (object instanceof T.Mesh) {
+    if (object instanceof T.Mesh || object instanceof T.Line) {
       geometries.add(object.geometry);
       for (const material of Array.isArray(object.material) ? object.material : [object.material]) materials.add(material);
     }

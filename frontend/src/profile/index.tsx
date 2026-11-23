@@ -23,6 +23,9 @@ import {
   integrationSummary,
 } from "./model";
 import "./style.css";
+import type { Installation } from '../pwa';
+import InstallApp from './InstallApp';
+import HouseholdName from './HouseholdName';
 export default function Profile({
   state,
   session,
@@ -33,6 +36,8 @@ export default function Profile({
   onSessionExpired,
   onDevices,
   initialSection = "general",
+  installation,
+  onSessionUpdated,
 }: {
   state: State;
   session: Session;
@@ -43,6 +48,8 @@ export default function Profile({
   onSessionExpired: () => void;
   onDevices: () => void;
   initialSection?: "general" | "members";
+  installation: Installation;
+  onSessionUpdated: (session: Session) => void;
 }) {
   const mobile = useMobile(),
     [section, setSection] = useState(initialSection as string);
@@ -169,7 +176,7 @@ export default function Profile({
               <dl className="settings-facts">
                 <div>
                   <dt>家庭名称</dt>
-                  <dd>{householdName}</dd>
+                  <dd><HouseholdName session={session} name={householdName} disabled={busy} onSaved={onSessionUpdated} onSessionExpired={onSessionExpired} /></dd>
                 </div>
                 <div>
                   <dt>设备记录</dt>
@@ -255,6 +262,7 @@ export default function Profile({
               )}
             </section>
           </div>
+          <InstallApp installation={installation} />
           {mobile && (
             <section className="panel settings-shortcuts">
               <h2>常用入口</h2>

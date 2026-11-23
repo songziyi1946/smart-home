@@ -23,6 +23,7 @@ import Automation from './automation';
 import Billing from './billing';
 import Profile from './profile';
 import Login from './login';
+import { useInstallation } from './pwa';
 
 const VR = lazy(() => import('./vr'));
 
@@ -31,6 +32,7 @@ function currentPage(): Page {
 }
 
 export default function App() {
+  const installation = useInstallation();
   const mobile=useMobile();
   const [selectedDevice,setSelectedDevice]=useState<string>();
   const openDevice=(id:string)=>{history.pushState({devicePanel:id},'',location.href);setSelectedDevice(id);};
@@ -178,6 +180,9 @@ export default function App() {
     document.body.setAttribute('arco-theme', nightMode ? 'dark' : 'light');
     try{window.localStorage.setItem('smart-home-theme', nightMode ? 'dark' : 'light');}catch{/* Theme remains available for this session. */}
   }, [nightMode]);
+  useEffect(() => {
+    document.title = session ? `${session.household.name} · 智能家庭工作台` : '智能家庭工作台';
+  }, [session]);
 
   if (!authChecked) return <div className="auth-viewport">
     <StatusPanel kind={notice?.error?'error':'loading'} title={notice?.error?'暂时无法连接家庭':'正在验证家庭会话'} description={notice?.text} onRetry={notice?.error?()=>void load():undefined} retryLabel="重新连接"/>
@@ -187,16 +192,23 @@ export default function App() {
   const activePage = session.user.role === 'guest' && ['automation', 'billing'].includes(page) ? 'home' : page;
   const householdName = session.localPreview ? '我的家' : session.household.name.trim() || '我的家';
   const controlsBusy=busy||connection!=='live';
+  const sessionGeneration = generation.current;
+  const onSessionUpdated = (updated: Session) => {
+    if (sessionGeneration === generation.current && updated.household.id === session.household.id && updated.user.id === session.user.id) setSession(updated);
+  };
+  const onProfileSessionExpired = () => {
+    if (sessionGeneration === generation.current) clearSession();
+  };
   const pages = state ? {
     home: mobile?<MobileHome state={state} live={connection==='live'} canViewAutomation={session.user.role!=='guest'} onRoom={openRoom} onOffline={()=>{setMobileRoom('all');setOfflineOnly(true);location.hash='rooms';}} busy={controlsBusy} mutate={mutate} onOpen={openDevice}/>:<Home state={state} live={connection==='live'} canViewAutomation={session.user.role!=='guest'} busy={controlsBusy} mutate={mutate} onOpen={openDevice} onRoom={openRoom} onOffline={()=>openDirectory({status:'offline'})} onDevices={()=>openDirectory()}/>,
     devices: <Devices state={state} busy={controlsBusy} mutate={mutate} onOpen={openDevice} filters={deviceFilters} onFilters={setDeviceFilters} role={session.user.role}/>,
     rooms: <RoomsPage state={state} roomId={mobileRoom} onRoom={setMobileRoom} offlineOnly={offlineOnly} onOfflineChange={setOfflineOnly} busy={controlsBusy} mutate={mutate} onOpen={openDevice}/>,
-    account: <Profile onDevices={()=>openRoom('all')} key="account" initialSection="members" state={state} session={session} householdName={householdName} busy={controlsBusy} pending={busy} onLogout={()=>void logout()} onSessionExpired={()=>clearSession()}/>,
+    account: <Profile installation={installation} onSessionUpdated={onSessionUpdated} onDevices={()=>openRoom('all')} key="account" initialSection="members" state={state} session={session} householdName={householdName} busy={controlsBusy} pending={busy} onLogout={()=>void logout()} onSessionExpired={onProfileSessionExpired}/>,
     scenes: <Scenes state={state} canManage={session.user.role==='admin'} busy={controlsBusy} pending={busy} mutate={mutate}/>,
     automation: <Automation state={state} busy={controlsBusy} pending={busy} mutate={mutate} canManage={session.user.role==='admin'}/>,
-    vr: <Suspense fallback={<StatusPanel kind="loading" title="正在加载空间视图"/>}><VR state={state} busy={controlsBusy} mutate={mutate} selectedRoom={room} onRoomChange={setRoom} nightMode={nightMode} /></Suspense>,
+    vr: <Suspense fallback={<StatusPanel kind="loading" title="正在加载空间视图"/>}><VR state={state} live={connection==='live'} busy={controlsBusy} mutate={mutate} selectedRoom={room} onRoomChange={setRoom} nightMode={nightMode} /></Suspense>,
     billing: <Billing state={state} busy={controlsBusy} pending={busy} mutate={mutate} />,
-    profile: <Profile onDevices={()=>openRoom('all')} key="profile" state={state} session={session} householdName={householdName} busy={controlsBusy} pending={busy} onLogout={() => void logout()} onSessionExpired={() => clearSession()} />,
+    profile: <Profile installation={installation} onSessionUpdated={onSessionUpdated} onDevices={()=>openRoom('all')} key="profile" state={state} session={session} householdName={householdName} busy={controlsBusy} pending={busy} onLogout={() => void logout()} onSessionExpired={onProfileSessionExpired} />,
   } satisfies Record<Page, ReactNode> : undefined;
 
   return <Layout mobile={mobile} householdName={householdName} connection={connection} lastReceived={lastReceived} onReconnect={reconnect} page={activePage} role={session.user.role} state={state} busy={busy} nightMode={nightMode} onNightModeChange={setNightMode}>

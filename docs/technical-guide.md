@@ -33,6 +33,12 @@ App 通过同源 SSE `/api/events` 接收服务端 WS 状态事件和本地保�
 
 无真实硬件时，使用 [MQTT Discovery 模拟器与完整测试说明](../tools/device-simulator/README.md) 启动独立的 HA/Mosquitto 环境及八台动态虚拟设备（11个 HA 实体）。
 
+### 米家接入范围
+
+本平台目前通过上述 Home Assistant Provider 接入真实设备，没有内置米家账号直连或极客版网关写入功能。小米官方集成支持小米账号授权、选择家庭和设备；是否走中枢网关本地控制取决于实际硬件与固件，没有中枢网关时可通过小米云转发。参见[小米官方接入说明](https://github.com/XiaoMi/ha_xiaomi_home/blob/main/doc/README_zh.md)。
+
+参考项目 [oh-my-sage](https://github.com/allocnode/oh-my-sage) 的极客版规则管理则要求局域网可达的米家中枢网关，并通过米家 App 开启功能、取得一次性登录码。公开资料可以确认接入条件，无法确认用户家中是否已有该硬件。本轮保留现有能力契约及模拟器，不复制其登录或规则写入流程，也不把没有授权的设备显示为已连接。
+
 ## 安装教程
 
 使用 Node.js 24.22.3（`.nvmrc`）和随附的 npm 11.19.1。两个子项目均使用 npm，提交各自的 `package-lock.json`。不要混用 Yarn/pnpm 或复制其他机器的 `node_modules`。
@@ -87,6 +93,14 @@ set +a
 ```
 
 PowerShell 可用 `$env:变量名 = '值'` 在启动终端设置各项配置。不要提交 `.env`。`SMART_HOME_DATA_DIR` 建议填写绝对路径，切换目录会使用另一份家庭业务和登录数据。
+
+## 手机桌面应用与离线恢复
+
+生产构建包含 `manifest.webmanifest`、本地图标和 `sw.js`。部署到 HTTPS 后，在“我的 → 家庭与账户 → 添加到桌面”中使用浏览器安装入口；iPhone/iPad 可通过 Safari 分享菜单添加到主屏幕。各家庭使用自己的 HTTPS 域名，桌面入口跟随该家庭服务。
+
+Service Worker 仅缓存不包含家庭信息的 `offline.html`。API、认证、SSE、设备命令和登录后的页面都不进入其缓存；离线首次打开显示恢复页，已打开页面则沿用连接状态与缓存数据标签，并禁止离线命令。网页应用不提供后台持续控制，也不等同于原生 Android/iOS 安装包。开发模式不注册 Service Worker，生产构建与后台同源运行时才启用。
+
+无需为了安装网页应用重写 React 前端；后续有蓝牙配网、系统小组件等明确需要时，再增加原生容器及平台适配。
 
 ## 工程检查与 CI
 

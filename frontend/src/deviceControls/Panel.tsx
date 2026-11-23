@@ -59,6 +59,7 @@ export default function DevicePanel({
       device?.capabilities.includes(cap);
   return (
     <Drawer
+      getPopupContainer={() => document.fullscreenElement ?? document.body}
       visible={visible}
       title={null}
       closable={false}

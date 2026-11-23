@@ -6,12 +6,14 @@ import { once } from 'node:events';
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { parseEnv } from 'node:util';
+import { createHousehold } from '../tools/create-household.mjs';
 import { legacySeedDevices } from './providers/mock/seed.mjs';
 
-async function launch(directory) {
-  const child = spawn(process.execPath, ['server.mjs'], {
+async function launch(directory, extraEnv = {}, args = ['server.mjs']) {
+  const child = spawn(process.execPath, args, {
     cwd: new URL('.', import.meta.url),
-    env: { ...process.env, SMART_HOME_DATA_DIR: directory, SMART_HOME_API_PORT: '0' },
+    env: { ...process.env, SMART_HOME_DATA_DIR: directory, SMART_HOME_API_PORT: '0', ...extraEnv },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let output = '';
@@ -128,4 +130,54 @@ test('real HTTP device routes preserve auth, validation, snapshots and persisten
   assert.equal((await request('/scenes/'+custom.id,'DELETE',{})).status,200);
   assert.equal((await request('/scenes/'+custom.id,'POST',{})).status,404);
   for (const scene of ['home', 'away', 'sleep']) assert.equal((await request('/scenes/' + scene, 'POST')).status, 200);
+});
+
+test('independent household instances isolate sessions, invitations, devices, expenses and restart persistence', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'smart-home-families-'));
+  const homes = ['alice', 'bob'].map((id, i) => createHousehold({ directory: join(root, id), id, port: 3121 + i, slot: 61 + i }));
+  const configs = homes.map(home => parseEnv(readFileSync(join(home, '.env.local'), 'utf8')));
+  const servers = [];
+  t.after(async () => { await Promise.all(servers.map(server => server.stop())); rmSync(root, { recursive: true, force: true }); });
+  for (const home of homes) {
+    const envPath = join(home, '.env.local');
+    writeFileSync(envPath, readFileSync(envPath, 'utf8').replace(/SMART_HOME_API_PORT='\d+'/u, "SMART_HOME_API_PORT='0'"));
+    // The family config must override an unrelated provider inherited from the operator's shell.
+    servers.push(await launch(home, { HA_URL: 'http://127.0.0.1:9', HA_TOKEN: 'fixture-only-provider' }, ['../tools/create-household.mjs', 'start', '--directory', home]));
+  }
+  const request = async (i, path, method = 'GET', body, cookie) => {
+    const response = await fetch(servers[i].url + '/api' + path, { method, headers: { 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) });
+    return { status: response.status, body: await response.json(), cookie: response.headers.get('set-cookie')?.split(';')[0] };
+  };
+  const credentials = { username: 'independent_owner', password: 'fixture-password-82', displayName: '家庭管理员' };
+  const owners = [];
+  for (const i of [0, 1]) {
+    const owner = await request(i, '/auth/setup', 'POST', { ...credentials, homeName: ['甲的家', '乙的家'][i] });
+    assert.equal(owner.status, 200); owners.push(owner);
+  }
+  assert.notEqual(owners[0].body.household.id, owners[1].body.household.id);
+  for (const i of [0, 1]) {
+    assert.equal((await request(i, '/state', 'GET', undefined, owners[1 - i].cookie)).status, 401);
+    assert.equal((await request(i, '/events', 'GET', undefined, owners[1 - i].cookie)).status, 401);
+    assert.equal((await request(i, '/devices/ceiling', 'PATCH', { capability: 'power', value: false }, owners[1 - i].cookie)).status, 401);
+  }
+  const invite = await request(0, '/auth/invitations', 'POST', { role: 'member' }, owners[0].cookie);
+  assert.equal((await request(1, '/auth/join', 'POST', { ...credentials, username: 'wrong_family', code: invite.body.code })).status, 400);
+  assert.equal((await request(0, '/devices/ceiling', 'PATCH', { capability: 'power', value: false }, owners[0].cookie)).status, 200);
+  assert.equal((await request(0, '/expenses', 'POST', { category: '电费', cents: 500, date: '2026-11-23', note: '仅甲家庭' }, owners[0].cookie)).status, 201);
+  assert.equal((await request(1, '/expenses', 'POST', { category: '电费', cents: 900, date: '2026-11-23', note: '仅乙家庭' }, owners[1].cookie)).status, 201);
+  assert.equal((await request(0, '/auth/household', 'PATCH', { name: '甲的新家' }, owners[0].cookie)).status, 200);
+  for (const i of [0, 1]) {
+    const state = (await request(i, '/state', 'GET', undefined, owners[i].cookie)).body;
+    assert.equal(state.devices.length, 9);
+    assert.equal(state.devices.find(device => device.id === 'ceiling').state.values.power, i === 1);
+    assert.deepEqual(state.expenses.map(expense => expense.cents), [i === 0 ? 500 : 900]);
+  }
+  await servers[0].stop();
+  servers[0] = await launch(configs[0].SMART_HOME_DATA_DIR, { ...configs[0], SMART_HOME_API_PORT: '0' });
+  assert.equal((await request(0, '/state', 'GET', undefined, owners[0].cookie)).status, 401);
+  const loggedIn = await request(0, '/auth/login', 'POST', credentials);
+  assert.equal(loggedIn.body.household.name, '甲的新家');
+  const restored = (await request(0, '/state', 'GET', undefined, loggedIn.cookie)).body;
+  assert.equal(restored.devices.find(device => device.id === 'ceiling').state.values.power, false);
+  assert.deepEqual(restored.expenses.map(expense => expense.cents), [500]);
 });
