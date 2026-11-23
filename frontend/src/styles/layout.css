@@ -1,0 +1,247 @@
+/* Shared page rhythm. Content scrolls only when it exceeds its available space. */
+:root {
+  --layout-gap: 16px;
+  --card-padding: 18px;
+}
+:is(.panel, .desktop-device, .desktop-room-card, .mobile-device) {
+  border-radius: var(--radius-card);
+  padding: var(--card-padding);
+  min-width: 0;
+}
+:is(.desktop-device-grid, .desktop-room-grid, .mobile-device-grid, .flow-scene-cards, .flow-rule-cards) {
+  gap: var(--layout-gap);
+  align-items: stretch;
+  grid-auto-rows: 1fr;
+}
+.desktop-device {display: flex; flex-direction: column;}
+.desktop-device-controls {margin-top: auto;}
+.auth-panel {max-height: calc(100dvh - 48px); overflow: auto;}
+:is(.desktop-section-head, .home-panel-heading, .flow-heading) {margin-bottom: 12px;}
+:is(.desktop-section-head, .home-panel-heading, .flow-heading) h2 {font-size: 18px;}
+:is(.panel, .desktop-device, .desktop-room-card, .mobile-device) :is(h2, h3, p, strong) {overflow-wrap: anywhere;}
+.today-almanac {max-height: calc(100dvh - 110px); overflow: auto; color: var(--color-text);}
+.dashboard-clock .today-almanac-heading strong, .today-almanac-activities dd {color: var(--color-text);}
+
+@media (min-width: 768px) {
+  /* Keep the header outside the scroll areas. Main remains a fallback at extreme zoom. */
+  .shell {height: 100dvh; min-height: 0;}
+  .workspace {display: flex; flex-direction: column; min-height: 0;}
+  .top {flex: none; width: 100%; max-width: none; padding: 16px 24px;}
+  main {
+    flex: 1; min-height: 0; max-width: none; padding: 0 24px 20px;
+    display: flex; flex-direction: column; gap: var(--layout-gap); overflow: auto;
+  }
+  .connection-banner {flex: none; margin: 0; padding: 12px 16px;}
+  main > :is(.desktop-home, .desktop-devices-page, .rooms-page, .flow-page, .automation-page, .ledger-page, .settings-page, .vr-page, .flow-editor, .ledger-editor) {
+    flex: 1; min-height: 0; min-width: 0;
+  }
+  :is(.panel, .desktop-device-grid, .desktop-room-grid, .mobile-device-grid, .flow-scene-cards, .flow-rule-cards, .flow-log-list, .flow-log-inspector, .vr-inspector) {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  /* Equal-height rows and columns on the overview, with each content area independent. */
+  .desktop-home {grid-template-rows: minmax(0, 156px) minmax(0, 1fr); gap: var(--layout-gap);}
+  .home-overview-grid {grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: var(--layout-gap); min-height: 0;}
+  .home-overview-grid > .panel {padding: 12px 16px; overflow: auto;}
+  .home-overview-grid .home-panel-heading {margin-bottom: 4px;}
+  .home-overview-grid .home-text-action {min-height: 32px;}
+  .home-action-grid {grid-template-columns: repeat(2, minmax(0, 1fr)); flex: none; align-content: start; gap: 6px;}
+  .home-action-grid > button:nth-child(3):last-child {grid-column: 1 / -1;}
+  .home-action-grid button {min-width: 0; min-height: 44px; padding: 6px 10px; gap: 8px;}
+  .home-action-grid button > span {line-height: 18px;}
+  .home-action-grid small {font-size: 11px; line-height: 12px;}
+  .home-status-body {gap: 12px;}
+  .home-status-dial {width: 64px; height: 64px;}
+  .home-status-dial strong {font-size: 20px;}
+  .home-status-metrics > div {padding: 0 8px;}
+  .home-status-source {margin-top: 4px; padding-top: 4px; font-size: 11px; line-height: 16px;}
+  .desktop-home-columns {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 168px);
+    gap: var(--layout-gap); align-items: stretch; min-height: 0;
+  }
+  .desktop-home-primary, .desktop-home-secondary {display: contents;}
+  .home-devices {grid-area: 1 / 1;}
+  .home-rooms {grid-area: 2 / 1;}
+  .desktop-home-secondary > :first-child {grid-area: 1 / 2;}
+  .desktop-home-secondary > :last-child {grid-area: 2 / 2;}
+  .desktop-home-columns > .desktop-home-secondary > .panel:not(.home-activity) {min-height: 0; overflow: auto;}
+  .home-activity {display: flex; flex-direction: column; min-height: 0; overflow: hidden;}
+  .home-activity-content {flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent;}
+  .home-devices, .home-rooms {display: flex; flex-direction: column; min-height: 0; overflow: auto; container: home-cards / inline-size;}
+  .desktop-section-head {flex: none;}
+  .desktop-home-primary .desktop-room-grid {
+    --home-columns: 1;
+    --visible-columns: max(1, min(var(--home-columns), var(--home-count)));
+    flex: 1; min-height: 0; overflow: auto; grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - (var(--visible-columns) - 1) * var(--layout-gap)) / var(--visible-columns));
+    grid-template-rows: minmax(min-content, 1fr); padding: 3px;
+    scroll-snap-type: x mandatory;
+  }
+  .desktop-home-primary .desktop-room-card {scroll-snap-align: start;}
+  .desktop-home-primary .desktop-device {padding: 12px;}
+  .desktop-home-primary .desktop-device-controls {gap: 4px;}
+  .desktop-home-primary > .panel {padding: 12px;}
+  .desktop-home-primary .desktop-section-head {margin-bottom: 4px;}
+  .desktop-home-primary .desktop-section-head :is(a, button) {padding-block: 2px;}
+  .desktop-home-primary .desktop-device-grid {
+    flex: 1; min-height: 0; overflow: auto; padding: 3px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 8px;
+  }
+  .home-devices .desktop-device {
+    position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-rows: auto minmax(18px, 1fr) auto; gap: 4px 8px;
+    min-height: 0; padding: 8px; overflow: auto;
+  }
+  .home-devices .desktop-device-top {flex-direction: column; gap: 2px; align-self: start;}
+  .home-devices .desktop-device-symbol {width: 22px; height: 22px; border-radius: 6px;}
+  .home-devices .desktop-device-symbol svg {width: 18px; height: 18px;}
+  .home-devices .device-availability {font-size: 10px; line-height: 14px;}
+  .home-devices .desktop-device-title {min-width: 0; padding: 0;}
+  .home-devices .desktop-device-title > span {min-width: 0;}
+  .home-devices .desktop-device-title strong {font-size: 14px; line-height: 20px;}
+  .home-devices .desktop-device-title small {font-size: 11px; line-height: 16px; margin-top: 0;}
+  .home-devices .desktop-device-reading {grid-column: 1 / -1; font-size: 12px; line-height: 18px; min-height: 18px; margin: 0;}
+  .home-devices .desktop-device-controls {grid-column: 1 / -1; min-height: 32px; padding-top: 4px; flex-wrap: nowrap;}
+  .home-devices .desktop-device-controls .arco-btn {flex: 1; min-width: 0; padding-inline: 4px; font-size: 12px;}
+  .desktop-home-primary .desktop-room-card {padding: 8px;}
+  .desktop-home-primary .desktop-room-card > span {margin-bottom: 4px;}
+  .desktop-home-primary .desktop-room-card p {margin: 4px 0;}
+  .desktop-home-primary .desktop-room-card small {display: block; line-height: 16px;}
+  .desktop-device-symbol {width: 32px; height: 32px;}
+  .desktop-device-title {padding-top: 8px;}
+  .desktop-room-card {padding: 12px;}
+  .desktop-room-card > span {margin-bottom: 8px;}
+  .desktop-environment {grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 12px 0;}
+  .desktop-environment strong {font-size: 20px;}
+  .desktop-occupancy {margin: 0; padding-top: 8px;}
+  /* Directory and room filters stay visible while their equal-sized device cards scroll. */
+  .desktop-devices-page {display: flex; flex-direction: column;}
+  .device-directory {flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: auto;}
+  .device-directory > :not(.desktop-device-grid) {flex: none;}
+  .directory-filters {padding: 12px 0; gap: 12px;}
+  .directory-count {margin: 12px 0;}
+  .device-directory > .desktop-device-grid {min-height: 0; overflow: auto; padding: 3px; align-content: start; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));}
+  .compact-list {grid-auto-rows: auto;}
+  .rooms-page {display: flex; flex-direction: column; overflow: auto;}
+  .rooms-page > :not(.mobile-device-grid) {flex: none;}
+  .rooms-page .mobile-device-grid {min-height: 0; overflow: auto; padding: 3px; align-content: start;}
+  .rooms-page .mobile-section-heading {margin: 12px 0 0;}
+  .rooms-page .mobile-secondary-link, .rooms-page .mobile-environment {margin-top: 12px;}
+  .room-chip-row {flex-wrap: nowrap; overflow: auto; padding: 3px;}
+  .room-chip-row button {flex: none;}
+  /* Scenes, rules, editors and logs share the same bounded workspace. */
+  .flow-page {display: flex; flex-direction: column; gap: var(--layout-gap); overflow: auto;}
+  .flow-toolbar {flex: none;}
+  .flow-scene-layout {flex: 1; min-height: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: var(--layout-gap);}
+  .flow-scene-cards, .flow-rule-cards {min-height: 0; overflow: auto; align-content: start; padding: 3px; grid-auto-rows: max-content;}
+  .flow-scene-cards {grid-template-columns: 1fr;}
+  .flow-scene-card {min-height: 170px;}
+  .flow-scene-name {flex: none;}
+  .flow-scene-card .flow-card-buttons {margin-top: auto; padding-top: 12px;}
+  .flow-scene-inspector {min-height: 0; overflow: auto;}
+  .flow-rule-cards {grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));}
+  .flow-rule-card {display: flex; flex-direction: column;}
+  .flow-rule-card .flow-card-buttons {margin-top: auto; padding-top: 12px;}
+  .flow-editor, .ledger-editor {max-width: none; min-height: 0; overflow: auto;}
+  .flow-editor > .flow-heading, .ledger-editor > header {position: sticky; top: calc(-1 * var(--card-padding)); z-index: 2; background: var(--panel); padding-block: 8px;}
+  .flow-rule-editor {height: 100%; min-height: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--layout-gap); align-items: stretch;}
+  .flow-preview {min-height: 0; overflow: auto;}
+  .flow-history {flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: auto;}
+  .flow-history > .flow-heading {flex: none;}
+  .flow-history-layout {flex: 1; min-height: 0; gap: var(--layout-gap);}
+  .flow-log-list {max-height: none; min-height: 0; padding: 3px;}
+  .flow-log-inspector {overflow: auto;}
+  .automation-page, .automation-page > .arco-tabs {display: flex; flex-direction: column; min-height: 0;}
+  .automation-page > .arco-tabs {flex: 1;}
+  .automation-page .arco-tabs-header-nav {flex: none;}
+  .automation-page .arco-tabs-content {flex: 1; min-height: 0; padding-top: 12px;}
+  .automation-page .arco-tabs-content-inner, .automation-page .arco-tabs-pane {height: 100%; min-height: 0;}
+  .automation-page .arco-tabs-pane > :is(.flow-page, .panel, div) {height: 100%; min-height: 0;}
+  .automation-page .arco-tabs-pane > .panel, .automation-page .arco-tabs-pane > div > .panel {max-height: 100%; overflow: auto;}
+  /* Four balanced expense panels replace the long vertical stack. */
+  main > .ledger-page {flex: 0 1 auto; max-height: 100%;}
+  .ledger-page {grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto minmax(0, 1fr); gap: var(--layout-gap);}
+  .ledger-overview {grid-area: 1 / 1;}
+  .ledger-analysis {grid-area: 1 / 2;}
+  .ledger-payment-area {grid-area: 2 / 1;}
+  #ledger-history-area {grid-area: 2 / 2; min-height: 0; display: flex;}
+  .ledger-page > .panel {min-height: 0; overflow: auto;}
+  .ledger-analysis, .ledger-payment-area {grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--layout-gap);}
+  .ledger-channels {grid-template-columns: repeat(2, minmax(0, 1fr));}
+  .ledger-overview-tools {gap: 8px;}
+  .ledger-payment-area {grid-template-columns: 1fr; align-content: start;}
+  .ledger-records {flex: 1; min-height: 0; overflow: auto;}
+  .ledger-record-list li {grid-template-columns: 90px minmax(0, 1fr) auto; gap: 8px;}
+  /* Settings panels align, including expanded permissions and invitation results. */
+  .settings-page {display: flex; flex-direction: column; gap: var(--layout-gap); overflow: auto;}
+  .settings-hero, .settings-tabs {flex: none;}
+  .settings-page header {margin-bottom: 12px;}
+  .settings-general-grid, .settings-integrations, .settings-member-grid {
+    flex: 1; min-height: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--layout-gap); align-items: stretch;
+  }
+  :is(.settings-general-grid, .settings-integrations, .settings-member-grid) > .panel {min-height: 0; overflow: auto;}
+  .settings-general-grid, .settings-integrations {flex: 0 1 auto; max-height: 100%;}
+  .settings-integrations > details:not([open]) {align-self: start;}
+  .settings-members {flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--layout-gap);}
+  .settings-member-heading {flex: none;}
+  .settings-permissions {flex: none; max-height: 40%; overflow: auto;}
+  .settings-facts {margin: 12px 0;}
+  .settings-facts > div, .settings-member-list li {padding: 12px 0;}
+  /* VR uses remaining height, including the compact navigation drawer trigger. */
+  main .vr-page {min-height: 0; gap: var(--layout-gap);}
+  .vr-page .vr-workspace {flex: 1; min-height: 0; gap: var(--layout-gap);}
+  .vr-page .vr-stage, .vr-page .vr-inspector {height: 100%; min-height: 0; max-height: none; border-radius: var(--radius-card);}
+  .vr-page .vr-inspector {padding: var(--card-padding);}
+  .vr-toolbar, .vr-panel-trigger {flex: none;}
+}
+
+/* Rooms use whole columns based on the actual panel width. */
+@container home-cards (min-width: 326px) {
+  .desktop-home-primary .desktop-room-grid {--home-columns: 2;}
+}
+@container home-cards (min-width: 494px) {
+  .desktop-home-primary .desktop-room-grid {--home-columns: 3;}
+}
+@container home-cards (min-width: 662px) {
+  .desktop-home-primary .desktop-room-grid {--home-columns: 4;}
+}
+@container home-cards (min-width: 830px) {
+  .desktop-home-primary .desktop-room-grid {--home-columns: 5;}
+}
+@container home-cards (min-width: 998px) {
+  .desktop-home-primary .desktop-room-grid {--home-columns: 6;}
+}
+
+@media (min-width: 768px) and (max-height: 740px) {
+  .workspace:has(.desktop-home) .top {padding-block: 8px;}
+  main:has(> .desktop-home) {padding-bottom: 12px;}
+  .desktop-home, .desktop-home-columns {gap: 12px;}
+  .home-devices .desktop-device {padding: 6px; gap: 3px 6px;}
+}
+
+@media (min-width: 768px) and (max-width: 1100px) {
+  .top {padding: 12px 16px;}
+  main {padding: 0 16px 16px;}
+  .home-action-grid button > svg:last-child {display: none;}
+  .home-status-metrics {gap: 4px;}
+  .home-status-metrics > div {padding-inline: 4px;}
+  .home-status-metrics dt {font-size: 11px;}
+  .home-status-metrics dd {font-size: 22px;}
+  .home-status-metrics > div:first-child {border-left: 0;}
+  .desktop-environment {grid-template-columns: repeat(2, minmax(0, 1fr));}
+  .flow-scene-cards {grid-template-columns: 1fr;}
+  .ledger-analysis, .ledger-payment-area {grid-template-columns: 1fr; align-content: start;}
+}
+
+@media (max-width: 767px) {
+  :root {--card-padding: 16px; --layout-gap: 12px;}
+  .flow-page, .settings-page, .ledger-page {gap: 16px;}
+  .flow-scene-card, .settings-page .panel {padding: var(--card-padding);}
+  .flow-scene-cards, .flow-rule-cards {grid-auto-rows: auto;}
+  .flow-tabs, .settings-tabs {flex-wrap: nowrap; overflow-x: auto; padding: 3px;}
+  .flow-tabs button, .settings-tabs button {flex-shrink: 0;}
+  .flow-editor, .ledger-editor {max-height: calc(100dvh - 190px); overflow: auto;}
+}

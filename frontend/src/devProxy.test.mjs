@@ -4,7 +4,8 @@ import { once } from "node:events";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { createServer } from "vite";
-import config from "../vite.config.ts";
+import { createApiProxy } from "../vite.config.ts";
+import { validateOrigin } from "../../backend/auth.mjs";
 import { createStateStream } from "../../backend/app/state-stream.mjs";
 const express = createRequire(
   new URL("../../backend/package.json", import.meta.url),
@@ -27,8 +28,8 @@ async function within(promise, ms = 1500) {
     clearTimeout(timer);
   }
 }
-test(
-  "development proxy keeps SSE live beyond REST timeout and propagates upstream disconnects",
+for (const remote of [false, true]) test(
+  `${remote ? "remote" : "local"} development proxy preserves origin checks, cookies and SSE reconnects`,
   { timeout: 20000 },
   async (t) => {
     let power = true;
@@ -44,6 +45,13 @@ test(
       }),
     });
     app.use(express.json());
+    let upstreamRequests = 0;
+    app.use((req, res, next) => { upstreamRequests++; next(); });
+    app.use('/api', validateOrigin);
+    app.post('/api/auth/login', (req, res) => {
+      res.cookie('smart_home_session', 'fixture-only', { httpOnly: true, secure: true, sameSite: 'strict', path: '/' });
+      res.json({ host: req.headers.host, origin: req.headers.origin });
+    });
     app.get("/api/events", (req, res) => {
       responses.add(res);
       res.once("close", () => responses.delete(res));
@@ -67,32 +75,48 @@ test(
       await vite?.close();
     });
     vite = await createServer({
-      ...config,
       configFile: false,
       root: fileURLToPath(new URL("..", import.meta.url)),
       plugins: [],
       logLevel: "silent",
       server: {
-        ...config.server,
         host: "127.0.0.1",
         port: 0,
         watch: null,
-        proxy: Object.fromEntries(
-          Object.entries(config.server.proxy).map(([key, value]) => [
-            key,
-            { ...value, target },
-          ]),
-        ),
+        proxy: createApiProxy(remote ? target : '', String(upstream.address().port)),
       },
       optimizeDeps: { noDiscovery: true, include: [] },
     });
     await vite.listen();
     const base = "http://127.0.0.1:" + vite.httpServer.address().port;
+    const login = await fetch(base + '/api/auth/login', {
+      method: 'POST', headers: { Origin: base, 'Content-Type': 'application/json' }, body: '{}',
+    });
+    assert.equal(login.status, 200);
+    assert.deepEqual(await login.json(), { host: new URL(remote ? target : base).host, origin: remote ? target : base });
+    const cookie = login.headers.get('set-cookie');
+    for (const attribute of ['HttpOnly', 'Secure', 'SameSite=Strict', 'Path=/']) assert.ok(cookie.includes(attribute));
+    assert.ok(!cookie.includes('Domain='));
+    for (const origin of ['https://untrusted.example', target, 'null', 'invalid']) {
+      const before = upstreamRequests;
+      const rejected = await fetch(base + '/api/auth/login', {
+        method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: '{}',
+      });
+      assert.equal(rejected.status, remote ? 404 : 403);
+      if (remote) assert.equal(upstreamRequests, before, 'untrusted requests must not reach the remote backend');
+    }
+    if (remote) {
+      const before = upstreamRequests;
+      const rejectedStream = await fetch(base + '/api/events', { headers: { Origin: target } });
+      assert.equal(rejectedStream.status, 404);
+      assert.equal(upstreamRequests, before);
+    }
     async function open() {
       const controller = new AbortController();
       controllers.push(controller);
       const response = await fetch(base + "/api/events", {
         signal: controller.signal,
+        headers: { Origin: base, Cookie: cookie.split(';')[0] },
       });
       assert.equal(response.status, 200);
       const reader = response.body.getReader();
@@ -132,7 +156,7 @@ test(
       (
         await fetch(base + "/api/devices/lamp", {
           method: "PATCH",
-          headers: { "content-type": "application/json" },
+          headers: { "content-type": "application/json", Origin: base },
           body: JSON.stringify({ value: false }),
         })
       ).status,
@@ -167,3 +191,14 @@ test(
     );
   },
 );
+
+test('API target accepts only HTTP(S) origins without embedded credentials or paths', () => {
+  for (const target of ['ftp://example.com', 'https://user:password@example.com', 'https://example.com/api', 'https://example.com/?token=x', 'https://example.com/#x', 'not-a-url']) {
+    assert.throws(() => createApiProxy(target));
+  }
+  const proxy = createApiProxy('https://example.com/');
+  assert.equal(proxy['/api'].target, 'https://example.com');
+  assert.equal(proxy['/api'].changeOrigin, true);
+  assert.notEqual(proxy['/api'].secure, false);
+  assert.equal(createApiProxy()['/api'].target, 'http://127.0.0.1:3101');
+});

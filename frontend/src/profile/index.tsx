@@ -114,35 +114,7 @@ export default function Profile({
           </article>
         </div>
       </section>
-      {admin && (
-        <details className="panel settings-setup">
-          <summary>Home Assistant 接入步骤</summary>
-          <ol>
-            <li>
-              <strong>准备 Home Assistant</strong>
-              <p>先在 HA 中接入设备，确认实体可读取和控制。</p>
-            </li>
-            <li>
-              <strong>由部署者配置后端</strong>
-              <p>
-                设置 <code>HA_URL</code>、<code>HA_TOKEN</code>；可选{" "}
-                <code>HA_ENTITY_PREFIX</code> 筛选实体，
-                <code>HA_ROOMS_FILE</code> 映射房间。
-              </p>
-            </li>
-            <li>
-              <strong>重启后端并检查设备</strong>
-              <p>
-                在设备页检查在线状态、能力与来源。此页面不接收或保存 Token。
-              </p>
-            </li>
-          </ol>
-          <p className="settings-muted">
-            完整命令见项目 README 的“开发与设备接入”，以及
-            tools/device-simulator/README.md。连接错误需由部署者查看服务端配置和日志。
-          </p>
-        </details>
-      )}
+
     </div>
   );
   return (
@@ -319,10 +291,7 @@ export default function Profile({
         <>
           {preview ? (
             <section className="panel settings-unavailable">
-              <h2>成员管理需要真实登录</h2>
-              <p>
-                请以正常登录模式启动服务。
-              </p>
+              <h2>请先登录</h2>
             </section>
           ) : admin ? (
             <Members

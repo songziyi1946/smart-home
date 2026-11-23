@@ -1,0 +1,924 @@
+{
+  "title": "埠印贤府 · 图纸外轮廓与全景内装重建",
+  "estimated": true,
+  "dimensionBasis": "外轮廓总宽12.91m、总进深7.53m、上凹口5.94m/0.89m、右侧底边Z=6.14m按用户尺寸图；中央底边Z≈6.32m、入口凹口Z≈5.80m按图像比例追踪。",
+  "estimationNote": "外轮廓主要尺寸参考用户图纸；内部分隔、家具、层高仍按全景估算。外轮廓投影面积含墙，不是产权面积或建筑面积。",
+  "width": 12.91,
+  "depth": 7.53,
+  "height": 2.7,
+  "footprint": [
+    [
+      0,
+      0
+    ],
+    [
+      5.94,
+      0
+    ],
+    [
+      5.94,
+      0.89
+    ],
+    [
+      12.91,
+      0.89
+    ],
+    [
+      12.91,
+      6.14
+    ],
+    [
+      9.68,
+      6.14
+    ],
+    [
+      9.68,
+      5.8
+    ],
+    [
+      8.26,
+      5.8
+    ],
+    [
+      8.26,
+      6.32
+    ],
+    [
+      5.74,
+      6.32
+    ],
+    [
+      5.74,
+      7.53
+    ],
+    [
+      0,
+      7.53
+    ]
+  ],
+  "footprintArea": 81.0135,
+  "rooms": [
+    {
+      "id": "entry",
+      "name": "入户",
+      "controlRoom": "入户",
+      "bounds": [
+        8.26,
+        3.7,
+        10.99,
+        5.8
+      ],
+      "position": [
+        9.1,
+        1.62,
+        5.3
+      ],
+      "target": [
+        6.6,
+        1.1,
+        4.8
+      ],
+      "sourceSceneIds": [
+        "25152992"
+      ]
+    },
+    {
+      "id": "dining",
+      "name": "餐厅",
+      "controlRoom": "餐厨",
+      "bounds": [
+        5.94,
+        3.7,
+        8.26,
+        6.32
+      ],
+      "position": [
+        7.75,
+        1.62,
+        4.0
+      ],
+      "target": [
+        6.9,
+        0.9,
+        5.0
+      ],
+      "sourceSceneIds": [
+        "25152992"
+      ]
+    },
+    {
+      "id": "living",
+      "name": "客厅",
+      "controlRoom": "客厅",
+      "bounds": [
+        0,
+        3.635,
+        5.74,
+        6.25
+      ],
+      "position": [
+        4.35,
+        1.62,
+        5.1
+      ],
+      "target": [
+        1.8,
+        1.0,
+        3.9
+      ],
+      "sourceSceneIds": [
+        "25152958",
+        "25152960",
+        "25152959"
+      ]
+    },
+    {
+      "id": "balcony",
+      "name": "阳台",
+      "controlRoom": "阳台",
+      "bounds": [
+        0,
+        6.25,
+        5.74,
+        7.53
+      ],
+      "position": [
+        3.8,
+        1.62,
+        6.85
+      ],
+      "target": [
+        1.0,
+        1.0,
+        6.9
+      ],
+      "sourceSceneIds": [
+        "25152960"
+      ]
+    },
+    {
+      "id": "kitchen",
+      "name": "厨房",
+      "controlRoom": "餐厨",
+      "bounds": [
+        5.94,
+        0.89,
+        7.82,
+        3.7
+      ],
+      "position": [
+        7.12,
+        1.62,
+        2.8
+      ],
+      "target": [
+        6.25,
+        1.1,
+        1.9
+      ],
+      "sourceSceneIds": [
+        "25152956"
+      ]
+    },
+    {
+      "id": "bedroom",
+      "name": "主卧",
+      "controlRoom": "主卧",
+      "bounds": [
+        0,
+        0,
+        3.96,
+        3.635
+      ],
+      "position": [
+        3.35,
+        1.62,
+        2.7
+      ],
+      "target": [
+        1.8,
+        0.8,
+        1.3
+      ],
+      "sourceSceneIds": [
+        "25152991"
+      ]
+    },
+    {
+      "id": "ensuite",
+      "name": "主卫",
+      "controlRoom": "主卫",
+      "bounds": [
+        3.96,
+        0,
+        5.94,
+        2.14
+      ],
+      "position": [
+        4.55,
+        1.62,
+        1.55
+      ],
+      "target": [
+        5.5,
+        1.0,
+        1.35
+      ],
+      "sourceSceneIds": [
+        "25152963"
+      ]
+    },
+    {
+      "id": "second-bedroom",
+      "name": "次卧",
+      "controlRoom": "次卧",
+      "bounds": [
+        7.82,
+        0.89,
+        9.89,
+        3.7
+      ],
+      "position": [
+        8.2,
+        1.62,
+        2.9
+      ],
+      "target": [
+        9.15,
+        0.8,
+        2.1
+      ],
+      "sourceSceneIds": [
+        "25152957"
+      ]
+    },
+    {
+      "id": "bath",
+      "name": "次卫",
+      "controlRoom": "次卫",
+      "bounds": [
+        10.99,
+        4.17,
+        12.91,
+        6.14
+      ],
+      "position": [
+        11.55,
+        1.62,
+        4.75
+      ],
+      "target": [
+        12.5,
+        1.0,
+        4.85
+      ],
+      "sourceSceneIds": [
+        "25152962"
+      ]
+    },
+    {
+      "id": "study",
+      "name": "书房",
+      "controlRoom": "书房",
+      "bounds": [
+        9.89,
+        0.89,
+        12.91,
+        4.17
+      ],
+      "position": [
+        10.5,
+        1.62,
+        3.6
+      ],
+      "target": [
+        11.9,
+        0.8,
+        2.5
+      ],
+      "sourceSceneIds": [
+        "25152961"
+      ]
+    }
+  ],
+  "walls": [
+    {
+      "id": "Bedroom north",
+      "minX": 0,
+      "minZ": 0,
+      "maxX": 3.96,
+      "maxZ": 0.14
+    },
+    {
+      "id": "Ensuite north window left",
+      "minX": 3.96,
+      "minZ": 0.0,
+      "maxX": 4.28,
+      "maxZ": 0.14
+    },
+    {
+      "id": "Ensuite north window right",
+      "minX": 5.53,
+      "minZ": 0.0,
+      "maxX": 5.94,
+      "maxZ": 0.14
+    },
+    {
+      "id": "Ensuite north window sill",
+      "minX": 4.28,
+      "minZ": 0.0,
+      "maxX": 5.53,
+      "maxZ": 0.14
+    },
+    {
+      "id": "Upper notch east return",
+      "minX": 5.8,
+      "minZ": 0.14,
+      "maxX": 5.94,
+      "maxZ": 0.89
+    },
+    {
+      "id": "Kitchen north window left",
+      "minX": 5.94,
+      "minZ": 0.89,
+      "maxX": 6.25,
+      "maxZ": 1.03
+    },
+    {
+      "id": "Kitchen north window right",
+      "minX": 7.5,
+      "minZ": 0.89,
+      "maxX": 7.82,
+      "maxZ": 1.03
+    },
+    {
+      "id": "Kitchen north window sill",
+      "minX": 6.25,
+      "minZ": 0.89,
+      "maxX": 7.5,
+      "maxZ": 1.03
+    },
+    {
+      "id": "Second north window left",
+      "minX": 7.82,
+      "minZ": 0.89,
+      "maxX": 8.1,
+      "maxZ": 1.03
+    },
+    {
+      "id": "Second north window right",
+      "minX": 9.58,
+      "minZ": 0.89,
+      "maxX": 9.89,
+      "maxZ": 1.03
+    },
+    {
+      "id": "Second north window sill",
+      "minX": 8.1,
+      "minZ": 0.89,
+      "maxX": 9.58,
+      "maxZ": 1.03
+    },
+    {
+      "id": "Study north window left",
+      "minX": 9.89,
+      "minZ": 0.89,
+      "maxX": 10.12,
+      "maxZ": 1.03
+    },
+    {
+      "id": "Study north window right",
+      "minX": 12.5,
+      "minZ": 0.89,
+      "maxX": 12.91,
+      "maxZ": 1.03
+    },
+    {
+      "id": "Study north window sill",
+      "minX": 10.12,
+      "minZ": 0.89,
+      "maxX": 12.5,
+      "maxZ": 1.03
+    },
+    {
+      "id": "Study east",
+      "minX": 12.77,
+      "minZ": 0.89,
+      "maxX": 12.91,
+      "maxZ": 4.17
+    },
+    {
+      "id": "Bath east window left",
+      "minX": 12.77,
+      "minZ": 4.17,
+      "maxX": 12.91,
+      "maxZ": 5.1
+    },
+    {
+      "id": "Bath east window right",
+      "minX": 12.77,
+      "minZ": 5.8,
+      "maxX": 12.91,
+      "maxZ": 6.14
+    },
+    {
+      "id": "Bath east window sill",
+      "minX": 12.77,
+      "minZ": 5.1,
+      "maxX": 12.91,
+      "maxZ": 5.8
+    },
+    {
+      "id": "Right south edge",
+      "minX": 9.68,
+      "minZ": 6.0,
+      "maxX": 12.77,
+      "maxZ": 6.14
+    },
+    {
+      "id": "Entry notch east return",
+      "minX": 9.68,
+      "minZ": 5.8,
+      "maxX": 9.82,
+      "maxZ": 6.0
+    },
+    {
+      "id": "Entry front jamb west",
+      "minX": 8.26,
+      "minZ": 5.66,
+      "maxX": 8.55,
+      "maxZ": 5.8
+    },
+    {
+      "id": "Entry front jamb east",
+      "minX": 9.42,
+      "minZ": 5.66,
+      "maxX": 9.68,
+      "maxZ": 5.8
+    },
+    {
+      "id": "Entry boundary",
+      "minX": 8.55,
+      "minZ": 5.66,
+      "maxX": 9.42,
+      "maxZ": 5.8
+    },
+    {
+      "id": "Entry notch west return",
+      "minX": 8.12,
+      "minZ": 5.8,
+      "maxX": 8.26,
+      "maxZ": 6.32
+    },
+    {
+      "id": "Central south edge",
+      "minX": 5.74,
+      "minZ": 6.18,
+      "maxX": 8.12,
+      "maxZ": 6.32
+    },
+    {
+      "id": "Balcony east return",
+      "minX": 5.6,
+      "minZ": 6.32,
+      "maxX": 5.74,
+      "maxZ": 7.53
+    },
+    {
+      "id": "Balcony glazing left",
+      "minX": 0,
+      "minZ": 7.39,
+      "maxX": 0.32,
+      "maxZ": 7.53
+    },
+    {
+      "id": "Balcony glazing right",
+      "minX": 5.3,
+      "minZ": 7.39,
+      "maxX": 5.6,
+      "maxZ": 7.53
+    },
+    {
+      "id": "Balcony glazing sill",
+      "minX": 0.32,
+      "minZ": 7.39,
+      "maxX": 5.3,
+      "maxZ": 7.53
+    },
+    {
+      "id": "Bedroom west bay left",
+      "minX": 0.0,
+      "minZ": 0,
+      "maxX": 0.14,
+      "maxZ": 0.64
+    },
+    {
+      "id": "Bedroom west bay right",
+      "minX": 0.0,
+      "minZ": 2.78,
+      "maxX": 0.14,
+      "maxZ": 3.635
+    },
+    {
+      "id": "Bedroom west bay sill",
+      "minX": 0.0,
+      "minZ": 0.64,
+      "maxX": 0.14,
+      "maxZ": 2.78
+    },
+    {
+      "id": "Living west",
+      "minX": 0,
+      "minZ": 3.635,
+      "maxX": 0.14,
+      "maxZ": 6.25
+    },
+    {
+      "id": "Balcony west",
+      "minX": 0,
+      "minZ": 6.25,
+      "maxX": 0.14,
+      "maxZ": 7.53
+    },
+    {
+      "id": "Primary dressing opening north",
+      "minX": 3.89,
+      "minZ": 0.14,
+      "maxX": 4.03,
+      "maxZ": 2.24
+    },
+    {
+      "id": "Primary dressing opening south",
+      "minX": 3.89,
+      "minZ": 3.25,
+      "maxX": 4.03,
+      "maxZ": 3.635
+    },
+    {
+      "id": "Ensuite entry west",
+      "minX": 4.03,
+      "minZ": 2.07,
+      "maxX": 4.18,
+      "maxZ": 2.21
+    },
+    {
+      "id": "Ensuite entry east",
+      "minX": 5.12,
+      "minZ": 2.07,
+      "maxX": 5.8,
+      "maxZ": 2.21
+    },
+    {
+      "id": "Bedroom entry west",
+      "minX": 0.14,
+      "minZ": 3.565,
+      "maxX": 2.9,
+      "maxZ": 3.705
+    },
+    {
+      "id": "Bedroom entry east",
+      "minX": 3.8,
+      "minZ": 3.565,
+      "maxX": 4.2,
+      "maxZ": 3.705
+    },
+    {
+      "id": "Dressing living entry west",
+      "minX": 4.2,
+      "minZ": 3.565,
+      "maxX": 4.65,
+      "maxZ": 3.705
+    },
+    {
+      "id": "Dressing living entry east",
+      "minX": 5.65,
+      "minZ": 3.565,
+      "maxX": 5.8,
+      "maxZ": 3.705
+    },
+    {
+      "id": "Kitchen west",
+      "minX": 5.87,
+      "minZ": 0.89,
+      "maxX": 6.01,
+      "maxZ": 3.7
+    },
+    {
+      "id": "Kitchen second divider",
+      "minX": 7.75,
+      "minZ": 0.89,
+      "maxX": 7.89,
+      "maxZ": 3.7
+    },
+    {
+      "id": "Kitchen glass opening west",
+      "minX": 6.01,
+      "minZ": 3.63,
+      "maxX": 6.45,
+      "maxZ": 3.77
+    },
+    {
+      "id": "Kitchen glass opening east",
+      "minX": 7.45,
+      "minZ": 3.63,
+      "maxX": 7.75,
+      "maxZ": 3.77
+    },
+    {
+      "id": "Second bedroom entry west",
+      "minX": 7.89,
+      "minZ": 3.63,
+      "maxX": 8.0,
+      "maxZ": 3.77
+    },
+    {
+      "id": "Second bedroom entry east",
+      "minX": 8.95,
+      "minZ": 3.63,
+      "maxX": 9.82,
+      "maxZ": 3.77
+    },
+    {
+      "id": "Study west",
+      "minX": 9.82,
+      "minZ": 0.89,
+      "maxX": 9.96,
+      "maxZ": 4.17
+    },
+    {
+      "id": "Study entry west",
+      "minX": 9.96,
+      "minZ": 4.1,
+      "maxX": 10.1,
+      "maxZ": 4.24
+    },
+    {
+      "id": "Study entry east",
+      "minX": 10.95,
+      "minZ": 4.1,
+      "maxX": 12.77,
+      "maxZ": 4.24
+    },
+    {
+      "id": "Bath entry north",
+      "minX": 10.92,
+      "minZ": 4.24,
+      "maxX": 11.06,
+      "maxZ": 4.57
+    },
+    {
+      "id": "Bath entry south",
+      "minX": 10.92,
+      "minZ": 5.53,
+      "maxX": 11.06,
+      "maxZ": 6.0
+    },
+    {
+      "id": "Balcony portal pier 0.14",
+      "minX": 0.14,
+      "minZ": 6.17,
+      "maxX": 0.4,
+      "maxZ": 6.32
+    },
+    {
+      "id": "Balcony portal pier 5.34",
+      "minX": 5.34,
+      "minZ": 6.17,
+      "maxX": 5.6,
+      "maxZ": 6.32
+    },
+    {
+      "id": "ensuite_screen",
+      "minX": 4.924,
+      "minZ": 0.19,
+      "maxX": 4.936,
+      "maxZ": 1.01
+    }
+  ],
+  "furniture": [
+    {
+      "id": "living_sofa",
+      "minX": 0.385,
+      "minZ": 5.345,
+      "maxX": 3.135,
+      "maxZ": 6.255
+    },
+    {
+      "id": "living_console",
+      "minX": 0.39,
+      "minZ": 3.75,
+      "maxX": 2.77,
+      "maxZ": 4.15
+    },
+    {
+      "id": "living_side_table",
+      "minX": 3.36,
+      "minZ": 5.33,
+      "maxX": 3.78,
+      "maxZ": 5.99
+    },
+    {
+      "id": "living_white_storage",
+      "minX": 5.03,
+      "minZ": 3.83,
+      "maxX": 5.59,
+      "maxZ": 4.49
+    },
+    {
+      "id": "balcony_laundry",
+      "minX": 0.35,
+      "minZ": 6.58,
+      "maxX": 1.85,
+      "maxZ": 7.21
+    },
+    {
+      "id": "balcony_tall_storage",
+      "minX": 4.89,
+      "minZ": 6.47,
+      "maxX": 5.51,
+      "maxZ": 7.35
+    },
+    {
+      "id": "dining_table",
+      "minX": 6.515,
+      "minZ": 4.3,
+      "maxX": 7.385,
+      "maxZ": 5.66
+    },
+    {
+      "id": "dining_chair_6.27_4.6",
+      "minX": 6.06,
+      "minZ": 4.39,
+      "maxX": 6.48,
+      "maxZ": 4.81
+    },
+    {
+      "id": "dining_chair_6.27_5.36",
+      "minX": 6.06,
+      "minZ": 5.15,
+      "maxX": 6.48,
+      "maxZ": 5.57
+    },
+    {
+      "id": "dining_chair_7.63_4.6",
+      "minX": 7.42,
+      "minZ": 4.39,
+      "maxX": 7.84,
+      "maxZ": 4.81
+    },
+    {
+      "id": "dining_chair_7.63_5.36",
+      "minX": 7.42,
+      "minZ": 5.15,
+      "maxX": 7.84,
+      "maxZ": 5.57
+    },
+    {
+      "id": "entry_white_storage",
+      "minX": 10.255,
+      "minZ": 5.22,
+      "maxX": 10.805,
+      "maxZ": 5.94
+    },
+    {
+      "id": "kitchen_sink_base",
+      "minX": 6.075,
+      "minZ": 1.045,
+      "maxX": 7.525,
+      "maxZ": 1.595
+    },
+    {
+      "id": "kitchen_cooktop_base",
+      "minX": 6.01,
+      "minZ": 1.625,
+      "maxX": 6.55,
+      "maxZ": 3.175
+    },
+    {
+      "id": "kitchen_upper",
+      "minX": 6.03,
+      "minZ": 1.625,
+      "maxX": 6.39,
+      "maxZ": 3.175
+    },
+    {
+      "id": "kitchen_fridge",
+      "minX": 7.01,
+      "minZ": 1.65,
+      "maxX": 7.7,
+      "maxZ": 2.33
+    },
+    {
+      "id": "bedroom_bed",
+      "minX": 0.99,
+      "minZ": 0.4,
+      "maxX": 2.83,
+      "maxZ": 2.56
+    },
+    {
+      "id": "bedroom_nightstand_0.69",
+      "minX": 0.46,
+      "minZ": 0.41,
+      "maxX": 0.92,
+      "maxZ": 0.87
+    },
+    {
+      "id": "bedroom_nightstand_3.13",
+      "minX": 2.9,
+      "minZ": 0.41,
+      "maxX": 3.36,
+      "maxZ": 0.87
+    },
+    {
+      "id": "bedroom_wardrobe",
+      "minX": 0.33,
+      "minZ": 3.01,
+      "maxX": 2.23,
+      "maxZ": 3.49
+    },
+    {
+      "id": "bedroom_bay",
+      "minX": 0.12,
+      "minZ": 0.66,
+      "maxX": 0.46,
+      "maxZ": 2.76
+    },
+    {
+      "id": "dressing_wardrobe",
+      "minX": 5.355,
+      "minZ": 2.32,
+      "maxX": 5.785,
+      "maxZ": 3.44
+    },
+    {
+      "id": "second_bed",
+      "minX": 8.49,
+      "minZ": 1.5,
+      "maxX": 9.77,
+      "maxZ": 3.5
+    },
+    {
+      "id": "second_white_wardrobe",
+      "minX": 7.99,
+      "minZ": 1.11,
+      "maxX": 8.39,
+      "maxZ": 2.19
+    },
+    {
+      "id": "study_daybed",
+      "minX": 10.9,
+      "minZ": 1.98,
+      "maxX": 12.8,
+      "maxZ": 3.22
+    },
+    {
+      "id": "study_white_wardrobe",
+      "minX": 11.705,
+      "minZ": 1.12,
+      "maxX": 12.655,
+      "maxZ": 1.64
+    },
+    {
+      "id": "study_desk",
+      "minX": 9.995,
+      "minZ": 1.13,
+      "maxX": 11.045,
+      "maxZ": 1.61
+    },
+    {
+      "id": "study_chair",
+      "minX": 10.19,
+      "minZ": 1.83,
+      "maxX": 10.73,
+      "maxZ": 2.39
+    },
+    {
+      "id": "ensuite_vanity",
+      "minX": 5.345,
+      "minZ": 1.07,
+      "maxX": 5.835,
+      "maxZ": 1.79
+    },
+    {
+      "id": "ensuite_toilet",
+      "minX": 4.15,
+      "minZ": 0.21,
+      "maxX": 4.63,
+      "maxZ": 0.97
+    },
+    {
+      "id": "bath_vanity",
+      "minX": 12.275,
+      "minZ": 4.455,
+      "maxX": 12.765,
+      "maxZ": 5.205
+    },
+    {
+      "id": "bath_toilet",
+      "minX": 11.31,
+      "minZ": 5.19,
+      "maxX": 11.79,
+      "maxZ": 5.95
+    }
+  ]
+}

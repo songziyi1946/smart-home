@@ -691,15 +691,6 @@ export default function Rules({
             <StatusPanel
               kind="empty"
               title="暂无自动化规则"
-              description={
-                !canManage
-                  ? "家庭管理员创建规则后，可在这里查看。"
-                  : !state.scenes.length
-                    ? "请先创建一个可调用的场景。"
-                    : !state.devices.length
-                      ? "请先接入一个触发设备。"
-                      : undefined
-              }
               action={
                 canManage && !state.scenes.length ? (
                   <a className="quiet-button" href="#scenes">

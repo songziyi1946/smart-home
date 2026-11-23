@@ -44,3 +44,6 @@ backend/data.key
 *.key
 *.homeos.enc
 .home-encrypted-*/
+
+# Local release archives, logs and render previews
+outputs/

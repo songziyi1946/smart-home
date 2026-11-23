@@ -153,11 +153,6 @@ export function History<T extends Log>({
           compact
           kind="empty"
           title="暂无执行记录"
-          description={
-            filter === "all"
-              ? "执行场景或触发规则后，会显示结果与失败原因。"
-              : "当前筛选下没有记录，可切换结果类型。"
-          }
         />
       ) : (
         <div className="flow-history-layout">

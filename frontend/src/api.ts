@@ -7,7 +7,7 @@ export class ApiError extends Error {
 }
 
 export async function request<T = State>(path: string, method = 'GET', body?: unknown): Promise<T> {
-  const unavailable = '无法连接 Smart Home 后端，请确认后端已启动，并且前后端使用相同的 API 端口。';
+  const unavailable = '暂时无法连接服务，请稍后重试。';
   let response: Response;
   try {
     response = await fetch('/api' + path, {

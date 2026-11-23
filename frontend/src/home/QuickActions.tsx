@@ -56,7 +56,7 @@ export default function QuickActions({
           })}
         </div>
       ) : (
-        <p className="home-actions-empty">暂无场景，可在场景页创建常用操作。</p>
+        <p className="home-actions-empty">暂无场景</p>
       )}
     </section>
   );

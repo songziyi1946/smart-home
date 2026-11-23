@@ -29,8 +29,8 @@ const render = (state, props = {}) =>
 test("mobile today labels demonstration plans and missing telemetry without invented occupancy", () => {
   const html = render(empty);
   assert.match(html, /情境演示/);
-  assert.match(html, /示例安排，尚未启用自动执行/);
-  assert.match(html, /习惯学习尚未接入/);
+  assert.equal((html.match(/today-demo-badge/g) ?? []).length, 2);
+  assert.match(html, /演示草稿/);
   assert.match(html, /暂未接入在家感应/);
   assert.match(html, /暂无数据/);
   assert.doesNotMatch(html, /全家在家|小禾在家|today-warning/);

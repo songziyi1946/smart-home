@@ -2,13 +2,11 @@ import * as T from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { buildHome, disposeObject } from './scene';
-import { canWalk, CEILING_HEIGHT, viewpoints } from './plan';
-import millworkUrl from './models/millwork.glb?url';
-import furnishingsUrl from './models/furnishings.glb?url';
+import { buildHome, disposeObject, type ModelLoadState } from './scene';
+import { canWalk, CEILING_HEIGHT, HOME_DEPTH, HOME_WIDTH, viewpoints } from './plan';
 
 export type ViewerMode = 'walk' | 'orbit';
-export type ViewerStatus = { mode: ViewerMode; position: [number, number]; heading: number };
+export type ViewerStatus = { mode: ViewerMode; position: [number, number]; heading: number; modelState?: ModelLoadState };
 export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) => void) {
   const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
@@ -35,19 +33,20 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
   sun.shadow.bias = -.00015; sun.shadow.normalBias = .025; sun.shadow.radius = 3; scene.add(sun, sun.target);
   let needsRender = true;
   function invalidate() { needsRender = true; }
-  const home = buildHome(invalidate); scene.add(home.root);
+  let modelState: ModelLoadState = 'loading';
+  const home = buildHome(invalidate, state => { modelState = state; renderer.shadowMap.needsUpdate = true; invalidate(); }); scene.add(home.root);
   const ground = new T.Mesh(new T.PlaneGeometry(100, 100), new T.MeshStandardMaterial({ color: '#9da5a7', roughness: 1 }));
   ground.rotation.x = -Math.PI / 2; ground.position.y = -.195; ground.receiveShadow = true; scene.add(ground);
-  const camera = new T.PerspectiveCamera(65, 1, .04, 150);
+  const camera = new T.PerspectiveCamera(75, 1, .04, 150);
   const overview = new T.OrthographicCamera(-1, 1, 1, -1, .1, 120);
   const orbit = new OrbitControls(overview, renderer.domElement);
   orbit.enableDamping = true; orbit.minZoom = .5; orbit.maxZoom = 3;
   orbit.minPolarAngle = .08; orbit.maxPolarAngle = Math.PI / 2 - .12;
   orbit.addEventListener('change', invalidate);
-  const homeBounds = new T.Box3(new T.Vector3(0, -.19, 0), new T.Vector3(12.91, CEILING_HEIGHT, 7.53));
+  const homeBounds = new T.Box3(new T.Vector3(0, -.19, 0), new T.Vector3(HOME_WIDTH, CEILING_HEIGHT, HOME_DEPTH));
   let fitWidth = 1; let fitHeight = 1;
   let mode: ViewerMode = 'orbit'; let yaw = 0; let pitch = 0; let night = false; let roof = true;
-  let imported: T.Group | undefined; let importedBounds: T.Box3 | undefined; let disposed = false; let importVersion = 0;
+  let imported: T.Group | undefined; let importedBounds: T.Box3 | undefined; let disposed = false; let active = true; let importVersion = 0;
   let frame = 0; let lastTime = performance.now(); let reportAt = 0; let pointer: { id: number; x: number; y: number } | undefined;
   const keys = new Set<string>(); const held = new Set<string>(); const direction = new T.Vector3();
   const raycaster = new T.Raycaster();
@@ -58,9 +57,10 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
     sun.target.position.copy((importedBounds ?? homeBounds).getCenter(new T.Vector3()));
     sun.position.copy(sun.target.position).add(new T.Vector3(-5.45, 9, 6.25));
     scene.background = cutaway ? null : sky.set(night ? '#17263a' : '#c6d6e5');
-    ambient.color.set(night ? '#8ab7ff' : '#d4e4ff');
-    ambient.intensity = night ? .37 : cutaway ? .95 : 1.15;
-    sun.color.set(night ? '#7ba8ff' : '#f1f5ff');
+    ambient.color.set(night ? '#8ab7ff' : '#fff4e2');
+    ambient.groundColor.set(night ? '#797069' : '#bdb7aa');
+    ambient.intensity = night ? .37 : cutaway ? .95 : 1.6;
+    sun.color.set(night ? '#7ba8ff' : '#fff1da');
     sun.intensity = night ? .34 : 1.3;
     scene.environmentIntensity = night ? .09 : .23;
     renderer.toneMappingExposure = night ? .95 : 1;
@@ -92,9 +92,9 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
   }
   let previousStatus: ViewerStatus | undefined;
   function report() {
-    if (previousStatus?.mode === mode && (mode === 'orbit' ||
+    if (previousStatus?.modelState === modelState && previousStatus?.mode === mode && (mode === 'orbit' ||
         (previousStatus.position[0] === camera.position.x && previousStatus.position[1] === camera.position.z && previousStatus.heading === yaw))) return;
-    previousStatus = { mode, position: [camera.position.x, camera.position.z], heading: yaw };
+    previousStatus = { mode, position: [camera.position.x, camera.position.z], heading: yaw, modelState };
     onStatus(previousStatus);
   }
   function view(id: string) {
@@ -169,31 +169,8 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
     invalidate();
   }
   const observer = new ResizeObserver(resize); observer.observe(host); setMode('orbit');
-  for (const url of [millworkUrl, furnishingsUrl]) {
-    new GLTFLoader().load(url, ({ scene: model }) => {
-      if (disposed) { disposeObject(model); return; }
-      model.traverse(object => {
-        if (!(object instanceof T.Mesh)) return;
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        object.castShadow = materials.every(material => !material.transparent);
-        object.receiveShadow = true;
-        for (const material of materials) if (material.transparent) material.depthWrite = false;
-      });
-      home.root.add(model);
-      if (url === millworkUrl) {
-        // The generated millwork now contains both entry cabinets and the living TV wall.
-        // Hide only the local fallback after the asset has loaded successfully.
-        home.millworkFallback.visible = false;
-        home.entryFallback.visible = false;
-      } else {
-        home.livingFallback.visible = false;
-      }
-      renderer.shadowMap.needsUpdate = true;
-      invalidate();
-    }, undefined, error => console.error('家具模型加载失败', error));
-  }
   function tick(time: number) {
-    if (disposed) return;
+    if (disposed || !active) return;
     const dt = Math.min((time - lastTime) / 1000, .05); lastTime = time;
     if (mode === 'walk') {
       const pressed = (name: string) => keys.has(name) || held.has(name);
@@ -213,6 +190,13 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
   frame = requestAnimationFrame(tick);
   return {
     view, setMode, step,
+    reloadModel() { home.reload(); report(); },
+    setActive(value: boolean) {
+      if (active === value || disposed) return;
+      active = value; clear(); orbit.enabled = active && mode === 'orbit';
+      cancelAnimationFrame(frame);
+      if (active) { lastTime = performance.now(); resize(); invalidate(); frame = requestAnimationFrame(tick); }
+    },
     focus() { canvas.focus(); },
     hold(key: string, active: boolean) { if (active) held.add(key); else held.delete(key); },
     setNight(value: boolean) { night = value; updatePresentation(); },
@@ -229,7 +213,7 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
       if (disposed || version !== importVersion) { disposeObject(gltf.scene); return; }
       const bounds = new T.Box3().setFromObject(gltf.scene);
       if (bounds.isEmpty() || !Number.isFinite(bounds.max.x)) { disposeObject(gltf.scene); throw new Error('模型没有可显示的三维几何。'); }
-      const size = bounds.getSize(new T.Vector3()); const scale = 12.91 / Math.max(size.x, size.z, .01);
+      const size = bounds.getSize(new T.Vector3()); const scale = Math.max(HOME_WIDTH, HOME_DEPTH) / Math.max(size.x, size.z, .01);
       gltf.scene.scale.multiplyScalar(scale);
       bounds.setFromObject(gltf.scene); gltf.scene.position.sub(new T.Vector3(bounds.min.x, bounds.min.y, bounds.min.z));
       if (imported) { scene.remove(imported); disposeObject(imported); }
@@ -238,7 +222,7 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
     },
     resetModel() { importVersion++; if (imported) { scene.remove(imported); disposeObject(imported); imported = undefined; } importedBounds = undefined; home.root.visible = true; setMode('orbit'); },
     dispose() {
-      disposed = true; importVersion++; cancelAnimationFrame(frame); observer.disconnect(); orbit.removeEventListener('change', invalidate); orbit.dispose();
+      disposed = true; importVersion++; home.dispose(); cancelAnimationFrame(frame); observer.disconnect(); orbit.removeEventListener('change', invalidate); orbit.dispose();
       canvas.removeEventListener('keydown', keydown); window.removeEventListener('keyup', keyup); window.removeEventListener('blur', clear); canvas.removeEventListener('blur', clear);
       canvas.removeEventListener('pointerdown', down); canvas.removeEventListener('pointermove', drag); canvas.removeEventListener('pointerup', up); canvas.removeEventListener('pointercancel', clear); canvas.removeEventListener('wheel', wheel);
       disposeObject(scene); environment.dispose(); renderer.dispose(); canvas.remove();

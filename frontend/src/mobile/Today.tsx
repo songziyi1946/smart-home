@@ -192,7 +192,7 @@ export default function Today({
             </div>
           </>
         ) : (
-          <p className="today-empty">暂无场景，请先在场景页创建。</p>
+          <p className="today-empty">暂无场景</p>
         )}
         <button
           className="today-voice-entry"
@@ -200,7 +200,7 @@ export default function Today({
         >
           <Mic size={18} />
           <span>
-            说说今天的安排<small>例如“今天晚回” · 演示草稿</small>
+            说说今天的安排<small>演示草稿</small>
           </span>
           <ArrowUpRight size={16} />
         </button>
@@ -225,7 +225,6 @@ export default function Today({
               </li>
             ))}
           </ol>
-          <p className="today-demo-note">示例安排，尚未启用自动执行。</p>
         </div>
       </section>
       <section className="panel today-learning" aria-label="习惯建议演示">
@@ -235,7 +234,6 @@ export default function Today({
             习惯建议 <small className="today-demo-badge">演示</small>
           </h2>
           <p>{weekend ? "周末想晚一点开窗帘？" : "回家后想用怎样的灯光？"}</p>
-          <small>习惯学习尚未接入</small>
         </div>
         <button
           aria-label="语音录入习惯偏好"
@@ -248,7 +246,7 @@ export default function Today({
         <section className="panel today-draft" role="status">
           <h2>演示草稿</h2>
           <p>{draft}</p>
-          <small>本次首页暂存 · 尚未应用</small>
+          <small>未应用</small>
           <button onClick={() => setDraft("")}>清除草稿</button>
         </section>
       )}

@@ -62,7 +62,21 @@ cd frontend
 npm run dev
 ```
 
-浏览器打开 http://localhost:8000。前端将 `/api` 请求转发到端口 3101 的后端，因此两个服务都需要运行。若该端口被占用，在两个启动终端中设置同一个 `SMART_HOME_API_PORT` 后重启前后端。后端数据保存在 `backend/data/home.sqlite`，旧 JSON 仅作首次迁移输入。
+浏览器打开 http://localhost:8000。默认前端将 `/api` 请求转发到本机端口 3101 的后端，因此本地开发两个服务都需要运行。若该端口被占用，在两个启动终端中设置同一个 `SMART_HOME_API_PORT` 后重启前后端。后端数据保存在 `backend/data/home.sqlite`，旧 JSON 仅作首次迁移输入。
+
+### 本地前端连接服务器后端
+
+复制 `frontend/.env.example` 为 `frontend/.env.local`，将 `SMART_HOME_API_URL` 设置为服务器公开的 HTTPS 地址，例如：
+
+```dotenv
+SMART_HOME_API_URL=https://your-home.example.com
+```
+
+填写站点根地址，不附加 `/api`，不放账号、密码或 Token。之后从项目根目录运行 `npm run dev --prefix frontend` 即可，无需启动本地后端或 SSH 隧道。Vite 自动加载该文件；修改后需重启前端。环境变量优先于文件；地址为空时恢复本地后端，使用 `SMART_HOME_API_PORT`（默认 3101）。`.env.local` 已被 Git 忽略。
+
+用 Chrome 访问 http://localhost:8000，并用服务器上的账号重新登录。API 和 SSE 均通过本地 Vite 转发，页面操作会修改服务器上的家庭数据。远程代理先校验本地请求来源，再调整上游 Host/Origin；服务器授权、Cookie 安全属性和 TLS 证书校验保持启用。生产环境的 Secure Cookie 在 Chrome 的 localhost 上可用；Safari 需要本地 HTTPS，不能依赖这一例外（[浏览器说明](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Cookies)）。服务器地址必须能从本机直接访问，仅监听服务器回环地址的端口不能直接填入。
+
+该配置只用于 Vite 开发代理，不改变生产构建的同源 `/api` 路径。使用 [Vite 环境配置](https://vite.dev/config/) 加载前端目录的环境文件；下面的根目录 `.env` 仍需按说明手动加载。
 
 可选配置：将 [`.env.example`](../.env.example) 复制为 `.env` 并填写需要的配置，例如接入 Home Assistant 所需的地址和 Token。它不会自动加载；在 macOS/Linux 中，从项目根目录执行以下命令再启动后端。开发模式如果修改了后端端口，启动前端的终端也要设置相同的端口。
 

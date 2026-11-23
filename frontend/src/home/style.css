@@ -35,39 +35,49 @@
   gap: var(--space-6);
 }
 .home-status-dial {
-  width: 112px;
-  height: 112px;
-  padding: 7px;
+  position: relative;
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
-  border-radius: 50%;
-  background: conic-gradient(
-    var(--accent) var(--online-progress),
-    var(--accent-soft) 0
-  );
 }
+.home-status-dial > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke-width: 4;
+}
+.home-status-track {stroke: var(--line);}
+.home-status-progress {stroke: var(--accent); stroke-linecap: round;}
 .home-status-dial > div {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  border-radius: 50%;
-  background: var(--panel);
+  gap: 4px;
 }
 .home-status-dial strong {
-  font-size: 30px;
-  line-height: 1.2;
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  font-size: 24px;
+  line-height: 1;
   font-weight: 600;
+  letter-spacing: -.04em;
   font-variant-numeric: tabular-nums;
 }
 .home-status-dial small {
-  font-size: var(--font-sm);
-  color: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--muted);
 }
 .home-status-dial span {
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1;
   color: var(--muted);
-  margin-top: var(--space-1);
 }
 .home-status-metrics {
   display: grid;
@@ -223,14 +233,6 @@
   .home-status-body {
     gap: var(--space-4);
   }
-  .home-status-dial {
-    width: 92px;
-    height: 92px;
-    padding: 6px;
-  }
-  .home-status-dial strong {
-    font-size: 26px;
-  }
   .home-status-metrics {
     grid-template-columns: 1fr;
     gap: var(--space-1);
@@ -277,8 +279,6 @@
 }
 
 .home-status-body {gap:20px;}
-.home-status-dial {width:96px;height:96px;padding:5px;}
-.home-status-dial strong {font-size:28px;}
 .home-status-metrics {gap:8px;}
 .home-status-metrics > div {padding:10px 12px;border-left:1px solid var(--line);}
 .home-status-metrics dd {display:flex;align-items:center;min-height:44px;margin:0;}
@@ -288,9 +288,6 @@
   .mobile-home > .home-status {padding: 16px;}
   .home-status .home-panel-heading {margin-bottom: 8px;}
   .home-status-body {flex-direction: row;align-items: center;gap: 12px;}
-  .home-status-dial {width: 80px;height: 80px;padding: 4px;align-self: center;}
-  .home-status-dial strong {font-size: 24px;}
-  .home-status-dial span {font-size: 10px;}
   .home-status-metrics {grid-template-columns: repeat(3, minmax(0, 1fr));gap: 4px;}
   .home-status-metrics > div {display: block;padding: 4px 0;text-align: center;border: 0;background: transparent;}
   .home-status-metrics dt {justify-content: center;font-size: 11px;}

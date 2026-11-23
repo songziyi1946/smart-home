@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import {
   Activity,
   ArrowUpRight,
@@ -46,16 +45,25 @@ export default function HomeStatus({
       <div className="home-status-body">
         <div
           className="home-status-dial"
-          style={{ "--online-progress": `${percent ?? 0}%` } as CSSProperties}
           role="img"
           aria-label={`设备在线率${percent === undefined ? "暂无数据" : percent + "%"}`}
         >
+          <svg viewBox="0 0 88 88" aria-hidden="true" focusable="false">
+            <circle className="home-status-track" cx="44" cy="44" r="38" />
+            <circle
+              className="home-status-progress"
+              cx="44" cy="44" r="38" pathLength="100"
+              strokeDasharray={`${percent ?? 0} 100`}
+              strokeOpacity={percent ? 1 : 0}
+              transform="rotate(-90 44 44)"
+            />
+          </svg>
           <div>
             <strong>
               {percent ?? "—"}
               {percent !== undefined && <small>%</small>}
             </strong>
-            <span>设备在线率</span>
+            <span>在线率</span>
           </div>
         </div>
         <dl className="home-status-metrics">

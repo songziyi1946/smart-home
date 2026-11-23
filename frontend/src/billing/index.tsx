@@ -242,11 +242,6 @@ export default function Billing({
           compact
           kind="empty"
           title={state.expenses.length ? "没有匹配的费用记录" : "暂无费用记录"}
-          description={
-            state.expenses.length
-              ? "调整月份或类别，或清除筛选查看全部记录。"
-              : "记一笔实际支出后，即可查看费用汇总。"
-          }
         />
       )}
     </section>

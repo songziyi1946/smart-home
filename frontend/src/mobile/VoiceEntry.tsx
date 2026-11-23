@@ -119,7 +119,7 @@ export default function VoiceEntry({
         </button>
       </div>
       <p className="today-demo-note">
-        演示草稿 · 安排调整与习惯学习尚未接入，内容仅保留在本次首页，不会执行。
+        演示草稿 · 未应用
       </p>
       {available ? (
         <p className="voice-service-note">
@@ -144,11 +144,7 @@ export default function VoiceEntry({
       >
         {listening ? "结束录音" : text ? "重新语音录入" : "开始语音录入"}
       </Button>
-      <p className="voice-status" role="status">
-        {listening
-          ? "正在聆听，请说出你的安排…"
-          : "识别后可修改文字，再保留草稿。"}
-      </p>
+      {listening && <p className="voice-status" role="status">正在聆听…</p>}
       <label className="voice-text">
         录入内容
         <textarea

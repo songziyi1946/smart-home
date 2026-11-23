@@ -1,0 +1,88 @@
+{
+  "title": "埠印贤府",
+  "author": "喇叭|一再全案设计工作室",
+  "sourceUrl": "https://vr.shinewonder.com/pano/page/publik/pklimit?inf=MGMAFDMG@D@ACLDG@",
+  "downloadedOn": "2026-11-23",
+  "scenes": [
+    {
+      "id": "25152958",
+      "roomId": "living",
+      "room": "客厅",
+      "controlRoom": "客厅",
+      "label": "客厅 · 视点 1",
+      "sourceBase": "https://vr-img-cdn.shinewonder.com/pano/pano_store/2026_05_05/4d35bc4c-8059-47cf-afc6-c8058187d320/4d35bc4c-8059-47cf-afc6-c8058187d320.tiles/"
+    },
+    {
+      "id": "25152960",
+      "roomId": "living",
+      "room": "客厅",
+      "controlRoom": "客厅",
+      "label": "客厅 · 视点 2",
+      "sourceBase": "https://vr-img-cdn.shinewonder.com/pano/pano_store/2026_05_05/2b0a3c13-eecd-4dd7-b81f-9a7c72014f3b/2b0a3c13-eecd-4dd7-b81f-9a7c72014f3b.tiles/"
+    },
+    {
+      "id": "25152992",
+      "roomId": "dining",
+      "room": "餐厅",
+      "controlRoom": "餐厨",
+      "label": "餐厅",
+      "sourceBase": "https://vr-img-cdn.shinewonder.com/pano/pano_store/2026_05_05/8789b6c4-d41f-468e-ad98-69eb59f926ed/8789b6c4-d41f-468e-ad98-69eb59f926ed.tiles/"
+    },
+    {
+      "id": "25152959",
+      "roomId": "living",
+      "room": "客厅",
+      "controlRoom": "客厅",
+      "label": "客厅 · 视点 3",
+      "sourceBase": "https://vr-img-cdn.shinewonder.com/pano/pano_store/2026_05_05/95c688e8-e4f4-45a6-bfd9-fb68be5c7ec4/95c688e8-e4f4-45a6-bfd9-fb68be5c7ec4.tiles/"
+    },
+    {
+      "id": "25152956",
+      "roomId": "kitchen",
+      "room": "厨房",
+      "controlRoom": "餐厨",
+      "label": "厨房",
+      "sourceBase": "https://vr-img-cdn.shinewonder.com/pano/pano_store/2026_05_05/f57a486f-1238-411e-a87e-993b85f45b0d/f57a486f-1238-411e-a87e-993b85f45b0d.tiles/"
+    },
+    {
+      "id": "25152991",
+      "roomId": "primary-bedroom",
+      "room": "主卧",
+      "controlRoom": "主卧",
+      "label": "主卧",
+      "sourceBase": "https://vr-img-cdn.shinewonder.com/pano/pano_store/2026_05_05/e7fb1ad7-7be5-43f2-a344-5f5cd2a3a916/e7fb1ad7-7be5-43f2-a344-5f5cd2a3a916.tiles/"
+    },
+    {
+      "id": "25152957",
+      "roomId": "second-bedroom",
+      "room": "次卧",
+      "controlRoom": "次卧",
+      "label": "次卧",
+      "sourceBase": "https://vr-img-cdn.shinewonder.com/pano/pano_store/2026_05_05/2780f19a-d28f-4e63-987f-78c8390d2f82/2780f19a-d28f-4e63-987f-78c8390d2f82.tiles/"
+    },
+    {
+      "id": "25152961",
+      "roomId": "study",
+      "room": "书房",
+      "controlRoom": "书房",
+      "label": "书房",
+      "sourceBase": "https://vr-img-cdn.shinewonder.com/pano/pano_store/2026_05_05/4fad9054-76e6-4469-88c7-50b3368bfaed/4fad9054-76e6-4469-88c7-50b3368bfaed.tiles/"
+    },
+    {
+      "id": "25152963",
+      "roomId": "primary-bathroom",
+      "room": "主卫",
+      "controlRoom": "主卫",
+      "label": "主卫",
+      "sourceBase": "https://vr-img-cdn.shinewonder.com/pano/pano_store/2026_05_05/7779d747-3057-4b3b-bdcd-a519ceec8fba/7779d747-3057-4b3b-bdcd-a519ceec8fba.tiles/"
+    },
+    {
+      "id": "25152962",
+      "roomId": "bathroom",
+      "room": "卫生间",
+      "controlRoom": "次卫",
+      "label": "卫生间",
+      "sourceBase": "https://vr-img-cdn.shinewonder.com/pano/pano_store/2026_05_05/10f2510f-5751-4764-b4e6-19c1e530929d/10f2510f-5751-4764-b4e6-19c1e530929d.tiles/"
+    }
+  ]
+}

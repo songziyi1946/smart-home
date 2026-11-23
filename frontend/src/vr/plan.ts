@@ -1,44 +1,46 @@
-import millwork from './millwork.json' with { type: 'json' };
-import furnishings from './furnishings.json' with { type: 'json' };
+import design from './design-model.json' with { type: 'json' };
+import { canonicalRoom } from '../constants';
 
-// Metres. Origin = upper-left corner of the approval drawing's furnished plan.
-// Plan dimensions: 12.910 m overall width; left depth 7.530 m; right depth 6.140 m.
-// Ceiling height is provisional until the ceiling drawing is supplied.
-export const CEILING_HEIGHT = 2.7;
-export type Viewpoint = { id: string; name: string; position: [number, number, number]; target: [number, number, number] };
-export const viewpoints: Viewpoint[] = [
-  { id: 'entry', name: '入户', position: [8.65, 1.62, 5.65], target: [6.6, 1.3, 2.5] },
-  { id: 'living', name: '客厅', position: [4.8, 1.62, 5.65], target: [2.65, 1.0, 6.25] },
-  { id: 'kitchen', name: '餐厨', position: [7.55, 1.62, 4.42], target: [7.7, 1.2, 1.4] },
-  { id: 'study', name: '书房', position: [11.3, 1.62, 2.65], target: [11.5, 1.2, 3.85] },
-  { id: 'bedroom', name: '主卧', position: [3.55, 1.62, 2.8], target: [2.0, 1.0, .85] },
-  { id: 'ensuite', name: '主卫', position: [4.48, 1.62, 1.65], target: [5.25, .95, .90] },
-  { id: 'bath', name: '次卫', position: [10.3, 1.62, 5.25], target: [11.9, 1.0, 5.1] },
-];
+// Outer dimensions follow P-07; unlabelled recess depths and the panorama interior remain estimated.
+export const designModel = design;
+export const HOME_WIDTH = design.width;
+export const HOME_DEPTH = design.depth;
+export const CEILING_HEIGHT = design.height;
+export const footprint = design.footprint;
+export const FOOTPRINT_AREA = Math.abs(footprint.reduce((sum, [x, z], index) => {
+  const [nextX, nextZ] = footprint[(index + 1) % footprint.length];
+  return sum + x * nextZ - nextX * z;
+}, 0)) / 2;
+export type Viewpoint = { id: string; name: string; controlRoom: string; position: [number, number, number]; target: [number, number, number] };
+export const viewpoints: Viewpoint[] = design.rooms.map(room => ({
+  id: room.id, name: room.name, controlRoom: room.controlRoom,
+  position: room.position as [number, number, number], target: room.target as [number, number, number],
+}));
+export function viewpointForRoom(room: string) {
+  return viewpoints.find(point => point.name === room) ??
+    viewpoints.find(point => point.controlRoom === canonicalRoom(room));
+}
 export type Obstacle = { minX: number; maxX: number; minZ: number; maxZ: number };
-export const millworkFootprints: Obstacle[] = [...millwork.cabinets.map(({ bounds }) => bounds), millwork.island]
-  .map(([minX, minZ, maxX, maxZ]) => ({ minX, minZ, maxX, maxZ }));
-export const [bedroomDoorLeft, bedroomDoorRight, bedroomDoorFront] = millwork.bedroomDoor;
-function furnitureBounds(x: number, z: number, width: number, depth: number): Obstacle {
-  return { minX: x - width / 2, minZ: z - depth / 2, maxX: x + width / 2, maxZ: z + depth / 2 };
-}
-export const furnishingFootprints: Obstacle[] = [
-  ...[furnishings.sofa, furnishings.coffeeTable, furnishings.television]
-    .map(({ x, z, width, depth }) => furnitureBounds(x, z, width, depth)),
-  ...furnishings.bathrooms.flatMap(({ vanity, toilet, screen, sideScreen }) => [
-    furnitureBounds(vanity.x, vanity.z,
-      vanity.rotation === 0 ? vanity.width : vanity.depth,
-      vanity.rotation === 0 ? vanity.depth : vanity.width),
-    furnitureBounds(toilet.x, toilet.z, .42, .72),
-    { minX: screen[0], minZ: screen[1], maxX: screen[2], maxZ: screen[3] },
-    ...(sideScreen ? [{ minX: sideScreen[0], minZ: sideScreen[1], maxX: sideScreen[2], maxZ: sideScreen[3] }] : []),
-  ]),
-];
+export const wallFootprints = design.walls;
+export const furnishingFootprints = design.furniture;
+export const obstacles: Obstacle[] = [...wallFootprints, ...furnishingFootprints];
 export function insideHome(x: number, z: number, radius = .18) {
-  return x >= radius && x <= 12.91 - radius && z >= radius &&
-    z <= (x < 5.7 ? 7.53 : 6.14) - radius && (x <= 5.94 || z >= .89 + radius);
+  const tolerance = radius === 0 ? 1e-5 : 0;
+  if (x < radius - tolerance || x > HOME_WIDTH - radius + tolerance || z < radius - tolerance || z > HOME_DEPTH - radius + tolerance) return false;
+  let inside = false;
+  for (let i = 0, j = footprint.length - 1; i < footprint.length; j = i++) {
+    const [ax, az] = footprint[j], [bx, bz] = footprint[i];
+    if ((az > z) !== (bz > z) && x < (bx - ax) * (z - az) / (bz - az) + ax) inside = !inside;
+    // Keep the camera radius inside concave corners as well as the bounding rectangle.
+    const dx = bx - ax, dz = bz - az;
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
+    const distanceSquared = (x - ax - t * dx) ** 2 + (z - az - t * dz) ** 2;
+    if (radius === 0 && distanceSquared < 1e-8) return true;
+    if (distanceSquared < radius * radius - 1e-10) return false;
+  }
+  return inside;
 }
-export function canWalk(x: number, z: number, obstacles: Obstacle[], radius = .18) {
-  return insideHome(x, z, radius) && !obstacles.some(box =>
+export function canWalk(x: number, z: number, objects: Obstacle[] = obstacles, radius = .18) {
+  return insideHome(x, z, radius) && !objects.some(box =>
     x > box.minX - radius && x < box.maxX + radius && z > box.minZ - radius && z < box.maxZ + radius);
 }

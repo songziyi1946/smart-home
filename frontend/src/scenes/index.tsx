@@ -451,13 +451,6 @@ export default function Scenes({
               <StatusPanel
                 kind="empty"
                 title="暂无场景"
-                description={
-                  canManage
-                    ? available.length
-                      ? "创建场景，把多个设备动作组合为一次执行。"
-                      : "先接入支持控制的设备，再创建场景。"
-                    : "家庭管理员创建场景后，可在这里执行。"
-                }
               />
             )}
           </div>

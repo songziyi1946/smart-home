@@ -1,13 +1,11 @@
 import { useMobile } from "../mobile/hooks";
 import { StatusPanel } from "../ui/StatusPanel";
 import { useState } from "react";
-import { Modal } from "@arco-design/web-react";
 import {
   Search,
   SlidersHorizontal,
   Grid2X2,
   List,
-  PlugZap,
 } from "lucide-react";
 import type { State, Mutate, User } from "../types";
 import { roomOptions } from "../deviceControls/model";
@@ -21,7 +19,6 @@ export default function Devices({
   onOpen,
   filters,
   onFilters,
-  role,
 }: {
   state: State;
   busy: boolean;
@@ -33,8 +30,7 @@ export default function Devices({
 }) {
   const mobile = useMobile();
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [list, setList] = useState(false),
-    [help, setHelp] = useState(false);
+  const [list, setList] = useState(false);
   const devices = filterDevices(state.devices, {...filters, favoritesOnly: false}, []);
   const update = (part: Partial<DeviceFilters>) =>
     onFilters({ ...filters, ...part });
@@ -67,12 +63,7 @@ export default function Devices({
               <List size={18} />
             </button>
           </div>
-          {role === "admin" && (
-            <button className="quiet-button" onClick={() => setHelp(true)}>
-              <PlugZap size={17} />
-              设备接入说明
-            </button>
-          )}
+
         </div>
         {mobile && (
           <button
@@ -183,11 +174,6 @@ export default function Devices({
             compact
             kind="empty"
             title={state.devices.length ? "没有匹配的设备" : "尚未发现设备"}
-            description={
-              state.devices.length
-                ? "调整筛选条件，或查看全部设备。"
-                : "接入设备后会自动显示，状态以实时同步为准。"
-            }
             action={
               state.devices.length ? (
                 <button
@@ -196,31 +182,12 @@ export default function Devices({
                 >
                   重置筛选
                 </button>
-              ) : role === "admin" ? (
-                <button className="quiet-button" onClick={() => setHelp(true)}>
-                  查看接入说明
-                </button>
               ) : undefined
             }
           />
         )}
       </section>
-      <Modal
-        visible={help}
-        title="设备接入"
-        footer={null}
-        onCancel={() => setHelp(false)}
-      >
-        <p>
-          当前支持本地模拟设备和 Home Assistant
-          接入。已配置的连接会自动发现支持的实体。
-        </p>
-        <ol>
-          <li>在 Home Assistant 中连接设备或 MQTT 模拟器。</li>
-          <li>由部署管理员在服务端配置连接和房间映射。</li>
-          <li>返回这里查看发现的设备；未分配房间的设备也会列出。</li>
-        </ol>
-      </Modal>
+
     </div>
   );
 }
