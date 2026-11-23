@@ -36,6 +36,8 @@ const created=await setup({'X-Bootstrap-Token':process.env.SMART_HOME_BOOTSTRAP_
 const cookie=created.headers.get('set-cookie');assert.match(cookie,/HttpOnly/);assert.match(cookie,/Secure/);assert.match(cookie,/SameSite=Strict/);
 const snapshot=await fetch(base+'/api/state',{headers:{Cookie:cookie.split(';')[0]}});assert.equal(snapshot.status,200);
 assert.ok(Array.isArray((await snapshot.json()).devices));
+const mijia=await fetch(base+'/api/integrations/mijia',{headers:{Cookie:cookie.split(';')[0]}});assert.equal(mijia.status,200);assert.equal((await mijia.json()).state,'unbound');
+assert.equal(statSync('/connections').mode&0o777,0o700);
 assert.equal((await setup({'Origin':'https://untrusted.invalid'})).status,403);
 const db=new DatabaseSync('/data/home.sqlite',{readOnly:true});
 assert.equal(db.prepare('PRAGMA user_version').get().user_version,2);
@@ -47,6 +49,7 @@ console.log('PASS: nonroot runtime, static page, SQLite encryption, setup author
 try {
   await docker('run','--detach','--name',name,'--network','none','--read-only',
     '--tmpfs','/data:rw,noexec,nosuid,uid=1000,gid=1000,mode=0700',
+    '--tmpfs','/connections:rw,noexec,nosuid,uid=1000,gid=1000,mode=0700',
     '--tmpfs','/run/keys:rw,noexec,nosuid,uid=1000,gid=1000,mode=0700',
     '--env','SMART_HOME_DATA_KEY_FILE=/run/keys/data.key',
     '--env','SMART_HOME_BOOTSTRAP_TOKEN='+bootstrap,image,'node','--input-type=module','-e',start);

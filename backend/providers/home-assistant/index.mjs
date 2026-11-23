@@ -5,7 +5,7 @@ import { deviceError } from '../../domain/devices/model.mjs';
 /** Server-only REST/WS adapter. No raw HA attributes or credentials leave this class. */
 export class HomeAssistantProvider {
   #token;
-  constructor({ url, token, rooms = {}, cachedDevices = [], entityPrefix = '', timeoutMs = 5000, reconnectMs = 1000 }) {
+  constructor({ url, token, rooms = {}, cachedDevices = [], entityPrefix = '', timeoutMs = 5000, reconnectMs = 1000, onStatus }) {
     this.url = new URL(url);
     if (!['http:', 'https:'].includes(this.url.protocol) || this.url.username || this.url.password || this.url.search || this.url.hash) throw new Error('HA_URL 必须是无凭据的 HTTP(S) 地址');
     if (!token?.trim()) throw new Error('未配置 HA_TOKEN');
@@ -16,6 +16,7 @@ export class HomeAssistantProvider {
     this.entityPrefix = entityPrefix;
     this.timeoutMs = timeoutMs;
     this.reconnectMs = reconnectMs;
+    this.onStatus = onStatus;
     this.entities = new Map();
     this.eventVersions = new Map();
     this.listeners = new Set();
@@ -141,6 +142,7 @@ export class HomeAssistantProvider {
           buffer = []; syncing = false; this.connected = true; this.attempts = 0;
           clearTimeout(timer);
           for (const entity of this.entities.values()) this.emit(this.mapped(entity));
+          this.onStatus?.();
           heartbeat = setInterval(() => { if (!live) socket.terminate(); else { live = false; socket.ping(); } }, 30000);
           heartbeat.unref();
         } catch { socket.terminate(); }
@@ -160,6 +162,7 @@ export class HomeAssistantProvider {
       if (this.socket !== socket) return;
       this.connected = false;
       for (const { state, ...device } of this.snapshot()) this.emit({ device, state });
+      this.onStatus?.();
       if (!this.stopped) {
         this.retry = setTimeout(() => this.connect(), Math.min(this.reconnectMs * 2 ** this.attempts++, 30000));
         this.retry.unref();

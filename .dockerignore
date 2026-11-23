@@ -1,4 +1,7 @@
 .git
+**/*.mijia.enc
+**/*.mijia.enc.*.tmp
+**/*.connections
 **/node_modules
 **/dist
 **/.env

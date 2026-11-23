@@ -1,6 +1,6 @@
 import type { DeviceSnapshot } from '../types';
 import { isRunning } from '../devices';
-import { metricReading, occupancyReading, sourceLabel } from '../homeTelemetry';
+import { isSimulatedDevice, metricReading, occupancyReading, sourceLabel } from '../homeTelemetry';
 import { designModel, insideHome } from './plan';
 
 const legacyRoomId = (name: string) => `room-${encodeURIComponent(name)}`;
@@ -19,7 +19,9 @@ export function devicesForModelRoom(devices: DeviceSnapshot[], roomId: string) {
 }
 
 export function roomSummary(devices: DeviceSnapshot[], roomId: string) {
-  const roomDevices = devicesForModelRoom(devices, roomId);
+  const matched = devicesForModelRoom(devices, roomId);
+  const actual = matched.filter(device => !isSimulatedDevice(device));
+  const roomDevices = actual.length ? actual : matched;
   const lights = roomDevices.filter(device => device.capabilities.includes('brightness'));
   const knownLights = lights.filter(device => device.state.online && typeof device.state.values.power === 'boolean');
   const onLights = knownLights.filter(device => device.state.values.power);
@@ -30,7 +32,7 @@ export function roomSummary(devices: DeviceSnapshot[], roomId: string) {
     id: roomId, devices: roomDevices, total: roomDevices.length, offline,
     running: roomDevices.filter(isRunning).length,
     source: sources.join(' / ') || '暂无设备',
-    simulated: roomDevices.some(device => device.state.source !== 'home-assistant'),
+    simulated: roomDevices.some(isSimulatedDevice),
     shared,
     lightsOn: onLights.length,
     lighting: shared ? undefined : onLights.length ? Math.max(...onLights.map(device =>

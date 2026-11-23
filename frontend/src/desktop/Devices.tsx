@@ -141,6 +141,7 @@ export default function Devices({
                 <option value="simulator">模拟器</option>
                 <option value="mock">本地模拟</option>
                 <option value="home-assistant">Home Assistant</option>
+                <option value="mijia">米家</option>
               </select>
             </label>
             <button

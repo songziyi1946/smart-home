@@ -1,7 +1,10 @@
 import type {DeviceSnapshot, State} from './types';
 export type Metric = 'temperature' | 'humidity' | 'pm25' | 'co2';
+export function isSimulatedDevice(device: DeviceSnapshot) {
+  return device.state.source === 'simulator' || device.state.source === 'mock';
+}
 export function sourceLabel(device: DeviceSnapshot) {
-  return device.state.source === 'simulator' || device.state.source === 'mock' ? '模拟数据' : 'Home Assistant';
+  return isSimulatedDevice(device) ? '模拟数据' : device.state.source === 'mijia' ? '米家' : 'Home Assistant';
 }
 export function metricReading(devices: DeviceSnapshot[], metric: Metric) {
   const candidates = devices.filter(d => d.state.online && !d.capabilities.includes('power') && d.capabilities.includes(metric) && typeof d.state.values[metric] === 'number' && Number.isFinite(d.state.values[metric]));

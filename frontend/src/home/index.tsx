@@ -1,10 +1,10 @@
 import {useState} from 'react';import type {CSSProperties} from 'react';import {ArrowUpRight,House,Leaf,Star,Activity} from 'lucide-react';
-import type {State,Mutate,DeviceSnapshot} from '../types';import {roomOptions} from '../deviceControls/model';import {metricReading,occupancyReading,sourceLabel} from '../homeTelemetry';import {isRunning} from '../devices';import DesktopDeviceCard from '../desktop/DeviceCard';import HomeStatus from './Status';import QuickActions from './QuickActions';
+import type {State,Mutate,DeviceSnapshot} from '../types';import {roomOptions} from '../deviceControls/model';import {isSimulatedDevice,metricReading,occupancyReading,sourceLabel} from '../homeTelemetry';import {isRunning} from '../devices';import DesktopDeviceCard from '../desktop/DeviceCard';import HomeStatus from './Status';import QuickActions from './QuickActions';
 export default function Home({state,busy,live,canViewAutomation,mutate,onOpen,onRoom,onOffline,onDevices}:{state:State;busy:boolean;live:boolean;canViewAutomation:boolean;mutate:Mutate;onOpen:(id:string)=>void;onRoom:(id:string)=>void;onOffline:()=>void;onDevices:()=>void}){
  const rooms=roomOptions(state.devices);const [environmentRoom,setEnvironmentRoom]=useState('');const actualRoom=rooms.some(r=>r.id===environmentRoom)?environmentRoom:rooms.find(r=>state.devices.some(d=>d.roomId===r.id&&d.capabilities.includes('temperature')&&!d.capabilities.includes('power')))?.id??rooms[0]?.id;
  const environmentDevices=state.devices.filter(d=>d.roomId===actualRoom);const metrics=[['temperature','温度','°C'],['humidity','湿度','%'],['pm25','PM2.5','μg/m³'],['co2','CO₂','ppm']] as const;
  const readings=metrics.map(([key,label,unit])=>({key,label,unit,reading:metricReading(environmentDevices,key)}));
- const common=state.devices.slice(0,6);
+ const common=[...state.devices].sort((a,b)=>Number(isSimulatedDevice(a))-Number(isSimulatedDevice(b))).slice(0,6);
  const events=[...state.sceneRuns.map(r=>({...r,kind:'场景' as const})),...state.automationRuns.map(r=>({...r,kind:'自动化' as const}))].sort((a,b)=>Date.parse(b.startedAt)-Date.parse(a.startedAt)).slice(0,6);
  return <div className="desktop-home">
   <div className="home-overview-grid">

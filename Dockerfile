@@ -46,15 +46,16 @@ USER node
 RUN npm test --prefix backend
 
 FROM node-runtime AS runtime
-ENV NODE_ENV=production SMART_HOME_API_HOST=0.0.0.0 SMART_HOME_API_PORT=3101 SMART_HOME_DATA_DIR=/data
+ENV NODE_ENV=production SMART_HOME_API_HOST=0.0.0.0 SMART_HOME_API_PORT=3101 SMART_HOME_DATA_DIR=/data SMART_HOME_MIJIA_VAULT_FILE=/connections/account.mijia.enc
 WORKDIR /app
 # npm never enters this stage. Retain Node's shared libraries and CA trust store.
-RUN mkdir /data && chown node:node /data && chmod 700 /data \
+RUN mkdir /data /connections && chown node:node /data /connections && chmod 700 /data /connections \
     && apk del --no-network wolfi-base apk-tools
 COPY --from=backend-deps /app/backend/node_modules/ backend/node_modules/
 COPY backend/ backend/
 COPY packages/ packages/
 COPY --from=frontend-build /app/frontend/dist/ frontend/dist/
+COPY docs/third-party/ docs/third-party/
 USER node
 EXPOSE 3101
 CMD ["node", "backend/server.mjs"]

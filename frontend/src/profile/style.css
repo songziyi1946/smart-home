@@ -2,6 +2,18 @@
   display: grid;
   gap: 24px;
 }
+.mijia-connection h2 { display: flex; align-items: center; gap: 8px; }
+.mijia-form { display: grid; gap: 12px; margin: 16px 0; }
+.mijia-form fieldset { display: grid; gap: 14px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.mijia-form label { display: grid; gap: 7px; font-size: 14px; }
+.mijia-form select { width: 100%; }
+.mijia-form p, .mijia-connection > p, .mijia-room-mapping > p, .mijia-status p { font-size: 14px; color: var(--muted); }
+.mijia-status { display: grid; gap: 6px; padding: 14px; border-radius: var(--radius-control); background: var(--control); }
+.mijia-status p { margin: 0; }
+.mijia-status .settings-error { color: var(--color-danger); }
+.mijia-captcha { display: block; max-width: 100%; max-height: 120px; align-self: start; border: 1px solid var(--line); border-radius: 8px; background: white; }
+.mijia-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.mijia-room-mapping { padding-top: 20px; margin-top: 20px; border-top: 1px solid var(--line); }
 .settings-home-name { display: inline-flex; align-items: center; gap: 6px; }
 .settings-name-editor { display: grid; gap: 10px; width: min(320px, 100%); }
 .settings-name-editor .settings-actions { justify-content: flex-end; }

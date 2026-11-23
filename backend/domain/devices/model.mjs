@@ -23,7 +23,7 @@ export const Device = z.object({
   capabilities: z.array(Capability).min(1).refine(items => new Set(items).size === items.length),
 }).strict();
 export const DeviceState = z.object({
-  deviceId: z.string().min(1), source: z.enum(['mock', 'home-assistant', 'simulator']), online: z.boolean(),
+  deviceId: z.string().min(1), source: z.enum(['mock', 'home-assistant', 'mijia', 'simulator']), online: z.boolean(),
   lastSeenAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
   values: z.object(Object.fromEntries(Object.entries(valueSchemas).map(([key, schema]) => [key, schema.optional()]))).strict(),

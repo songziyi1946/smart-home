@@ -5,4 +5,7 @@
 .env.* export-ignore
 .env.example -export-ignore
 backend/data export-ignore
+**/*.mijia.enc export-ignore
+**/*.mijia.enc.*.tmp export-ignore
+**/*.connections export-ignore
 tools/device-simulator/.lab-auth.json export-ignore

@@ -1,4 +1,7 @@
 import {clientAddressPolicy} from './app/client-address.mjs';
+import { ProviderVault } from './infrastructure/provider-vault.mjs';
+import { MijiaService } from './providers/mijia/service.mjs';
+import { createMijiaRouter } from './app/mijia-routes.mjs';
 import {loadStorageKey} from './infrastructure/encryption.mjs';
 import {acquireDataLock} from './infrastructure/data-lock.mjs';
 import { deploymentSecurity, isLocalRequest } from './app/deployment-security.mjs';
@@ -62,15 +65,25 @@ let cachedProviderDevices=store.loadProviderDevices();
 const ha = process.env.HA_URL ? new HomeAssistantProvider({
   url: process.env.HA_URL, token: process.env.HA_TOKEN,
   entityPrefix: process.env.HA_ENTITY_PREFIX || '',
-  cachedDevices: cachedProviderDevices,
+  onStatus: publishProviderState,
+  cachedDevices: cachedProviderDevices.filter(device => device.providerId === 'home-assistant'),
   rooms: process.env.HA_ROOMS_FILE ? JSON.parse(readFileSync(process.env.HA_ROOMS_FILE, 'utf8')) : {},
 }) : undefined;
 let stream, automation;
-function observeDevices(){try{automation?.observe(snapshot().devices);}catch{console.error('自动化事件处理或日志保存失败');}}
-ha?.subscribe(() => {
-  if(ha.connected){const next=ha.snapshot();try{store.saveProviderDevices(next);cachedProviderDevices=next;}catch{console.error('Provider 状态缓存保存失败');}}
-  stream?.publish();observeDevices();
+const mijia = new MijiaService({
+  vault: new ProviderVault(fileURLToPath(dir), encryptionKey, process.env.SMART_HOME_MIJIA_VAULT_FILE),
+  cachedDevices: cachedProviderDevices.filter(device => device.providerId === 'mijia'),
+  onDevicesChanged: publishProviderState,
 });
+function observeDevices(){try{automation?.observe(snapshot().devices);}catch{console.error('自动化事件处理或日志保存失败');}}
+function publishProviderState() {
+  const next = [...(ha ? ha.snapshot() : cachedProviderDevices.filter(device => device.providerId === 'home-assistant')), ...mijia.snapshot()];
+  try { store.saveProviderDevices(next); cachedProviderDevices = next; }
+  catch { console.error('Provider 状态缓存保存失败'); return; }
+  stream?.publish(); observeDevices();
+}
+cachedProviderDevices = [...cachedProviderDevices.filter(device => device.providerId === 'home-assistant'), ...mijia.snapshot()];
+ha?.subscribe(publishProviderState);
 
 
 function commit(change) {
@@ -85,7 +98,7 @@ function commit(change) {
 
 function snapshot() {
   const { accounts, devices, deviceStates, ...rest } = state;
-  return { ...rest, devices: [...deviceSnapshot(state), ...(ha ? ha.snapshot() : cachedProviderDevices)], accounts: accounts.map(({ number, ...account }) => ({
+  return { ...rest, devices: [...deviceSnapshot(state), ...cachedProviderDevices], accounts: accounts.map(({ number, ...account }) => ({
     ...account, masked: '••••' + number.slice(-Math.min(4, number.length - 1)),
   })) };
 }
@@ -135,6 +148,8 @@ app.use('/api', (req, res, next) => {
 });
 
 stream = createStateStream({ snapshot, sessionFor, subscribeAuth });
+const mijiaRoutes = createMijiaRouter({ service: mijia, sessionFor, subscribeAuth, clientAddress, allowCredentials: req => security.mode === 'https' || isLocalRequest(req) });
+app.use('/api/integrations/mijia', mijiaRoutes.router);
 app.get('/api/events', stream.route);
 app.get('/api/state', (_req, res) => res.json(snapshot()));
 app.patch('/api/devices/:id', async (req, res) => {
@@ -142,6 +157,10 @@ app.patch('/api/devices/:id', async (req, res) => {
   if (req.params.id.startsWith('ha:')) {
     if (!ha) fail(404, '设备不存在');
     await ha.executeCommand(req.params.id.slice(3), command);
+    return res.json(snapshot());
+  }
+  if (req.params.id.startsWith('mi:')) {
+    await mijia.executeCommand(req.params.id.slice(3), command);
     return res.json(snapshot());
   }
   res.json(commit(draft => executeDeviceCommand(draft, req.params.id, command)));
@@ -170,6 +189,7 @@ async function runScene(sceneId,actorId,authorized){
       if(!device.state.online)fail(409,'设备已离线');
       if(device.providerId==='mock')commit(draft=>executeDeviceCommand(draft,id,command));
       else if(device.providerId==='home-assistant'&&ha)await ha.executeCommand(device.providerDeviceId,command);
+      else if(device.providerId==='mijia')await mijia.executeCommand(device.providerDeviceId,command);
       else fail(400,'设备 Provider 不可用');
     }});
     return run;
@@ -178,6 +198,7 @@ async function runScene(sceneId,actorId,authorized){
 app.post('/api/scenes/:id',async(req,res)=>res.json({run:await runScene(req.params.id,req.user.id,()=>!!sessionFor(req))}));
 automation=createAutomationEngine({rules:()=>state.automations,executeScene:runScene,authorized:id=>activeAdmin(id),now:()=>testTime?new Date(testTime):new Date(),save:run=>commit(draft=>{const i=draft.automationRuns.findIndex(r=>r.id===run.id);if(i<0)draft.automationRuns.unshift(structuredClone(run));else draft.automationRuns[i]=structuredClone(run);draft.automationRuns=draft.automationRuns.slice(0,100);})});
 automation.observe(snapshot().devices);
+void mijia.start().catch(() => { console.error('米家连接初始化失败，请在设备接入中重新配置'); });
 app.post('/api/automations/preview',(req,res)=>{
  const body=z.object({rule:z.unknown(),event:z.object({from:z.union([z.boolean(),z.number(),z.string()]),to:z.union([z.boolean(),z.number(),z.string()])}).strict(),at:z.string().datetime({offset:true}).optional()}).strict().parse(req.body);
  const rule=validateRule(body.rule,snapshot().devices,state.scenes);
@@ -279,4 +300,4 @@ const server = app.listen(port, process.env.SMART_HOME_API_HOST || '127.0.0.1', 
   }
 });
 
-for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => { automation.close(); stream.close(); ha?.close(); server.closeAllConnections(); server.close(()=>{store.close();releaseDataLock();}); });
+for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => { automation.close(); stream.close(); mijiaRoutes.close(); mijia.close(); ha?.close(); server.closeAllConnections(); server.close(()=>{store.close();releaseDataLock();}); });

@@ -69,7 +69,7 @@ test('room telemetry never invents readings or all-off lighting for an offline o
   assert.equal(empty.source, '暂无设备');
   const offline = device('offline', 'living', ['power', 'brightness'], { power: true, brightness: 90 }, { online: false });
   const off = device('off', 'living', ['power', 'brightness'], { power: false });
-  const sensor = device('sensor', 'living', ['temperature', 'humidity'], { temperature: 0, humidity: 0 }, { source: 'home-assistant' });
+  const sensor = device('sensor', 'living', ['temperature', 'humidity'], { temperature: 0, humidity: 0 });
   const room = roomSummary([offline, off, sensor], 'living');
   assert.equal(room.lighting, undefined);
   assert.equal(room.offline, 1);
@@ -78,9 +78,22 @@ test('room telemetry never invents readings or all-off lighting for an offline o
   assert.equal(room.humidity.value, 0);
   assert.equal(room.simulated, true);
   assert.match(room.source, /模拟数据/);
-  assert.match(room.source, /Home Assistant/);
   assert.equal(roomSummary([off], 'living').lighting, 0);
   assert.equal(roomSummary([device('unknown', 'living', ['power', 'brightness'], {})], 'living').lighting, undefined);
+});
+
+test('real room devices exclude demonstration devices even when the real light is offline', () => {
+  const demo = device('demo-on', 'living', ['power', 'brightness'], {power:true,brightness:100});
+  const real = device('mi:lamp', 'living', ['power', 'brightness'], {power:false,brightness:30}, {source:'mijia'});
+  const room = roomSummary([demo,real], 'living');
+  assert.deepEqual(room.devices,[real]); assert.equal(room.total,1); assert.equal(room.running,0);
+  assert.equal(room.lighting,0); assert.equal(room.simulated,false); assert.equal(room.source,'米家');
+  const stale = {...real,state:{...real.state,online:false,values:{power:true,brightness:40}}};
+  const unavailable = roomSummary([demo,stale], 'living');
+  assert.deepEqual(unavailable.devices,[stale]); assert.equal(unavailable.lighting,undefined); assert.equal(unavailable.offline,1);
+  const sensor = device('actual-sensor','living',['temperature'],{temperature:25},{source:'home-assistant'});
+  assert.deepEqual(roomSummary([demo,sensor],'living').devices,[sensor]);
+  assert.equal(roomSummary([demo,sensor],'living').lighting,undefined);
 });
 
 test('lighting feedback uses only online capability-backed light values and never AC power', () => {

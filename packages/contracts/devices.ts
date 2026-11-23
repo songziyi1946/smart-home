@@ -11,7 +11,7 @@ export type Device = {
 };
 export type DeviceState = {
   deviceId: string;
-  source: 'mock' | 'home-assistant' | 'simulator';
+  source: 'mock' | 'home-assistant' | 'mijia' | 'simulator';
   lastSeenAt?: string;
   updatedAt?: string;
   online: boolean;

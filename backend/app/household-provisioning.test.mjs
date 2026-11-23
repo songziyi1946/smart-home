@@ -22,7 +22,7 @@ test('provisioning creates private, separate household data/key/configuration an
     assert.equal(local[i].HA_URL, ''); assert.equal(local[i].HA_TOKEN, '');
     assert.equal(local[i].SMART_HOME_BOOTSTRAP_TOKEN, '');
     if (process.platform !== 'win32') {
-      for (const path of [home, join(home, 'data'), join(home, 'secrets')]) assert.equal(statSync(path).mode & 0o777, 0o700);
+      for (const path of [home, join(home, 'data'), join(home, 'data.connections'), join(home, 'secrets')]) assert.equal(statSync(path).mode & 0o777, 0o700);
       for (const path of [local[i].SMART_HOME_DATA_KEY_FILE, join(home, '.env.local'), join(home, '.env.compose')]) assert.equal(statSync(path).mode & 0o777, 0o600);
     }
   }

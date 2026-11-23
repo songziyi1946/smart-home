@@ -13,7 +13,7 @@ import { legacySeedDevices } from './providers/mock/seed.mjs';
 async function launch(directory, extraEnv = {}, args = ['server.mjs']) {
   const child = spawn(process.execPath, args, {
     cwd: new URL('.', import.meta.url),
-    env: { ...process.env, SMART_HOME_DATA_DIR: directory, SMART_HOME_API_PORT: '0', ...extraEnv },
+    env: { ...process.env, SMART_HOME_MIJIA_VAULT_FILE: '', SMART_HOME_DATA_DIR: directory, SMART_HOME_API_PORT: '0', ...extraEnv },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let output = '';

@@ -26,6 +26,7 @@ import "./style.css";
 import type { Installation } from '../pwa';
 import InstallApp from './InstallApp';
 import HouseholdName from './HouseholdName';
+import MijiaConnection from './MijiaConnection';
 export default function Profile({
   state,
   session,
@@ -79,6 +80,7 @@ export default function Profile({
   );
   const integrations = (
     <div className="settings-integrations">
+      <MijiaConnection session={session} disabled={busy} onSessionExpired={onSessionExpired} />
       <section className="panel">
         <header>
           <h2>设备来源</h2>
@@ -87,6 +89,7 @@ export default function Profile({
           </a>
         </header>
         <div className="settings-provider-list">
+          <article><div><h3>米家</h3></div><p>{providers.mijia ? `${providers.mijiaOnline} / ${providers.mijia} 项设备在线` : '暂无设备记录'}</p></article>
           <article>
             <div>
               <h3>模拟设备</h3>

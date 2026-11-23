@@ -10,6 +10,9 @@
 
 # Dependencies and build output
 node_modules/
+**/*.mijia.enc
+**/*.mijia.enc.*.tmp
+**/*.connections/
 dist/
 
 # macOS metadata

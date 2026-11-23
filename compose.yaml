@@ -9,6 +9,7 @@ services:
     environment:
       SMART_HOME_DEPLOYMENT_MODE: https
       SMART_HOME_DATA_KEY_FILE: /run/secrets/data_key
+      SMART_HOME_MIJIA_VAULT_FILE: /connections/account.mijia.enc
       SMART_HOME_TRUSTED_PROXY_IP: ${SMART_HOME_CADDY_IP:-172.30.47.3}
       SMART_HOME_BOOTSTRAP_TOKEN: ${SMART_HOME_BOOTSTRAP_TOKEN:-}
       HA_URL: ${HA_URL:-}
@@ -16,6 +17,7 @@ services:
       HA_ENTITY_PREFIX: ${HA_ENTITY_PREFIX:-}
     volumes:
       - ${SMART_HOME_HOST_DATA_DIR:-./data}:/data
+      - ${SMART_HOME_HOST_DATA_DIR:-./data}.connections:/connections
     secrets:
       - data_key
     networks:

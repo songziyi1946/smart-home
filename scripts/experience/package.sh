@@ -11,7 +11,7 @@ trap 'rm -rf "$scratch"' EXIT
 # Build from the release commit, without worktree changes, installed modules or home data.
 source="$scratch/source"
 mkdir "$source"
-git archive HEAD backend frontend packages scripts/experience .nvmrc | tar -xf - -C "$source"
+git archive HEAD backend frontend packages scripts/experience docs/third-party .nvmrc | tar -xf - -C "$source"
 cd "$source"
 version=$(cat .nvmrc)
 test "$(node -v)" = "v$version"
@@ -29,6 +29,8 @@ find backend/node_modules frontend/node_modules -type f \( -iname 'license*' -o 
     printf '\n--- %s ---\n\n' "$notice"
     cat "$notice"
   done > "$package/THIRD-PARTY-NOTICES.txt"
+cp -R docs/third-party "$package/third-party"
+cat docs/third-party/mijia-cloud-NOTICE.md >> "$package/THIRD-PARTY-NOTICES.txt"
 mv frontend/dist "$package/frontend/"
 test -f "$package/frontend/dist/index.html"
 test ! -e "$package/backend/data"

@@ -14,7 +14,7 @@ async function fixture(t, options = {}) {
     if(req.headers.authorization!=='Bearer fixture-secret'){res.writeHead(401);res.end('{}');return;}
     if(failure){res.writeHead(failure);res.end('{"message":"fixture-secret"}');return;}
     if(req.url==='/api/config')return res.end(JSON.stringify({unit_system:{temperature:'°C'}}));
-    if(req.url==='/api/states'){const snapshot=JSON.stringify([entity]);discoveryStarted=true;setTimeout(()=>res.end(snapshot), options.discoveryDelay ?? 0);return;}
+    if(req.url==='/api/states'){const snapshot=JSON.stringify(options.empty ? [] : [entity]);discoveryStarted=true;setTimeout(()=>res.end(snapshot), options.discoveryDelay ?? 0);return;}
     if(req.url==='/api/states/light.test')return res.end(JSON.stringify(entity));
     if(req.url==='/api/services/light/turn_on'){
       serviceCalls++;let input='';for await(const chunk of req)input+=chunk;
@@ -36,7 +36,7 @@ async function fixture(t, options = {}) {
     });
   });
   server.listen(0,'127.0.0.1');await once(server,'listening');
-  const provider=new HomeAssistantProvider({url:`http://127.0.0.1:${server.address().port}`,token:options.token ?? 'fixture-secret',reconnectMs:20,timeoutMs:1000});
+  const provider=new HomeAssistantProvider({url:`http://127.0.0.1:${server.address().port}`,token:options.token ?? 'fixture-secret',reconnectMs:20,timeoutMs:1000,cachedDevices:options.cachedDevices,onStatus:options.onStatus});
   t.after(()=>{provider.close();for(const socket of wss.clients)socket.terminate();wss.close();server.closeAllConnections();server.close();});
   return {provider,event,discoveryStarted:()=>discoveryStarted,connections:()=>connections,setState(value){entity={...entity,state:value,last_updated:new Date().toISOString()};event(entity);},setFailure(value){failure=value;},disconnect(){for(const socket of wss.clients)socket.terminate();},calls:()=>serviceCalls};
 }
@@ -62,6 +62,14 @@ test('authentication and service failures are sanitized; unsupported commands do
   f.setFailure(401);
   await assert.rejects(f.provider.discoverOrListDevices(),e=>e.status===502&&!e.message.includes('fixture-secret'));
   assert.throws(()=>new HomeAssistantProvider({url:'https://user:secret@example.com',token:'x'}));
+});
+test('initial empty HA discovery notifies cache owners to remove stale restored devices', async t => {
+  let persisted;
+  const cached = { id: 'ha:light.old', name: '旧设备', roomId: 'living', room: '客厅', providerId: 'home-assistant', providerDeviceId: 'light.old', capabilities: ['power'], state: { deviceId: 'ha:light.old', source: 'home-assistant', online: false, values: { power: false } } };
+  const f = await fixture(t, { empty: true, cachedDevices: [cached], onStatus: () => { persisted = f.provider.snapshot(); } });
+  assert.equal(f.provider.snapshot().length, 1);
+  f.provider.subscribe(() => {}); await until(() => f.provider.connected && persisted !== undefined);
+  assert.deepEqual(persisted, []);
 });
 
 test('events received during REST snapshot are replayed after subscription acknowledgement',async t=>{

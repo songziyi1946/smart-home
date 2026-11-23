@@ -35,9 +35,9 @@ App 通过同源 SSE `/api/events` 接收服务端 WS 状态事件和本地保�
 
 ### 米家接入范围
 
-本平台目前通过上述 Home Assistant Provider 接入真实设备，没有内置米家账号直连或极客版网关写入功能。小米官方集成支持小米账号授权、选择家庭和设备；是否走中枢网关本地控制取决于实际硬件与固件，没有中枢网关时可通过小米云转发。参见[小米官方接入说明](https://github.com/XiaoMi/ha_xiaomi_home/blob/main/doc/README_zh.md)。
+除上述 Home Assistant Provider 外，现已提供服务端 `MijiaProvider`，可通过小米账号密码及人工图片/短信/邮箱验证选择家庭，无需米家 App。按公开 MIoT Spec 规范化设备，服务端有界轮询和命令后读回，再经 SSE 同步；授权凭据保存在独立加密文件中，详见[米家接入及部署说明](mijia.md)。
 
-参考项目 [oh-my-sage](https://github.com/allocnode/oh-my-sage) 的极客版规则管理则要求局域网可达的米家中枢网关，并通过米家 App 开启功能、取得一次性登录码。公开资料可以确认接入条件，无法确认用户家中是否已有该硬件。本轮保留现有能力契约及模拟器，不复制其登录或规则写入流程，也不把没有授权的设备显示为已连接。
+参考项目 [oh-my-sage](https://github.com/allocnode/oh-my-sage) 的极客版规则管理仍要求局域网可达的米家中枢网关，并通过米家 App 开启功能、取得一次性登录码；当前账号云接入不包含这条规则写入通道，也不把未授权设备显示为已连接。
 
 ## 安装教程
 

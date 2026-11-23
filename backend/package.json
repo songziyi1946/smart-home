@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node --watch server.mjs --skip-login",
     "start": "node server.mjs",
-    "test": "node --test auth.test.mjs domain/devices/*.test.mjs providers/mock/*.test.mjs providers/home-assistant/*.test.mjs devices-api.test.mjs app/*.test.mjs domain/scenes/*.test.mjs domain/automations/*.test.mjs infrastructure/*.test.mjs"
+    "test": "node --test auth.test.mjs domain/devices/*.test.mjs providers/mock/*.test.mjs providers/home-assistant/*.test.mjs providers/mijia/*.test.mjs devices-api.test.mjs app/*.test.mjs domain/scenes/*.test.mjs domain/automations/*.test.mjs infrastructure/*.test.mjs"
   },
   "dependencies": {
     "express": "^5.1.0",

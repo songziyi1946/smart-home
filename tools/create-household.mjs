@@ -17,14 +17,16 @@ export function createHousehold({ directory, id, port = 3101, slot = 47 }) {
   if (!/^[a-z][a-z0-9-]{0,39}$/.test(id ?? '')) throw Error('实例标识需为小写字母开头的 1–40 位字母、数字或连字符');
   port = integer(port, 1024, 65535, '本机端口');
   slot = integer(slot, 0, 255, '网络编号');
-  const root = resolve(directory), data = join(root, 'data'), secrets = join(root, 'secrets'), key = join(secrets, 'data.key');
+  const root = resolve(directory), data = join(root, 'data'), secrets = join(root, 'secrets'), connections = data + '.connections', key = join(secrets, 'data.key');
   // Exclusive creation prevents touching an existing household or an existing symlink.
   mkdirSync(root, { mode: 0o700 });
   mkdirSync(data, { mode: 0o700 });
   mkdirSync(secrets, { mode: 0o700 });
+  mkdirSync(connections, { mode: 0o700 });
   writeProtected(key, randomBytes(32).toString('hex') + '\n');
   const local = {
     SMART_HOME_DATA_DIR: data, SMART_HOME_DATA_KEY_FILE: key,
+    SMART_HOME_MIJIA_VAULT_FILE: join(connections, 'account.mijia.enc'),
     SMART_HOME_DEPLOYMENT_MODE: 'local', SMART_HOME_API_HOST: '127.0.0.1', SMART_HOME_API_PORT: String(port),
     SMART_HOME_BOOTSTRAP_TOKEN: '', SMART_HOME_TRUSTED_PROXY_IP: '',
     HA_URL: '', HA_TOKEN: '', HA_ENTITY_PREFIX: '', HA_ROOMS_FILE: '',
@@ -63,7 +65,9 @@ function config(directory, filename) {
 }
 
 export function startHousehold(directory) {
-  return run(process.execPath, [fileURLToPath(new URL('../backend/server.mjs', import.meta.url))], config(directory, '.env.local'));
+  const env = config(directory, '.env.local');
+  env.SMART_HOME_MIJIA_VAULT_FILE ||= resolve(env.SMART_HOME_DATA_DIR) + '.mijia.enc';
+  return run(process.execPath, [fileURLToPath(new URL('../backend/server.mjs', import.meta.url))], env);
 }
 
 export function main(args = process.argv.slice(2)) {

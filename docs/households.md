@@ -18,6 +18,7 @@ node tools/create-household.mjs start --directory /srv/home-alice
 ```text
 /srv/home-alice/
   data/             # 此家庭自己的加密 SQLite 与运行数据
+  data.connections/ # 此家庭独立的加密云授权，首次选择家庭后写入
   secrets/data.key  # 只属于此家庭，位于 data 目录之外
   .env.local        # 本机启动配置，设备接入默认留空
   .env.compose      # 公网部署配置，域名默认是待修改的 example.com

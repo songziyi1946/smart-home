@@ -52,6 +52,9 @@ for (const remote of [false, true]) test(
       res.cookie('smart_home_session', 'fixture-only', { httpOnly: true, secure: true, sameSite: 'strict', path: '/' });
       res.json({ host: req.headers.host, origin: req.headers.origin });
     });
+    app.post('/api/integrations/mijia/login', async (_req, res) => {
+      await delay(6000); res.json({ state: 'authorizing' });
+    });
     app.get("/api/events", (req, res) => {
       responses.add(res);
       res.once("close", () => responses.delete(res));
@@ -150,8 +153,10 @@ for (const remote of [false, true]) test(
       (await within(connection.snapshot())).devices[0].state.values.power,
       true,
     );
-    // Existing REST proxy timeout was 5 seconds, but the SSE heartbeat is 15 seconds.
+    // Authentication may need several upstream calls while the SSE connection remains idle.
+    const cloudLogin = fetch(base + '/api/integrations/mijia/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: base }, body: '{}' });
     await delay(6100);
+    assert.equal((await cloudLogin).status, 200);
     assert.equal(
       (
         await fetch(base + "/api/devices/lamp", {
