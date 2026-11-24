@@ -6,9 +6,11 @@ export default function DesktopDeviceCard({device,busy,mutate,onOpen}:{device:De
  return <article className={'desktop-device '+(!device.state.online?'is-offline':v.power||v.cleaning?'is-active':'')}>
   <div className="desktop-device-top"><span className="desktop-device-symbol"><Icon size={22}/></span><span className={'device-availability '+(!device.state.online?'warning':'')}>{device.state.online?'在线':'离线'}</span></div>
   <button className="desktop-device-title" onClick={onOpen} title="查看设备详情"><span><strong>{device.name}</strong><small>{device.room} · {sourceLabel(device)}</small></span><ArrowUpRight size={17} aria-hidden/></button>
+  <div className="desktop-device-state">
   <p className="desktop-device-reading">{deviceSummary(device)}</p>
   {(has('power')||has('cleaning')||has('position'))&&<div className="desktop-device-controls">{has('power')&&<Switch aria-label={device.name+'电源'} checked={v.power??false} disabled={disabled||v.power===undefined} onChange={value=>void sendDeviceCommand(mutate,device,{capability:'power',value})}/>} {has('cleaning')&&<Button size="small" disabled={disabled||v.cleaning===undefined} onClick={()=>void sendDeviceCommand(mutate,device,{capability:'cleaning',value:!v.cleaning})}>{v.cleaning?'暂停':'开始清扫'}</Button>}
    {has('position')&&(['open','stop','closed'] as const).map(value=><Button size="small" key={value} disabled={disabled} onClick={()=>void sendDeviceCommand(mutate,device,{capability:'position',value})}>{{open:'打开',stop:'停止',closed:'关闭'}[value]}</Button>)}
   </div>}
+  </div>
  </article>;
 }

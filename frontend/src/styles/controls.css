@@ -119,6 +119,12 @@ select:disabled {
   --auth-input-fill: var(--panel);
   background-color: var(--auth-input-fill);
 }
+.auth-panel .arco-input-inner-wrapper:focus-within {
+  /* Paint above the autofilled child, which covers an inset box-shadow. */
+  box-shadow: none;
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
 .auth-panel .arco-input:is(:autofill, :-webkit-autofill) {
   -webkit-text-fill-color: var(--color-text);
   caret-color: var(--color-text);

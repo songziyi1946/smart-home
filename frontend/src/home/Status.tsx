@@ -1,3 +1,4 @@
+import { useId } from "react";
 import {
   Activity,
   ArrowUpRight,
@@ -8,6 +9,8 @@ import {
 import type { State } from "../types";
 import { attention, onlineSummary } from "../homeTelemetry";
 import { isRunning } from "../devices";
+
+const ONLINE_ARC = "M30.645 101.355 A50 50 0 1 1 101.355 101.355";
 
 export default function HomeStatus({
   state,
@@ -24,6 +27,8 @@ export default function HomeStatus({
   onOffline: () => void;
   onOpen: (id: string) => void;
 }) {
+  const gradientId = useId();
+  const glowId = useId();
   const online = onlineSummary(state.devices);
   const issues = attention(state);
   const percent = online.total
@@ -48,14 +53,36 @@ export default function HomeStatus({
           role="img"
           aria-label={`设备在线率${percent === undefined ? "暂无数据" : percent + "%"}`}
         >
-          <svg viewBox="0 0 88 88" aria-hidden="true" focusable="false">
-            <circle className="home-status-track" cx="44" cy="44" r="38" />
-            <circle
-              className="home-status-progress"
-              cx="44" cy="44" r="38" pathLength="100"
+          <svg viewBox="0 0 132 132" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id={gradientId} x1="16" y1="16" x2="116" y2="116" gradientUnits="userSpaceOnUse">
+                <stop className="home-status-gradient-start" />
+                <stop offset="1" className="home-status-gradient-end" />
+              </linearGradient>
+              <filter id={glowId} x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="3" />
+              </filter>
+            </defs>
+            <path className="home-status-track" d={ONLINE_ARC} />
+            <path
+              className="home-status-glow"
+              d={ONLINE_ARC} pathLength="100"
               strokeDasharray={`${percent ?? 0} 100`}
               strokeOpacity={percent ? 1 : 0}
-              transform="rotate(-90 44 44)"
+              filter={`url(#${glowId})`}
+            />
+            <path
+              className="home-status-progress"
+              d={ONLINE_ARC} pathLength="100"
+              strokeDasharray={`${percent ?? 0} 100`}
+              strokeOpacity={percent ? 1 : 0}
+              stroke={`url(#${gradientId})`}
+            />
+            <circle
+              className="home-status-tip"
+              cx="30.645" cy="101.355" r="4.5"
+              opacity={percent ? 1 : 0}
+              style={{ transform: `rotate(${(percent ?? 0) * 2.7}deg)` }}
             />
           </svg>
           <div>
@@ -63,7 +90,7 @@ export default function HomeStatus({
               {percent ?? "—"}
               {percent !== undefined && <small>%</small>}
             </strong>
-            <span>在线率</span>
+            <span>设备在线率</span>
           </div>
         </div>
         <dl className="home-status-metrics">

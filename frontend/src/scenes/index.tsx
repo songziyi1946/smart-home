@@ -1,8 +1,8 @@
 import { StatusPanel } from "../ui/StatusPanel";
 import { useConfirmAction } from "../ui/useConfirmAction";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@arco-design/web-react";
-import { Play, Plus, ArrowUp, ArrowDown, Trash2, Layers } from "lucide-react";
+import { Play, Plus, ArrowLeft, ArrowUp, ArrowDown, Trash2, Layers } from "lucide-react";
 import type { State, Scene, Mutate, DeviceCommand } from "../types";
 import { useMobile } from "../mobile/hooks";
 import {
@@ -29,12 +29,26 @@ export default function Scenes({
   canManage: boolean;
 }) {
   const confirmation = useConfirmAction(busy);
+  const fieldsRef = useRef<HTMLDivElement>(null);
+  const lastActionRef = useRef<HTMLElement>(null);
+  const revealAddedAction = useRef(false);
   const mobile = useMobile(),
     [draft, setDraft] = useState<Scene>(),
     [selected, setSelected] = useState<string>(),
     [error, setError] = useState(""),
     [focusedRun, setFocusedRun] = useState<string>(),
     [tab, setTab] = useState("scenes");
+  useEffect(() => {
+    if (!revealAddedAction.current) return;
+    revealAddedAction.current = false;
+    const fields = fieldsRef.current;
+    const action = lastActionRef.current;
+    if (fields && action) {
+      // Scroll only the fields so the editor header and save bar stay in place.
+      fields.scrollTop +=
+        action.getBoundingClientRect().top - fields.getBoundingClientRect().top - 8;
+    }
+  }, [draft?.actions.length]);
   const available = state.devices.filter((d) =>
     d.capabilities.some((c) =>
       writable.includes(c as (typeof writable)[number]),
@@ -76,6 +90,7 @@ export default function Scenes({
       : undefined;
   };
   const edit = (scene?: Scene) => {
+    revealAddedAction.current = false;
     setError("");
     setDraft(
       scene
@@ -110,12 +125,19 @@ export default function Scenes({
     void mutate("/scenes/" + scene.id, "POST", {});
   if (draft)
     return (
-      <section className="panel flow-editor">
+      <section className="panel flow-editor flow-scene-editor">
         <div className="flow-heading">
-          <div>
-            <h2>{draft.id ? "编辑场景" : "创建场景"}</h2>
-          </div>
-          <Button disabled={pending} onClick={() => setDraft(undefined)}>
+          <h2>
+            <Layers size={20} aria-hidden />
+            {draft.id ? "编辑场景" : "创建场景"}
+          </h2>
+          <Button
+            type="text"
+            size="small"
+            icon={<ArrowLeft size={16} />}
+            disabled={pending}
+            onClick={() => setDraft(undefined)}
+          >
             返回场景
           </Button>
         </div>
@@ -139,154 +161,160 @@ export default function Scenes({
           }}
         >
           <fieldset disabled={busy || !canManage}>
-            <div className="flow-form-pair">
-              <label className="flow-field">
-                场景名称
-                <input
-                  required
-                  maxLength={80}
-                  value={draft.name}
-                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                />
-              </label>
-              <label className="flow-field">
-                说明
-                <input
-                  maxLength={200}
-                  value={draft.description}
-                  onChange={(e) =>
-                    setDraft({ ...draft, description: e.target.value })
-                  }
-                />
-              </label>
-            </div>
-            <h3 title="按顺序下发。遇到失败即停止，已执行的动作不会自动回滚。">
-              动作 · {draft.actions.length}
-            </h3>
-            {draft.actions.map((a, i) => {
-              const d = state.devices.find((d) => d.id === a.deviceId);
-              return (
-                <section
-                  className="flow-action"
-                  key={i}
-                  aria-label={"动作 " + (i + 1)}
-                >
-                  <header>
-                    <span className="flow-step-number">{i + 1}</span>
-                    <strong>{deviceName(state.devices, a.deviceId)}</strong>
-                    <div>
-                      <button
-                        type="button"
-                        aria-label={`动作${i + 1}上移`}
-                        disabled={i === 0}
-                        onClick={() => move(i, -1)}
-                      >
-                        <ArrowUp size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`动作${i + 1}下移`}
-                        disabled={i === draft.actions.length - 1}
-                        onClick={() => move(i, 1)}
-                      >
-                        <ArrowDown size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`移除动作${i + 1}`}
-                        disabled={draft.actions.length === 1}
-                        onClick={() =>
-                          setDraft({
-                            ...draft,
-                            actions: draft.actions.filter(
-                              (_, index) => index !== i,
-                            ),
-                          })
-                        }
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </header>
-                  <div className="flow-action-fields">
-                    <label className="flow-field">
-                      设备
-                      <select
-                        value={a.deviceId}
-                        onChange={(e) =>
-                          change(i, initialAction(e.target.value)!)
-                        }
-                      >
-                        {!d && <option value={a.deviceId}>设备已移除</option>}
-                        {available.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name} · {item.room}
-                            {item.state.online ? "" : "（离线）"}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="flow-field">
-                      控制能力
-                      <select
-                        value={a.command.capability}
-                        onChange={(e) => {
-                          const capability = e.target
-                            .value as DeviceCommand["capability"];
+            <div className="flow-scene-fields" ref={fieldsRef}>
+              <div className="flow-form-pair">
+                <label className="flow-field">
+                  场景名称
+                  <input
+                    required
+                    maxLength={80}
+                    value={draft.name}
+                    onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                  />
+                </label>
+                <label className="flow-field">
+                  说明
+                  <input
+                    maxLength={200}
+                    value={draft.description}
+                    onChange={(e) =>
+                      setDraft({ ...draft, description: e.target.value })
+                    }
+                  />
+                </label>
+              </div>
+              <h3 title="按顺序下发。遇到失败即停止，已执行的动作不会自动回滚。">
+                动作 · {draft.actions.length}
+              </h3>
+              {draft.actions.map((a, i) => {
+                const d = state.devices.find((d) => d.id === a.deviceId);
+                return (
+                  <section
+                    className="flow-action"
+                    key={i}
+                    ref={i === draft.actions.length - 1 ? lastActionRef : undefined}
+                    aria-label={"动作 " + (i + 1)}
+                  >
+                    <header>
+                      <span className="flow-step-number">{i + 1}</span>
+                      <strong>{deviceName(state.devices, a.deviceId)}</strong>
+                      <div>
+                        <button
+                          type="button"
+                          aria-label={`动作${i + 1}上移`}
+                          disabled={i === 0}
+                          onClick={() => move(i, -1)}
+                        >
+                          <ArrowUp size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`动作${i + 1}下移`}
+                          disabled={i === draft.actions.length - 1}
+                          onClick={() => move(i, 1)}
+                        >
+                          <ArrowDown size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`移除动作${i + 1}`}
+                          disabled={draft.actions.length === 1}
+                          onClick={() =>
+                            setDraft({
+                              ...draft,
+                              actions: draft.actions.filter(
+                                (_, index) => index !== i,
+                              ),
+                            })
+                          }
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </header>
+                    <div className="flow-action-fields">
+                      <label className="flow-field">
+                        设备
+                        <select
+                          value={a.deviceId}
+                          onChange={(e) =>
+                            change(i, initialAction(e.target.value)!)
+                          }
+                        >
+                          {!d && <option value={a.deviceId}>设备已移除</option>}
+                          {available.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name} · {item.room}
+                              {item.state.online ? "" : "（离线）"}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="flow-field">
+                        控制能力
+                        <select
+                          value={a.command.capability}
+                          onChange={(e) => {
+                            const capability = e.target
+                              .value as DeviceCommand["capability"];
+                            change(i, {
+                              command: {
+                                capability,
+                                value: initialValue(capability),
+                              } as DeviceCommand,
+                            });
+                          }}
+                        >
+                          {[
+                            ...new Set([
+                              a.command.capability,
+                              ...(d?.capabilities.filter((c) =>
+                                writable.includes(c as (typeof writable)[number]),
+                              ) ?? []),
+                            ]),
+                          ].map((c) => (
+                            <option key={c} value={c}>
+                              {capabilityLabels[c]}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <ValueField
+                        label="设置为"
+                        capability={a.command.capability}
+                        value={a.command.value}
+                        onChange={(value) =>
                           change(i, {
                             command: {
-                              capability,
-                              value: initialValue(capability),
+                              ...a.command,
+                              value: value ?? "",
                             } as DeviceCommand,
-                          });
-                        }}
-                      >
-                        {[
-                          ...new Set([
-                            a.command.capability,
-                            ...(d?.capabilities.filter((c) =>
-                              writable.includes(c as (typeof writable)[number]),
-                            ) ?? []),
-                          ]),
-                        ].map((c) => (
-                          <option key={c} value={c}>
-                            {capabilityLabels[c]}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <ValueField
-                      label="设置为"
-                      capability={a.command.capability}
-                      value={a.command.value}
-                      onChange={(value) =>
-                        change(i, {
-                          command: {
-                            ...a.command,
-                            value: value ?? "",
-                          } as DeviceCommand,
-                        })
-                      }
-                    />
-                  </div>
-                  {!d?.state.online && (
-                    <p className="flow-failure">
-                      设备离线或已移除，执行时可能失败。
-                    </p>
-                  )}
-                </section>
-              );
-            })}
-            <Button
-              disabled={draft.actions.length >= 100 || !available.length}
-              onClick={() => {
-                const a = initialAction();
-                if (a) setDraft({ ...draft, actions: [...draft.actions, a] });
-              }}
-              icon={<Plus size={16} />}
-            >
-              添加动作
-            </Button>
+                          })
+                        }
+                      />
+                    </div>
+                    {!d?.state.online && (
+                      <p className="flow-failure">
+                        设备离线或已移除，执行时可能失败。
+                      </p>
+                    )}
+                  </section>
+                );
+              })}
+              <Button
+                disabled={draft.actions.length >= 100 || !available.length}
+                onClick={() => {
+                  const a = initialAction();
+                  if (a) {
+                    revealAddedAction.current = true;
+                    setDraft({ ...draft, actions: [...draft.actions, a] });
+                  }
+                }}
+                icon={<Plus size={16} />}
+              >
+                添加动作
+              </Button>
+            </div>
             <div className="flow-save">
               <span>
                 {error && (
@@ -320,15 +348,6 @@ export default function Scenes({
               : ""}
           </button>
         </div>
-        {canManage && (
-          <Button
-            disabled={busy || !available.length}
-            icon={<Plus size={16} />}
-            onClick={() => edit()}
-          >
-            创建场景
-          </Button>
-        )}
       </div>
       {tab === "logs" ? (
         <History
@@ -361,97 +380,112 @@ export default function Scenes({
         />
       ) : (
         <div className="flow-scene-layout">
-          <div className="flow-scene-cards">
-            {(mobile
-              ? [...state.scenes].sort(
-                  (a, b) =>
-                    Number(
-                      state.sceneRuns.find((r) => r.sceneId === b.id)
-                        ?.status === "failed",
-                    ) -
-                    Number(
-                      state.sceneRuns.find((r) => r.sceneId === a.id)
-                        ?.status === "failed",
-                    ),
-                )
-              : state.scenes
-            ).map((scene) => {
-              const last = state.sceneRuns.find((r) => r.sceneId === scene.id);
-              return (
-                <article
-                  className={
-                    "panel flow-scene-card" +
-                    ((mobile ? selected : current?.id) === scene.id
-                      ? " selected"
-                      : "")
-                  }
-                  key={scene.id}
-                >
-                  <div className="flow-heading">
-                    <Layers size={22} />
-                    <small>{scene.actions.length} 个动作</small>
-                  </div>
-                  <button
-                    className="flow-scene-name"
-                    onClick={() => setSelected(scene.id)}
+          <div className="flow-scene-list">
+            <div className="flow-scene-cards">
+              {(mobile
+                ? [...state.scenes].sort(
+                    (a, b) =>
+                      Number(
+                        state.sceneRuns.find((r) => r.sceneId === b.id)
+                          ?.status === "failed",
+                      ) -
+                      Number(
+                        state.sceneRuns.find((r) => r.sceneId === a.id)
+                          ?.status === "failed",
+                      ),
+                  )
+                : state.scenes
+              ).map((scene) => {
+                const last = state.sceneRuns.find((r) => r.sceneId === scene.id);
+                return (
+                  <article
+                    className={
+                      "panel flow-scene-card" +
+                      ((mobile ? selected : current?.id) === scene.id
+                        ? " selected"
+                        : "")
+                    }
+                    key={scene.id}
                   >
-                    <h3>{scene.name}</h3>
-                    <p>
-                      {scene.description ||
-                        scene.actions
-                          .slice(0, 2)
-                          .map((a) => deviceName(state.devices, a.deviceId))
-                          .join("、")}
-                    </p>
-                  </button>
-                  {last && (
-                    <button
-                      className={"flow-last-run " + last.status}
-                      onClick={() => {
-                        setFocusedRun(last.id);
-                        setTab("logs");
-                      }}
-                    >
-                      最近：{runLabels[last.status]}
-                      {last.reason ? " · " + last.reason : ""}
-                    </button>
-                  )}
-                  <div className="flow-card-buttons">
-                    <Button
-                      type="primary"
-                      disabled={busy || running}
-                      icon={<Play size={15} />}
-                      onClick={() => execute(scene)}
-                    >
-                      执行
-                    </Button>
-                    <Button onClick={() => setSelected(scene.id)}>
-                      查看动作
-                    </Button>
-                    {canManage && mobile && (
-                      <Button disabled={busy} onClick={() => edit(scene)}>
-                        编辑
-                      </Button>
+                    <div className="flow-heading flow-scene-heading">
+                      <button
+                        className="flow-scene-name"
+                        onClick={() => setSelected(scene.id)}
+                      >
+                        <h3>
+                          <Layers size={22} aria-hidden />
+                          {scene.name}
+                        </h3>
+                        <p>
+                          {scene.description ||
+                            scene.actions
+                              .slice(0, 2)
+                              .map((a) => deviceName(state.devices, a.deviceId))
+                              .join("、")}
+                        </p>
+                      </button>
+                      <small>{scene.actions.length} 个动作</small>
+                    </div>
+                    {last && (
+                      <button
+                        className={"flow-last-run " + last.status}
+                        onClick={() => {
+                          setFocusedRun(last.id);
+                          setTab("logs");
+                        }}
+                      >
+                        最近：{runLabels[last.status]}
+                        {last.reason ? " · " + last.reason : ""}
+                      </button>
                     )}
-                  </div>
-                  {mobile && selected === scene.id && (
-                    <ol className="flow-mobile-actions">
-                      {scene.actions.map((a, i) => (
-                        <li key={i}>
-                          {deviceName(state.devices, a.deviceId)} ·{" "}
-                          {actionText(a.command)}
-                        </li>
-                      ))}
-                    </ol>
-                  )}
-                </article>
-              );
-            })}
-            {!state.scenes.length && (
-              <StatusPanel
-                kind="empty"
-                title="暂无场景"
-              />
+                    <div className="flow-card-buttons">
+                      <Button
+                        type="primary"
+                        disabled={busy || running}
+                        icon={<Play size={15} />}
+                        onClick={() => execute(scene)}
+                      >
+                        执行
+                      </Button>
+                      <Button onClick={() => setSelected(scene.id)}>
+                        查看动作
+                      </Button>
+                      {canManage && mobile && (
+                        <Button disabled={busy} onClick={() => edit(scene)}>
+                          编辑
+                        </Button>
+                      )}
+                    </div>
+                    {mobile && selected === scene.id && (
+                      <ol className="flow-mobile-actions">
+                        {scene.actions.map((a, i) => (
+                          <li key={i}>
+                            {deviceName(state.devices, a.deviceId)} ·{" "}
+                            {actionText(a.command)}
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </article>
+                );
+              })}
+              {!state.scenes.length && (
+                <StatusPanel
+                  kind="empty"
+                  title="暂无场景"
+                />
+              )}
+            </div>
+            {canManage && (
+              <Button
+                className="flow-scene-create"
+                type="outline"
+                disabled={busy || !available.length}
+                icon={<Plus size={16} />}
+                onClick={() => edit()}
+              >
+                创建场景
+              </Button>
             )}
           </div>
           {!mobile && current && (
@@ -459,9 +493,18 @@ export default function Scenes({
               <div className="flow-heading">
                 <h2>{current.name}</h2>
                 {canManage && (
-                  <Button disabled={busy} onClick={() => edit(current)}>
-                    编辑编排
-                  </Button>
+                  <div className="flow-heading-actions">
+                    <Button disabled={busy} onClick={() => edit(current)}>
+                      编辑编排
+                    </Button>
+                    <Button
+                      status="danger"
+                      disabled={busy}
+                      onClick={() => confirmDelete(current)}
+                    >
+                      删除场景
+                    </Button>
+                  </div>
                 )}
               </div>
               <ol className="flow-timeline">
@@ -479,15 +522,6 @@ export default function Scenes({
                   </li>
                 ))}
               </ol>
-              {canManage && (
-                <Button
-                  status="danger"
-                  disabled={busy}
-                  onClick={() => confirmDelete(current)}
-                >
-                  删除场景
-                </Button>
-              )}
             </section>
           )}
           {mobile && canManage && current && selected === current.id && (

@@ -36,19 +36,32 @@
 }
 .home-status-dial {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 96px;
+  height: 96px;
   flex-shrink: 0;
 }
 .home-status-dial > svg {
   display: block;
   width: 100%;
   height: 100%;
+  overflow: visible;
   fill: none;
-  stroke-width: 4;
+  stroke-width: 9;
+  stroke-linecap: round;
 }
-.home-status-track {stroke: var(--line);}
-.home-status-progress {stroke: var(--accent); stroke-linecap: round;}
+.home-status-track {stroke: var(--control);}
+.home-status-gradient-start {stop-color: rgb(var(--brand-4));}
+.home-status-gradient-end {stop-color: var(--accent);}
+.home-status-glow {stroke: var(--accent); stroke-width: 15; opacity: .12;}
+.home-status-progress,
+.home-status-glow {transition: stroke-dasharray var(--duration-normal) var(--ease-standard);}
+.home-status-tip {
+  fill: var(--accent);
+  stroke: none;
+  transform-origin: 66px 66px;
+  transform-box: view-box;
+  transition: transform var(--duration-normal) var(--ease-standard);
+}
 .home-status-dial > div {
   position: absolute;
   inset: 0;
@@ -56,27 +69,27 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
 }
 .home-status-dial strong {
   display: flex;
   align-items: baseline;
   gap: 1px;
-  font-size: 24px;
+  font-size: 28px;
   line-height: 1;
   font-weight: 600;
   letter-spacing: -.04em;
   font-variant-numeric: tabular-nums;
 }
 .home-status-dial small {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0;
   color: var(--muted);
 }
 .home-status-dial span {
-  font-size: 10px;
-  line-height: 1;
+  font-size: 11px;
+  line-height: 1.2;
   color: var(--muted);
 }
 .home-status-metrics {

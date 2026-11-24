@@ -52,6 +52,13 @@ test("home status distinguishes missing devices from measured online rate and la
   assert.match(html, /查看离线设备，1 项/);
   assert.match(html, /上次记录/);
   assert.match(html, /含 2 项模拟数据/);
+  const offline = render({
+    ...empty,
+    devices: [device("离线灯", { power: false }, false)],
+  });
+  assert.match(offline, /设备在线率0%/);
+  assert.match(offline, /0 \/ 1 项设备在线/);
+  assert.doesNotMatch(offline, /设备在线率暂无数据/);
 });
 
 test("both home layouts use latest failures and online low battery, with guest-safe navigation", () => {

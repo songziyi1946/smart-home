@@ -11,5 +11,17 @@
 @media(max-width:1199px){.desktop-home-columns{grid-template-columns:minmax(0,1fr) 270px;gap:16px;}.desktop-home-primary .desktop-device-grid,.desktop-room-grid{grid-template-columns:1fr;}.compact-list .desktop-device{grid-template-columns:80px 1fr;}.directory-count{flex-wrap:wrap;}}
 @media(max-width:767px){.directory-search{flex-wrap:wrap;gap:var(--space-2);}.directory-search>label{flex:0 0 100%;max-width:none;}.directory-view{margin-left:0;}.directory-search .quiet-button{margin-left:auto;}.desktop-home-columns{grid-template-columns:1fr;}.device-directory{padding:16px;}.directory-filters{gap:12px;}.directory-filters select{min-width:110px;}.directory-search input{font-size:16px;}.desktop-device-grid{grid-template-columns:1fr;}}
 .desktop-home{gap:20px;}.desktop-device{padding:16px;}.desktop-device-reading{margin:10px 0;}
+.desktop-device-state {display: contents;}
+.home-environment .desktop-room-picker {display: grid; grid-template-columns: auto minmax(0, 1fr); justify-content: start; gap: 12px; font-size: 14px;}
+.home-environment .desktop-room-picker select {width: 100%; max-width: none; min-width: 0;}
+.home-activity summary {display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; list-style: none;}
+.home-activity summary::-webkit-details-marker {display: none;}
+.home-activity summary strong {margin: 0; line-height: 1.5;}
+.home-activity summary > svg {color: var(--muted); transition: transform var(--duration-fast);}
+.home-activity details[open] summary > svg {transform: rotate(90deg);}
+.home-activity-meta {grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; color: var(--muted);}
+.home-activity .home-activity-meta small {margin: 0;}
+.home-activity details > :is(p, ul) {margin: 12px 0 0; line-height: 1.6;}
+.home-activity .desktop-activity > li:first-child details {padding-top: 0;}
 @media(min-width:1200px){.compact-list .desktop-device{grid-template-columns:120px minmax(160px,1fr) minmax(150px,1fr) minmax(180px,1fr);}.compact-list .desktop-device-top{flex-wrap:nowrap;}}
 @media(max-width:767px){.directory-filter-toggle{margin-top:16px;width:100%;justify-content:space-between;}}

@@ -14,6 +14,12 @@
   align-items: center;
   gap: 8px;
 }
+.flow-heading-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
 .flow-toolbar {
   display: flex;
   align-items: center;
@@ -45,6 +51,18 @@
   gap: 24px;
   align-items: start;
 }
+.flow-scene-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.flow-scene-create {
+  width: 100%;
+  min-height: 48px;
+  flex-shrink: 0;
+}
+.flow-scene-create:focus-visible {outline: 2px solid var(--accent); outline-offset: -2px;}
 .flow-scene-cards,
 .flow-rule-cards {
   display: grid;
@@ -58,9 +76,21 @@
 .flow-scene-card.selected {
   border-color: var(--accent);
 }
+.flow-scene-card .flow-scene-heading {
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  gap: 12px;
+  margin-bottom: 0;
+}
+.flow-scene-heading > small {
+  flex-shrink: 0;
+  line-height: 26px;
+  white-space: nowrap;
+}
 .flow-scene-name {
   display: block;
   flex: 1;
+  min-width: 0;
   width: 100%;
   text-align: left;
   border: 0;
@@ -69,12 +99,16 @@
   padding: 0;
 }
 .flow-scene-name h3 {
-  font-size: 20px;
+  font-size: 18px;
+  line-height: 26px;
   font-weight: 500;
 }
+.flow-scene-name svg {flex-shrink: 0;}
 .flow-scene-name p {
   color: var(--muted);
   font-size: 13px;
+  line-height: 20px;
+  margin: 4px 0 0;
 }
 .flow-card-buttons {
   display: flex;
@@ -85,6 +119,9 @@
 }
 .flow-card-buttons > small {
   margin-right: auto;
+}
+.flow-card-buttons > .flow-heading-actions {
+  margin-left: auto;
 }
 .flow-last-run {
   display: block;
@@ -168,6 +205,22 @@
 .flow-editor {
   max-width: 1200px;
   width: 100%;
+}
+/* Keep fields usable when fixed controls exceed a very short viewport. */
+.flow-editor.flow-scene-editor {display: flex; flex-direction: column; min-height: 320px; overflow: hidden;}
+.flow-scene-editor > form {display: flex; flex-direction: column; flex: 1; min-height: 0;}
+.flow-scene-editor > form > fieldset {display: flex; flex-direction: column; flex: 1; min-height: 0;}
+.flow-scene-fields {flex: 1; min-height: 0; overflow: auto; padding: 5px; margin: -5px;}
+.flow-scene-editor .flow-save {flex: none; margin-top: 12px; padding-top: 12px;}
+.flow-scene-editor .flow-save > span {min-width: 0; overflow-wrap: anywhere;}
+.flow-scene-editor .flow-save > .arco-btn {flex-shrink: 0;}
+.flow-scene-editor > .flow-heading {
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  padding: 0 0 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line);
 }
 .flow-editor fieldset {
   padding: 0;

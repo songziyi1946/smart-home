@@ -662,11 +662,12 @@ export default function Rules({
                 <div className="flow-card-buttons">
                   <small>冷却 {rule.executionPolicy.cooldownSeconds} 秒</small>
                   {canManage && (
-                    <>
+                    <div className="flow-heading-actions">
                       <Button disabled={busy} onClick={() => open(rule)}>
                         {mobile ? "预览 / 完整编辑" : "编辑与预览"}
                       </Button>
                       <Button
+                        status="danger"
                         disabled={busy}
                         onClick={() =>
                           confirmation.ask({
@@ -681,7 +682,7 @@ export default function Rules({
                       >
                         删除
                       </Button>
-                    </>
+                    </div>
                   )}
                 </div>
               </article>

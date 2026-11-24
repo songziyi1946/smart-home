@@ -39,61 +39,65 @@
     scrollbar-width: thin;
     scrollbar-color: var(--line) transparent;
   }
-  /* Equal-height rows and columns on the overview, with each content area independent. */
-  .desktop-home {grid-template-rows: minmax(0, 156px) minmax(0, 1fr); gap: var(--layout-gap);}
-  .home-overview-grid {grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: var(--layout-gap); min-height: 0;}
-  .home-overview-grid > .panel {padding: 12px 16px; overflow: auto;}
-  .home-overview-grid .home-panel-heading {margin-bottom: 4px;}
-  .home-overview-grid .home-text-action {min-height: 32px;}
-  .home-action-grid {grid-template-columns: repeat(2, minmax(0, 1fr)); flex: none; align-content: start; gap: 6px;}
-  .home-action-grid > button:nth-child(3):last-child {grid-column: 1 / -1;}
-  .home-action-grid button {min-width: 0; min-height: 44px; padding: 6px 10px; gap: 8px;}
-  .home-action-grid button > span {line-height: 18px;}
-  .home-action-grid small {font-size: 11px; line-height: 12px;}
-  .home-status-body {gap: 12px;}
-  .home-status-dial {width: 64px; height: 64px;}
-  .home-status-dial strong {font-size: 20px;}
-  .home-status-metrics > div {padding: 0 8px;}
-  .home-status-source {margin-top: 4px; padding-top: 4px; font-size: 11px; line-height: 16px;}
-  .desktop-home-columns {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) minmax(0, 168px);
-    gap: var(--layout-gap); align-items: stretch; min-height: 0;
+  /* One outer grid owns all three rows; its full height keeps bottom padding reachable. */
+  main:has(> .desktop-home) {padding-bottom: 24px;}
+  main > .desktop-home {
+    --home-row-min: 248px;
+    flex: 1 0 calc(3 * var(--home-row-min) + 2 * var(--layout-gap));
+    grid-template-columns: minmax(0, 2fr) minmax(224px, 1fr);
+    grid-template-rows: repeat(3, minmax(var(--home-row-min), 1fr));
+    gap: var(--layout-gap);
   }
+  .home-overview-grid, .desktop-home-columns {display: contents;}
+  .home-overview-grid > .home-status {grid-area: 1 / 1;}
+  .home-overview-grid > .home-actions {grid-area: 1 / 2;}
+  .home-overview-grid > .panel {padding: 16px; overflow: auto;}
+  .home-overview-grid .home-panel-heading {margin-bottom: 12px;}
+  .home-overview-grid .home-text-action {min-height: 32px;}
+  .home-action-grid {grid-template-columns: repeat(3, minmax(0, 1fr)); flex: 1; align-content: stretch; gap: 12px;}
+  .home-action-grid button {min-width: 0; min-height: 80px; padding: 12px; gap: 12px; flex-direction: column; justify-content: center; text-align: center;}
+  .home-action-grid button > span {flex: 0; line-height: 20px;}
+  .home-action-grid small {font-size: 12px; line-height: 16px;}
+  .home-status-body {display: grid; grid-template-columns: minmax(132px, 1.25fr) minmax(0, 2fr); gap: 16px;}
+  .home-status-dial {width: 132px; height: 132px; justify-self: center;}
+  .home-status-dial strong {font-size: 32px;}
+  .home-status-dial span {font-size: 12px;}
+  .home-status-metrics > div {padding: 0 10px;}
+  .home-status-source {margin-top: 8px; padding-top: 8px; font-size: 12px; line-height: 16px;}
   .desktop-home-primary, .desktop-home-secondary {display: contents;}
-  .home-devices {grid-area: 1 / 1;}
-  .home-rooms {grid-area: 2 / 1;}
-  .desktop-home-secondary > :first-child {grid-area: 1 / 2;}
-  .desktop-home-secondary > :last-child {grid-area: 2 / 2;}
+  .home-devices {grid-area: 2 / 1;}
+  .home-rooms {grid-area: 3 / 1;}
+  .desktop-home-secondary > :first-child {grid-area: 2 / 2;}
+  .desktop-home-secondary > :last-child {grid-area: 3 / 2;}
   .desktop-home-columns > .desktop-home-secondary > .panel:not(.home-activity) {min-height: 0; overflow: auto;}
   .home-activity {display: flex; flex-direction: column; min-height: 0; overflow: hidden;}
   .home-activity-content {flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent;}
-  .home-devices, .home-rooms {display: flex; flex-direction: column; min-height: 0; overflow: auto; container: home-cards / inline-size;}
+  .home-devices, .home-rooms {display: flex; flex-direction: column; min-height: 0; overflow: auto;}
+  .desktop-home-columns .panel {padding: 16px;}
+  .desktop-home .desktop-section-head {margin-bottom: 12px; min-height: 32px;}
   .desktop-section-head {flex: none;}
   .desktop-home-primary .desktop-room-grid {
-    --home-columns: 1;
-    --visible-columns: max(1, min(var(--home-columns), var(--home-count)));
+    --room-count: max(1, var(--home-count));
     flex: 1; min-height: 0; overflow: auto; grid-template-columns: none;
     grid-auto-flow: column;
-    grid-auto-columns: calc((100% - (var(--visible-columns) - 1) * var(--layout-gap)) / var(--visible-columns));
+    grid-auto-columns: max(160px, calc((100% - (var(--room-count) - 1) * var(--layout-gap)) / var(--room-count)));
     grid-template-rows: minmax(min-content, 1fr); padding: 3px;
-    scroll-snap-type: x mandatory;
+    scroll-snap-type: x mandatory; scrollbar-width: none;
   }
+  .desktop-home-primary .desktop-room-grid::-webkit-scrollbar {display: none;}
   .desktop-home-primary .desktop-room-card {scroll-snap-align: start;}
+  .desktop-home-primary .desktop-room-card:focus-visible {outline-offset: 1px;}
   .desktop-home-primary .desktop-device {padding: 12px;}
-  .desktop-home-primary .desktop-device-controls {gap: 4px;}
-  .desktop-home-primary > .panel {padding: 12px;}
-  .desktop-home-primary .desktop-section-head {margin-bottom: 4px;}
-  .desktop-home-primary .desktop-section-head :is(a, button) {padding-block: 2px;}
+  .desktop-home-primary .desktop-device-controls {gap: 8px;}
   .desktop-home-primary .desktop-device-grid {
     flex: 1; min-height: 0; overflow: auto; padding: 3px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 8px;
+    grid-template-rows: repeat(2, minmax(max-content, 1fr)); gap: 12px;
   }
   .home-devices .desktop-device {
     position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr);
-    grid-template-rows: auto minmax(18px, 1fr) auto; gap: 4px 8px;
-    min-height: 0; padding: 8px; overflow: auto;
+    grid-template-rows: minmax(40px, auto) auto; gap: 8px;
+    align-content: start; min-height: 0; padding: 12px;
   }
   .home-devices .desktop-device-top {flex-direction: column; gap: 2px; align-self: start;}
   .home-devices .desktop-device-symbol {width: 22px; height: 22px; border-radius: 6px;}
@@ -103,20 +107,47 @@
   .home-devices .desktop-device-title > span {min-width: 0;}
   .home-devices .desktop-device-title strong {font-size: 14px; line-height: 20px;}
   .home-devices .desktop-device-title small {font-size: 11px; line-height: 16px; margin-top: 0;}
-  .home-devices .desktop-device-reading {grid-column: 1 / -1; font-size: 12px; line-height: 18px; min-height: 18px; margin: 0;}
-  .home-devices .desktop-device-controls {grid-column: 1 / -1; min-height: 32px; padding-top: 4px; flex-wrap: nowrap;}
+  .home-devices .desktop-device-state {
+    grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px;
+    min-width: 0; min-height: var(--control-compact-height);
+  }
+  .home-devices .desktop-device-reading {
+    flex: 1; min-width: 36px; display: flex; align-items: center;
+    font-size: 12px; line-height: 18px; min-height: var(--control-compact-height); margin: 0;
+  }
+  .home-devices .desktop-device-controls {
+    flex: none; justify-content: flex-end; max-width: 100%; min-height: var(--control-compact-height);
+    margin: 0 0 0 auto; padding: 0; border: 0; flex-wrap: wrap;
+  }
   .home-devices .desktop-device-controls .arco-btn {flex: 1; min-width: 0; padding-inline: 4px; font-size: 12px;}
-  .desktop-home-primary .desktop-room-card {padding: 8px;}
-  .desktop-home-primary .desktop-room-card > span {margin-bottom: 4px;}
-  .desktop-home-primary .desktop-room-card p {margin: 4px 0;}
-  .desktop-home-primary .desktop-room-card small {display: block; line-height: 16px;}
+  .home-devices .desktop-device-controls:has(> .arco-btn:only-child) {width: 64px;}
+  .home-devices .desktop-device-controls:has(> .arco-btn:nth-child(3):last-child) {
+    width: 96px; gap: 0; flex-wrap: nowrap; overflow: hidden;
+    border-radius: var(--radius-control); background: var(--control);
+  }
+  .home-devices .desktop-device-controls:has(> .arco-btn:nth-child(3):last-child) > .arco-btn {
+    border-radius: 0; padding-inline: 2px;
+  }
+  .home-devices .desktop-device-controls:has(> .arco-btn:nth-child(3):last-child) > .arco-btn + .arco-btn {
+    border-inline-start: 1px solid var(--line);
+  }
+  .home-devices .desktop-device-controls:has(> .arco-btn:nth-child(3):last-child) > .arco-btn:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: -2px;
+  }
+  .desktop-home-primary .desktop-room-card {display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 6px; padding: 12px;}
+  .desktop-home-primary .desktop-room-card > span {gap: 8px; margin: 0;}
+  .desktop-home-primary .desktop-room-card strong {font-size: 15px; line-height: 22px;}
+  .desktop-home-primary .desktop-room-card p {font-size: 13px; line-height: 20px; margin: 0;}
+  .desktop-home-primary .desktop-room-card small {display: block; font-size: 12px; line-height: 18px;}
+  .desktop-home-primary .desktop-room-card > small:last-child {margin-top: auto;}
   .desktop-device-symbol {width: 32px; height: 32px;}
   .desktop-device-title {padding-top: 8px;}
   .desktop-room-card {padding: 12px;}
   .desktop-room-card > span {margin-bottom: 8px;}
-  .desktop-environment {grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 12px 0;}
-  .desktop-environment strong {font-size: 20px;}
-  .desktop-occupancy {margin: 0; padding-top: 8px;}
+  .home-environment .desktop-environment {grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 12px 0;}
+  .home-environment .desktop-environment > div {padding: 12px; border-radius: var(--radius-control); background: var(--control);}
+  .home-environment .desktop-environment strong {font-size: clamp(18px, 1.8vw, 24px); line-height: 1.2; white-space: nowrap;}
+  .desktop-occupancy {margin: 0; padding-top: 12px;}
   /* Directory and room filters stay visible while their equal-sized device cards scroll. */
   .desktop-devices-page {display: flex; flex-direction: column;}
   .device-directory {flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: auto;}
@@ -137,16 +168,19 @@
   .flow-toolbar {flex: none;}
   .flow-scene-layout {flex: 1; min-height: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: var(--layout-gap);}
   .flow-scene-cards, .flow-rule-cards {min-height: 0; overflow: auto; align-content: start; padding: 3px; grid-auto-rows: max-content;}
-  .flow-scene-cards {grid-template-columns: 1fr;}
-  .flow-scene-card {min-height: 170px;}
-  .flow-scene-name {flex: none;}
-  .flow-scene-card .flow-card-buttons {margin-top: auto; padding-top: 12px;}
+  .flow-scene-list {min-height: 0;}
+  .flow-scene-cards {flex: 1; grid-template-columns: 1fr;}
+  .flow-scene-create {width: calc(100% - 6px); margin-inline: 3px;}
+  .flow-scene-card {min-height: 0; padding: 16px;}
+  .flow-scene-card .flow-last-run {min-height: var(--control-compact-height); line-height: 20px; margin-top: 4px; padding: 0;}
+  .flow-scene-card .flow-card-buttons {margin-top: 8px; padding-top: 0;}
   .flow-scene-inspector {min-height: 0; overflow: auto;}
   .flow-rule-cards {grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));}
   .flow-rule-card {display: flex; flex-direction: column;}
   .flow-rule-card .flow-card-buttons {margin-top: auto; padding-top: 12px;}
   .flow-editor, .ledger-editor {max-width: none; min-height: 0; overflow: auto;}
   .flow-editor > .flow-heading, .ledger-editor > header {position: sticky; top: calc(-1 * var(--card-padding)); z-index: 2; background: var(--panel); padding-block: 8px;}
+  .flow-scene-editor > .flow-heading {flex: none; position: static; z-index: auto; background: transparent; padding: 0 0 12px;}
   .flow-rule-editor {height: 100%; min-height: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--layout-gap); align-items: stretch;}
   .flow-preview {min-height: 0; overflow: auto;}
   .flow-history {flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: auto;}
@@ -198,39 +232,17 @@
   .vr-toolbar, .vr-panel-trigger {flex: none;}
 }
 
-/* Rooms use whole columns based on the actual panel width. */
-@container home-cards (min-width: 326px) {
-  .desktop-home-primary .desktop-room-grid {--home-columns: 2;}
-}
-@container home-cards (min-width: 494px) {
-  .desktop-home-primary .desktop-room-grid {--home-columns: 3;}
-}
-@container home-cards (min-width: 662px) {
-  .desktop-home-primary .desktop-room-grid {--home-columns: 4;}
-}
-@container home-cards (min-width: 830px) {
-  .desktop-home-primary .desktop-room-grid {--home-columns: 5;}
-}
-@container home-cards (min-width: 998px) {
-  .desktop-home-primary .desktop-room-grid {--home-columns: 6;}
-}
-
 @media (min-width: 768px) and (max-height: 740px) {
   .workspace:has(.desktop-home) .top {padding-block: 8px;}
-  main:has(> .desktop-home) {padding-bottom: 12px;}
-  .desktop-home, .desktop-home-columns {gap: 12px;}
-  .home-devices .desktop-device {padding: 6px; gap: 3px 6px;}
 }
 
 @media (min-width: 768px) and (max-width: 1100px) {
   .top {padding: 12px 16px;}
   main {padding: 0 16px 16px;}
-  .home-action-grid button > svg:last-child {display: none;}
-  .home-status-metrics {gap: 4px;}
-  .home-status-metrics > div {padding-inline: 4px;}
-  .home-status-metrics dt {font-size: 11px;}
+  .home-status-metrics {grid-template-columns: 1fr; gap: 0;}
+  .home-status-metrics > div {display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0; border: 0;}
+  .home-status-metrics dt {font-size: 12px;}
   .home-status-metrics dd {font-size: 22px;}
-  .home-status-metrics > div:first-child {border-left: 0;}
   .desktop-environment {grid-template-columns: repeat(2, minmax(0, 1fr));}
   .flow-scene-cards {grid-template-columns: 1fr;}
   .ledger-analysis, .ledger-payment-area {grid-template-columns: 1fr; align-content: start;}
@@ -244,4 +256,5 @@
   .flow-tabs, .settings-tabs {flex-wrap: nowrap; overflow-x: auto; padding: 3px;}
   .flow-tabs button, .settings-tabs button {flex-shrink: 0;}
   .flow-editor, .ledger-editor {max-height: calc(100dvh - 190px); overflow: auto;}
+  .flow-editor.flow-scene-editor {height: calc(100dvh - 190px);}
 }

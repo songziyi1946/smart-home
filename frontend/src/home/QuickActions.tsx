@@ -50,7 +50,6 @@ export default function QuickActions({
                   {scene.name}
                   {sceneRunning && <small role="status">执行中…</small>}
                 </span>
-                <ArrowUpRight size={15} aria-hidden />
               </button>
             );
           })}
