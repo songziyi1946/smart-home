@@ -114,3 +114,5 @@
   .vr-model-room small { display: none; }
   .vr-model-room[aria-pressed="true"] small { display: block; }
 }
+
+.vr-reference-image { display: block; width: 100%; height: 100%; object-fit: contain; background: #181d20; }

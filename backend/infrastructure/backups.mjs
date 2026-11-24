@@ -27,7 +27,11 @@ function plainSnapshot(filename) {
   } finally { db.close(); }
 }
 function snapshot(store) {
-  return store.transaction(() => ({state:store.loadState(),auth:store.loadAuth(),providers:store.rows('provider_devices').map(r=>store.parse('provider_devices',r))}));
+  return store.transaction(() => {
+    const models = store.exportModelData();
+    const generation = store.exportGenerationData();
+    return {state:store.loadState(),auth:store.loadAuth(),providers:store.rows('provider_devices').map(r=>store.parse('provider_devices',r)), ...(models.library ? {models} : {}), ...(generation.records.length||generation.assets.length ? {generation} : {})};
+  });
 }
 function archive(encryptionKey, data, path) {
   const encryption = createEncryption(encryptionKey);
@@ -45,7 +49,9 @@ function restoreContents(directory, value, encryptionKey) {
   try {
     if (value.auth) store.saveAuth(value.auth, {create:true});
     store.saveProviderDevices(value.providers);
-    const expected = {state:value.state,auth:value.auth,providers:value.providers};
+    if (value.models) store.restoreModelData(value.models);
+    if (value.generation) store.restoreGenerationData(value.generation);
+    const expected = {state:value.state,auth:value.auth,providers:value.providers,...(value.models ? {models:value.models} : {}),...(value.generation ? {generation:value.generation} : {})};
     if (!isDeepStrictEqual(snapshot(store),expected)) throw Error('恢复数据校验失败');
   } finally { store.close(); }
 }

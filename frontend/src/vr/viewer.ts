@@ -3,11 +3,15 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildHome, disposeObject, type ModelLoadState } from './scene';
-import { CEILING_HEIGHT, designModel, HOME_DEPTH, HOME_WIDTH } from './plan';
+import { CEILING_HEIGHT as DEFAULT_HEIGHT, designModel, HOME_DEPTH as DEFAULT_DEPTH, HOME_WIDTH as DEFAULT_WIDTH } from './plan';
+import type { ModelVersion } from '../../../packages/contracts/space-models';
 import { isRoomClick, modelRoomAt, type RoomSummary } from './room-state';
 
 export type ViewerStatus = { roomId?: string; modelState: ModelLoadState };
-export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) => void, onRoomSelect?: (id: string) => void) {
+export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) => void, onRoomSelect?: (id: string) => void, model?: ModelVersion) {
+  const HOME_WIDTH = model?.width ?? DEFAULT_WIDTH, HOME_DEPTH = model?.depth ?? DEFAULT_DEPTH, CEILING_HEIGHT = model?.height ?? DEFAULT_HEIGHT;
+  const custom = !!model && model.source !== 'builtin';
+  const rooms = (model?.rooms ?? designModel.rooms).filter(room => room.bounds !== undefined);
   const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
   renderer.shadowMap.enabled = true;
@@ -37,7 +41,8 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
   let imported: T.Group | undefined, importedBounds: T.Box3 | undefined;
   const invalidate = () => { needsRender = true; };
   const report = () => onStatus({ roomId, modelState });
-  const home = buildHome(invalidate, state => { modelState = state; renderer.shadowMap.needsUpdate = true; invalidate(); report(); }); scene.add(home.root);
+  const home = custom ? undefined : buildHome(invalidate, state => { modelState = state; renderer.shadowMap.needsUpdate = true; invalidate(); report(); });
+  if (home) scene.add(home.root);
   const camera = new T.OrthographicCamera(-1, 1, 1, -1, .1, 120);
   const orbit = new OrbitControls(camera, canvas);
   orbit.enableDamping = true; orbit.enablePan = false; orbit.minZoom = .6; orbit.maxZoom = 3;
@@ -50,12 +55,13 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
   let transition: { start: number; from: T.Vector3; to: T.Vector3; fromTarget: T.Vector3; toTarget: T.Vector3; fromHeight: number; toHeight: number } | undefined;
   let pointer: { id: number; x: number; y: number; moved: boolean } | undefined;
   let touchCount = 0;
-  const markers = designModel.rooms.map(room => {
+  const markers = rooms.map(room => {
+    const region = room.bounds!;
     const button = document.createElement('button'); button.type = 'button'; button.className = 'vr-model-room';
     const title = document.createElement('strong'); title.textContent = room.name;
     const detail = document.createElement('small'); detail.textContent = '暂无设备'; button.append(title, detail);
     button.addEventListener('click', () => selectRoom(room.id)); labels.append(button);
-    return { room, button, detail, position: new T.Vector3((room.bounds[0] + room.bounds[2]) / 2, 1.25, (room.bounds[1] + room.bounds[3]) / 2) };
+    return { room, button, detail, position: new T.Vector3((region[0] + region[2]) / 2, 1.25, (region[1] + region[3]) / 2) };
   });
   function resize() {
     const width = host.clientWidth, height = host.clientHeight;
@@ -70,11 +76,12 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
     return Math.max(size.y, size.x / Math.max(host.clientWidth / Math.max(host.clientHeight, 1), .1)) * .65;
   }
   function framingBounds(id?: string) {
-    const room = !imported && designModel.rooms.find(value => value.id === id);
-    return room ? new T.Box3(new T.Vector3(room.bounds[0] - .25, 0, room.bounds[1] - .25), new T.Vector3(room.bounds[2] + .25, CEILING_HEIGHT, room.bounds[3] + .25)) : importedBounds ?? bounds;
+    const room = (!imported || model) && rooms.find(value => value.id === id);
+    const region = room && room.bounds;
+    return region ? new T.Box3(new T.Vector3(region[0] - .25, 0, region[1] - .25), new T.Vector3(region[2] + .25, CEILING_HEIGHT, region[3] + .25)) : importedBounds ?? bounds;
   }
   function showRoom(id?: string, animate = true) {
-    const room = !imported && designModel.rooms.find(value => value.id === id);
+    const room = (!imported || model) && rooms.find(value => value.id === id);
     roomId = room ? room.id : undefined;
     const box = framingBounds(roomId);
     const target = box.getCenter(new T.Vector3());
@@ -93,7 +100,7 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
       transition = undefined; camera.position.copy(to); orbit.target.copy(target); halfHeight = toHeight;
       camera.lookAt(target); orbit.enabled = active; orbit.update(); resize();
     }
-    home.selectRoom(roomId);
+    home?.selectRoom(roomId);
     sun.target.position.copy((importedBounds ?? bounds).getCenter(new T.Vector3()));
     sun.position.copy(sun.target.position).add(new T.Vector3(-5.45, 9, 6.25));
     renderer.shadowMap.needsUpdate = true;
@@ -101,7 +108,7 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
     report(); invalidate();
   }
   function selectRoom(id: string) {
-    if (imported) return;
+    if (imported && !model) return;
     if (onRoomSelect) onRoomSelect(id); else showRoom(id);
   }
   function stopTransition() {
@@ -120,13 +127,13 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
   function up(event: PointerEvent) {
     if (event.pointerType === 'touch') touchCount = Math.max(0, touchCount - 1);
     const start = pointer; if (start?.id !== event.pointerId) return; pointer = undefined;
-    if (imported || modelState !== 'ready' || !isRoomClick(start, { x: event.clientX, y: event.clientY })) return;
+    if ((imported && !model) || modelState !== 'ready' || !isRoomClick(start, { x: event.clientX, y: event.clientY })) return;
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height || event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) return;
     raycaster.setFromCamera(new T.Vector2((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1), camera);
-    const hit = raycaster.intersectObject(home.root, true).find(value => value.object.visible && value.point.y <= 1.25);
+    const hit = raycaster.intersectObject(imported ?? home!.root, true).find(value => value.object.visible && value.point.y <= 1.25);
     const point = hit?.point ?? raycaster.ray.intersectPlane(floor, new T.Vector3());
-    const room = point && modelRoomAt(point.x, point.z); if (room) selectRoom(room.id);
+    const room = point && modelRoomAt(point.x, point.z, model); if (room) selectRoom(room.id);
   }
   function clear() { pointer = undefined; touchCount = 0; }
   function cancel() { if (pointer) pointer.moved = true; clear(); }
@@ -151,7 +158,7 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
       needsRender = false; camera.updateMatrixWorld();
       for (const marker of markers) {
         const point = marker.position.clone().project(camera);
-        marker.button.hidden = !!imported || modelState !== 'ready' || point.z < -1 || point.z > 1 || Math.abs(point.x) > 1 || Math.abs(point.y) > 1;
+        marker.button.hidden = (!!imported && !model) || modelState !== 'ready' || point.z < -1 || point.z > 1 || Math.abs(point.x) > 1 || Math.abs(point.y) > 1;
         marker.button.style.left = `${(point.x + 1) * 50}%`; marker.button.style.top = `${(1 - point.y) * 50}%`;
         marker.button.classList.toggle('is-muted', !!roomId && marker.room.id !== roomId);
       }
@@ -163,9 +170,9 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
   return {
     view: (id: string) => showRoom(id),
     overview: () => showRoom(),
-    reloadModel() { home.reload(); report(); },
+    reloadModel() { home?.reload(); report(); },
     setRoomStates(summaries: RoomSummary[], live = true) {
-      home.setRoomStates(summaries);
+      home?.setRoomStates(summaries);
       for (const marker of markers) {
         const summary = summaries.find(value => value.id === marker.room.id);
         marker.detail.textContent = !summary?.total ? '暂无设备' : `${summary.running} 运行 · ${summary.offline ? summary.offline + ' 离线' : summary.total + ' 设备'}${summary.simulated ? ' · 模拟' : ''}${!live ? ' · 缓存' : ''}`;
@@ -185,7 +192,7 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
       renderer.shadowMap.needsUpdate = true; invalidate();
     },
     async importModel(file: File) {
-      if (file.size > 100 * 1024 * 1024) throw new Error('模型超过 100 MB，请先压缩或简化。');
+      if (file.size > 30 * 1024 * 1024) throw new Error('模型超过 30 MB，请先压缩或简化。');
       const version = ++importVersion, buffer = await file.arrayBuffer();
       if (buffer.byteLength < 12 || new DataView(buffer).getUint32(0, true) !== 0x46546c67) throw new Error('请选择包含贴图的 GLB 三维模型。');
       const manager = new T.LoadingManager(); manager.setURLModifier(url => { if (url.startsWith('blob:') || url.startsWith('data:')) return url; throw new Error('模型含外部资源，请导出为贴图内嵌的 GLB。'); });
@@ -193,15 +200,29 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
       if (disposed || version !== importVersion) { disposeObject(gltf.scene); return; }
       const box = new T.Box3().setFromObject(gltf.scene);
       if (box.isEmpty() || ![...box.min.toArray(), ...box.max.toArray()].every(Number.isFinite)) { disposeObject(gltf.scene); throw new Error('模型没有可显示的三维几何。'); }
-      const size = box.getSize(new T.Vector3()); gltf.scene.scale.multiplyScalar(Math.max(HOME_WIDTH, HOME_DEPTH) / Math.max(size.x, size.z, .01));
-      box.setFromObject(gltf.scene); gltf.scene.position.sub(box.min);
+      // Generated geometry already uses the plan's metre coordinates, including wall thickness outside the footprint.
+      if (model?.source !== 'generated') {
+        const size = box.getSize(new T.Vector3()); gltf.scene.scale.multiplyScalar(Math.max(HOME_WIDTH, HOME_DEPTH) / Math.max(size.x, size.z, .01));
+        box.setFromObject(gltf.scene); gltf.scene.position.sub(box.min);
+      }
       if (imported) { scene.remove(imported); disposeObject(imported); }
-      imported = gltf.scene; imported.traverse(object => { if (object instanceof T.Mesh) object.castShadow = object.receiveShadow = true; });
-      scene.add(imported); home.root.visible = false; importedBounds = new T.Box3().setFromObject(imported); showRoom();
+      imported = gltf.scene;
+      const cutPlane = new T.Plane(new T.Vector3(0, -1, 0), 1.22);
+      imported.traverse(object => {
+        if (object.userData.presentation === 'ceiling' || object.userData.presentation === 'overhead') object.visible = false;
+        if (object instanceof T.Mesh) {
+          object.castShadow = object.receiveShadow = true;
+          if (object.userData.presentation === 'wall') {
+            const clip = (material: T.Material) => { const copy = material.clone(); copy.clippingPlanes = [cutPlane]; copy.clipShadows = true; return copy; };
+            object.material = Array.isArray(object.material) ? object.material.map(clip) : clip(object.material);
+          }
+        }
+      });
+      scene.add(imported); if (home) home.root.visible = false; importedBounds = new T.Box3().setFromObject(imported); modelState = 'ready'; showRoom();
     },
-    resetModel() { importVersion++; if (imported) { scene.remove(imported); disposeObject(imported); imported = undefined; } importedBounds = undefined; home.root.visible = true; showRoom(); },
+    resetModel() { importVersion++; if (imported) { scene.remove(imported); disposeObject(imported); imported = undefined; } importedBounds = undefined; if (home) home.root.visible = true; modelState = custom ? 'loading' : modelState; showRoom(); },
     dispose() {
-      disposed = true; importVersion++; home.dispose(); cancelAnimationFrame(frame); observer.disconnect(); orbit.removeEventListener('change', invalidate); orbit.dispose();
+      disposed = true; importVersion++; home?.dispose(); cancelAnimationFrame(frame); observer.disconnect(); orbit.removeEventListener('change', invalidate); orbit.dispose();
       canvas.removeEventListener('pointerdown', down); canvas.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', cancel); window.removeEventListener('blur', clear); canvas.removeEventListener('keydown', keyboard); canvas.removeEventListener('wheel', stopTransition);
       disposeObject(scene); environment.dispose(); renderer.dispose(); canvas.remove(); labels.remove();

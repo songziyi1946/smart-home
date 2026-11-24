@@ -206,7 +206,7 @@ export default function App() {
     account: <Profile installation={installation} onSessionUpdated={onSessionUpdated} onDevices={()=>openRoom('all')} key="account" initialSection="members" state={state} session={session} householdName={householdName} busy={controlsBusy} pending={busy} onLogout={()=>void logout()} onSessionExpired={onProfileSessionExpired}/>,
     scenes: <Scenes state={state} canManage={session.user.role==='admin'} busy={controlsBusy} pending={busy} mutate={mutate}/>,
     automation: <Automation state={state} busy={controlsBusy} pending={busy} mutate={mutate} canManage={session.user.role==='admin'}/>,
-    vr: <Suspense fallback={<StatusPanel kind="loading" title="正在加载空间视图"/>}><VR state={state} live={connection==='live'} busy={controlsBusy} mutate={mutate} selectedRoom={room} onRoomChange={setRoom} nightMode={nightMode} /></Suspense>,
+    vr: <Suspense fallback={<StatusPanel kind="loading" title="正在加载空间视图"/>}><VR key={session.household.id + ":" + session.user.id} role={session.user.role} state={state} live={connection==='live'} busy={controlsBusy} mutate={mutate} selectedRoom={room} onRoomChange={setRoom} nightMode={nightMode} /></Suspense>,
     billing: <Billing state={state} busy={controlsBusy} pending={busy} mutate={mutate} />,
     profile: <Profile installation={installation} onSessionUpdated={onSessionUpdated} onDevices={()=>openRoom('all')} key="profile" state={state} session={session} householdName={householdName} busy={controlsBusy} pending={busy} onLogout={() => void logout()} onSessionExpired={onProfileSessionExpired} />,
   } satisfies Record<Page, ReactNode> : undefined;

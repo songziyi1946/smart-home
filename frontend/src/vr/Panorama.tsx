@@ -4,6 +4,16 @@ import { createPanoramaViewer, type PanoramaStatus } from './panorama-viewer';
 import type { PanoramaScene } from './panoramas';
 
 export default function Panorama({ scene }: { scene?: PanoramaScene }) {
+  return scene?.imageUrl && !scene.faceUrls ? <ReferenceImage key={scene.imageUrl} scene={scene} /> : <PanoramaCube scene={scene} />;
+}
+function ReferenceImage({ scene }: { scene: PanoramaScene }) {
+  const [failed, setFailed] = useState(false), [attempt, setAttempt] = useState(0);
+  return <><img key={attempt} className="vr-reference-image" src={scene.imageUrl} alt={scene.room + '装修参考图'} onError={() => setFailed(true)} />
+    <div className="vr-view-label">{scene.room} · 参考图</div>
+    {failed && <div className="vr-message vr-error" role="alert">参考图加载失败<button className="vr-panorama-retry" onClick={() => { setFailed(false); setAttempt(value => value + 1); }}>重试</button></div>}
+  </>;
+}
+function PanoramaCube({ scene }: { scene?: PanoramaScene }) {
   const host = useRef<HTMLDivElement>(null);
   const viewer = useRef<ReturnType<typeof createPanoramaViewer>>();
   const [status, setStatus] = useState<PanoramaStatus>('loading');

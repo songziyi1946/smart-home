@@ -1,4 +1,14 @@
 import {clientAddressPolicy} from './app/client-address.mjs';
+import { PersonalAiVault } from './infrastructure/personal-ai-vault.mjs';
+import { PersonalAiService } from './providers/ai/service.mjs';
+import { createPersonalAiRouter } from './app/ai-routes.mjs';
+import { ModelLibraryService } from './domain/models/service.mjs';
+import { createModelRouter } from './app/model-routes.mjs';
+import { GenerationRepository } from './domain/model-generation/repository.mjs';
+import { GenerationService } from './domain/model-generation/service.mjs';
+import { importPanoramaSource } from './domain/model-generation/source-import.mjs';
+import { buildGeneratedGlb } from './domain/model-generation/geometry.mjs';
+import { createGenerationRouter } from './app/model-generation-routes.mjs';
 import { ProviderVault } from './infrastructure/provider-vault.mjs';
 import { MijiaService } from './providers/mijia/service.mjs';
 import { createMijiaRouter } from './app/mijia-routes.mjs';
@@ -37,7 +47,8 @@ app.use((_req, res, next) => {
   });
   next();
 });
-app.use(express.json({ limit: '32kb' }));
+const parseJson = express.json({ limit: '32kb' });
+app.use((req, res, next) => /^\/api\/(?:models|model-generation)(?:\/|$)/i.test(req.path) ? next() : parseJson(req, res, next));
 const dir = process.env.SMART_HOME_DATA_DIR
   ? pathToFileURL(resolve(process.env.SMART_HOME_DATA_DIR) + sep)
   : new URL('./data/', import.meta.url);
@@ -58,6 +69,7 @@ const normalize = input => initializeAutomations(initializeScenes(initializeDevi
 const releaseDataLock = acquireDataLock(fileURLToPath(dir));
 const encryptionKey = loadStorageKey(fileURLToPath(dir));
 const store = new SQLiteStore(fileURLToPath(dir),{initialState:initial,normalize,encryptionKey});
+const personalAi = new PersonalAiService({ vault: new PersonalAiVault(fileURLToPath(dir), encryptionKey) });
 const storedState=store.loadState();
 let state=normalize(storedState);
 if(!isDeepStrictEqual(state,storedState))store.saveState(state);
@@ -139,6 +151,20 @@ if (skipLogin) {
   app.use('/api', auth.requireAuth);
 }
 app.use('/api', authorizeHousehold);
+const personalAiRoutes = createPersonalAiRouter({service:personalAi,sessionFor,subscribeAuth,allowCredentials:req=>security.mode==='https'||isLocalRequest(req)});
+app.use('/api/ai',personalAiRoutes.router);
+const modelLibrary = new ModelLibraryService(store, { devices: () => snapshot().devices });
+app.use('/api/models', createModelRouter({ service: modelLibrary }));
+const generationRepository = new GenerationRepository(store);
+const modelGeneration = new GenerationService({
+  repository: generationRepository, ai: personalAi, importSource: importPanoramaSource, buildGlb: buildGeneratedGlb,
+  devices: () => snapshot().devices,
+  isActiveOwner: id => { const user=store.loadAuth()?.users.find(value=>value.id===id);return !!user&&!user.disabled&&['admin','member'].includes(user.role)&&(!user.accessExpiresAt||user.accessExpiresAt>Date.now()); },
+  getModelVersion: (modelId,versionId) => modelLibrary.list().models.find(model=>model.id===modelId)?.versions.find(version=>version.id===versionId),
+  publishPlan: (ownerId,job,input,bytes) => modelLibrary.publishGenerated(job,input,bytes,job.sourceId?generationRepository.source(ownerId,job.sourceId):undefined),
+});
+const generationRoutes = createGenerationRouter({service:modelGeneration,sessionFor,subscribeAuth});
+app.use('/api/model-generation',generationRoutes.router);
 app.use('/api', (req, res, next) => {
   if (req.user.role === 'guest') {
     const json = res.json.bind(res);
@@ -300,4 +326,4 @@ const server = app.listen(port, process.env.SMART_HOME_API_HOST || '127.0.0.1', 
   }
 });
 
-for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => { automation.close(); stream.close(); mijiaRoutes.close(); mijia.close(); ha?.close(); server.closeAllConnections(); server.close(()=>{store.close();releaseDataLock();}); });
+for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => { generationRoutes.close(); personalAiRoutes.close(); personalAi.close(); automation.close(); stream.close(); mijiaRoutes.close(); mijia.close(); ha?.close(); server.closeAllConnections(); server.close(()=>{store.close();releaseDataLock();}); });

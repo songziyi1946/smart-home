@@ -52,8 +52,8 @@ for (const remote of [false, true]) test(
       res.cookie('smart_home_session', 'fixture-only', { httpOnly: true, secure: true, sameSite: 'strict', path: '/' });
       res.json({ host: req.headers.host, origin: req.headers.origin });
     });
-    app.post('/api/integrations/mijia/login', async (_req, res) => {
-      await delay(6000); res.json({ state: 'authorizing' });
+    for (const path of ['/api/integrations/mijia/login', '/api/model-generation/sources', '/api/ai/connections/fixture/test']) app.post(path, async (_req, res) => {
+      await delay(6000); res.json({ state: 'completed' });
     });
     app.get("/api/events", (req, res) => {
       responses.add(res);
@@ -154,9 +154,9 @@ for (const remote of [false, true]) test(
       true,
     );
     // Authentication may need several upstream calls while the SSE connection remains idle.
-    const cloudLogin = fetch(base + '/api/integrations/mijia/login', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: base }, body: '{}' });
+    const longRequests = ['/api/integrations/mijia/login', '/api/model-generation/sources', '/api/ai/connections/fixture/test'].map(path => fetch(base + path, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: base }, body: '{}' }));
     await delay(6100);
-    assert.equal((await cloudLogin).status, 200);
+    for (const response of await Promise.all(longRequests)) assert.equal(response.status, 200);
     assert.equal(
       (
         await fetch(base + "/api/devices/lamp", {

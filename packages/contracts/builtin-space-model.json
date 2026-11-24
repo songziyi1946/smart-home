@@ -1,0 +1,172 @@
+{
+  "revision": 0,
+  "defaultModelId": "builtin",
+  "models": [
+    {
+      "id": "builtin",
+      "name": "当前装修",
+      "currentVersionId": "builtin-v1",
+      "versions": [
+        {
+          "id": "builtin-v1",
+          "createdAt": "2026-11-24T00:00:00.000Z",
+          "source": "builtin",
+          "width": 12.91,
+          "depth": 7.53,
+          "height": 2.7,
+          "rooms": [
+            {
+              "id": "entry",
+              "name": "入户",
+              "bounds": [
+                8.26,
+                3.7,
+                10.99,
+                5.8
+              ],
+              "deviceRoomIds": [
+                "entry",
+                "room-%E5%85%A5%E6%88%B7"
+              ]
+            },
+            {
+              "id": "dining",
+              "name": "餐厅",
+              "bounds": [
+                5.94,
+                3.7,
+                8.26,
+                6.32
+              ],
+              "deviceRoomIds": [
+                "dining",
+                "room-%E9%A4%90%E5%8E%A8"
+              ],
+              "panoramaSceneId": "25152992"
+            },
+            {
+              "id": "living",
+              "name": "客厅",
+              "bounds": [
+                0,
+                3.635,
+                5.74,
+                6.25
+              ],
+              "deviceRoomIds": [
+                "living"
+              ],
+              "panoramaSceneId": "25152958"
+            },
+            {
+              "id": "balcony",
+              "name": "阳台",
+              "bounds": [
+                0,
+                6.25,
+                5.74,
+                7.53
+              ],
+              "deviceRoomIds": [
+                "balcony",
+                "room-%E9%98%B3%E5%8F%B0"
+              ]
+            },
+            {
+              "id": "kitchen",
+              "name": "厨房",
+              "bounds": [
+                5.94,
+                0.89,
+                7.82,
+                3.7
+              ],
+              "deviceRoomIds": [
+                "kitchen",
+                "room-%E5%8E%A8%E6%88%BF",
+                "room-%E9%A4%90%E5%8E%A8"
+              ],
+              "panoramaSceneId": "25152956"
+            },
+            {
+              "id": "bedroom",
+              "name": "主卧",
+              "bounds": [
+                0,
+                0,
+                3.96,
+                3.635
+              ],
+              "deviceRoomIds": [
+                "master-bedroom",
+                "bedroom"
+              ],
+              "panoramaSceneId": "25152991"
+            },
+            {
+              "id": "ensuite",
+              "name": "主卫",
+              "bounds": [
+                3.96,
+                0,
+                5.94,
+                2.14
+              ],
+              "deviceRoomIds": [
+                "master-bathroom",
+                "ensuite"
+              ],
+              "panoramaSceneId": "25152963"
+            },
+            {
+              "id": "second-bedroom",
+              "name": "次卧",
+              "bounds": [
+                7.82,
+                0.89,
+                9.89,
+                3.7
+              ],
+              "deviceRoomIds": [
+                "second-bedroom",
+                "room-%E6%AC%A1%E5%8D%A7"
+              ],
+              "panoramaSceneId": "25152957"
+            },
+            {
+              "id": "bath",
+              "name": "次卫",
+              "bounds": [
+                10.99,
+                4.17,
+                12.91,
+                6.14
+              ],
+              "deviceRoomIds": [
+                "bath",
+                "room-%E6%AC%A1%E5%8D%AB",
+                "room-%E5%AE%A2%E5%8D%AB"
+              ],
+              "panoramaSceneId": "25152962"
+            },
+            {
+              "id": "study",
+              "name": "书房",
+              "bounds": [
+                9.89,
+                0.89,
+                12.91,
+                4.17
+              ],
+              "deviceRoomIds": [
+                "study",
+                "room-%E4%B9%A6%E6%88%BF"
+              ],
+              "panoramaSceneId": "25152961"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

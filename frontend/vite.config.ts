@@ -39,6 +39,8 @@ export function createApiProxy(apiUrl = '', port = '3101'): Record<string, Proxy
       },
     },
     '^/api/integrations/mijia(?:/|\\?|$)': { ...common, proxyTimeout: 90000 },
+    '^/api/model-generation(?:/|\\?|$)': { ...common, proxyTimeout: 130000 },
+    '^/api/ai(?:/|\\?|$)': { ...common, proxyTimeout: 90000 },
     '^/api/(?:devices|scenes)/[^/?]+(?:\\?|$)': { ...common, proxyTimeout: 90000 },
     '/api': { ...common, proxyTimeout: 5000 },
   };

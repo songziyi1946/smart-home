@@ -21,6 +21,10 @@ export class SQLiteStore {
       this.transaction(()=>{
         this.db.exec('CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL) STRICT;');
         for(const table of tables)this.db.exec(`CREATE TABLE IF NOT EXISTS ${table} (key TEXT PRIMARY KEY, position INTEGER NOT NULL, payload TEXT NOT NULL CHECK(json_valid(payload))) STRICT;`);
+        this.db.exec(`CREATE TABLE IF NOT EXISTS space_model_catalog (key TEXT PRIMARY KEY, payload TEXT NOT NULL CHECK(json_valid(payload))) STRICT;
+          CREATE TABLE IF NOT EXISTS space_model_assets (id TEXT PRIMARY KEY, model_id TEXT NOT NULL, size INTEGER NOT NULL, payload TEXT NOT NULL CHECK(json_valid(payload))) STRICT;`);
+        this.db.exec(`CREATE TABLE IF NOT EXISTS model_generation_records (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, kind TEXT NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL CHECK(json_valid(payload))) STRICT;
+          CREATE TABLE IF NOT EXISTS model_generation_assets (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, source_id TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, payload TEXT NOT NULL CHECK(json_valid(payload))) STRICT;`);
         this.db.exec(`CREATE TABLE IF NOT EXISTS device_capabilities(device_id TEXT NOT NULL REFERENCES devices(key) ON DELETE CASCADE, position INTEGER NOT NULL, capability TEXT NOT NULL, PRIMARY KEY(device_id,position));
           CREATE TABLE IF NOT EXISTS scene_actions(scene_id TEXT NOT NULL REFERENCES scenes(key) ON DELETE CASCADE, position INTEGER NOT NULL, device_id TEXT NOT NULL, command TEXT NOT NULL CHECK(json_valid(command)), PRIMARY KEY(scene_id,position));
           PRAGMA user_version=2;`);
@@ -40,6 +44,48 @@ export class SQLiteStore {
     }catch(error){this.db.close();throw error;}
   }
   transaction(fn){this.db.exec('BEGIN IMMEDIATE');try{const result=fn();this.db.exec('COMMIT');return result;}catch(error){this.db.exec('ROLLBACK');throw error;}}
+  loadModelLibrary() {
+    const row = this.db.prepare("SELECT payload FROM space_model_catalog WHERE key='library'").get();
+    return row ? JSON.parse(this.encryption.open(row.payload, 'space-model:library')) : null;
+  }
+  exportGenerationData() { return {records:this.db.prepare('SELECT * FROM model_generation_records ORDER BY id').all().map(row=>({...row})),assets:this.db.prepare('SELECT * FROM model_generation_assets ORDER BY id').all().map(row=>({...row}))}; }
+  restoreGenerationData(data) {
+    this.transaction(()=>{
+      if(this.db.prepare('SELECT count(*) AS n FROM model_generation_records').get().n||this.db.prepare('SELECT count(*) AS n FROM model_generation_assets').get().n)throw Error('生成数据恢复目标必须为空');
+      for(const row of data.records)this.db.prepare('INSERT INTO model_generation_records(id,owner_id,kind,revision,payload) VALUES(?,?,?,?,?)').run(row.id,row.owner_id,row.kind,row.revision,row.payload);
+      for(const row of data.assets)this.db.prepare('INSERT INTO model_generation_assets(id,owner_id,source_id,mime,size,payload) VALUES(?,?,?,?,?,?)').run(row.id,row.owner_id,row.source_id,row.mime,row.size,row.payload);
+    });
+  }
+  modelAssetInfo(id) { return this.db.prepare('SELECT model_id AS modelId,size FROM space_model_assets WHERE id=?').get(id); }
+  loadModelAsset(id) {
+    const row = this.db.prepare('SELECT model_id,payload FROM space_model_assets WHERE id=?').get(id);
+    return row ? this.encryption.open(row.payload, `space-model:asset:${id}:${row.model_id}`) : null;
+  }
+  saveModelLibrary(library, expectedRevision, asset) {
+    this.transaction(() => {
+      if ((this.loadModelLibrary()?.revision ?? 0) !== expectedRevision) throw Object.assign(Error('模型已被修改，请刷新后重试'), { status: 409 });
+      if (asset) {
+        const used = this.db.prepare('SELECT coalesce(sum(size),0) AS bytes FROM space_model_assets').get().bytes;
+        // Keep encrypted JSON backup envelopes within Node's maximum string size.
+        if (used + asset.bytes.length > 100 * 1024 * 1024) throw Object.assign(Error('模型资源已达到 100 MB 上限'), { status: 413 });
+        this.db.prepare('INSERT INTO space_model_assets(id,model_id,size,payload) VALUES(?,?,?,?)').run(asset.id, asset.modelId, asset.bytes.length, this.encryption.seal(asset.bytes, `space-model:asset:${asset.id}:${asset.modelId}`));
+      }
+      this.db.prepare("INSERT INTO space_model_catalog(key,payload) VALUES('library',?) ON CONFLICT(key) DO UPDATE SET payload=excluded.payload").run(this.encryption.seal(Buffer.from(encode(library)), 'space-model:library'));
+    });
+  }
+  exportModelData() {
+    return { library: this.loadModelLibrary(), assets: this.db.prepare('SELECT id,model_id FROM space_model_assets ORDER BY id').all().map(row => ({ id: row.id, modelId: row.model_id, bytesBase64: this.loadModelAsset(row.id).toString('base64') })) };
+  }
+  restoreModelData(data) {
+    this.transaction(() => {
+      if (this.loadModelLibrary() || this.db.prepare('SELECT count(*) AS n FROM space_model_assets').get().n) throw Error('模型恢复目标必须为空');
+      if (data.library) this.db.prepare("INSERT INTO space_model_catalog(key,payload) VALUES('library',?)").run(this.encryption.seal(Buffer.from(encode(data.library)), 'space-model:library'));
+      for (const asset of data.assets) {
+        const bytes = Buffer.from(asset.bytesBase64, 'base64');
+        this.db.prepare('INSERT INTO space_model_assets(id,model_id,size,payload) VALUES(?,?,?,?)').run(asset.id,asset.modelId,bytes.length,this.encryption.seal(bytes, `space-model:asset:${asset.id}:${asset.modelId}`));
+      }
+    });
+  }
   meta(key){return this.db.prepare('SELECT value FROM metadata WHERE key=?').get(key)?.value;}
   setMeta(key,value){this.db.prepare('INSERT INTO metadata(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key,value);}
   legacy(name){

@@ -12,6 +12,10 @@
 node_modules/
 **/*.mijia.enc
 **/*.mijia.enc.*.tmp
+**/*.ai.enc
+**/*.ai.enc.*.tmp
+**/personal-ai.enc
+**/personal-ai.enc.*.tmp
 **/*.connections/
 dist/
 

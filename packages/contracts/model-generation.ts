@@ -1,0 +1,7 @@
+import type { ModelRoom } from './space-models';
+export type PlanWall = { id: string; from: [number, number]; to: [number, number]; thickness: number; openings: { kind: 'door' | 'window'; offset: number; width: number; bottom: number; height: number }[] };
+export type PlanFurniture = { id: string; roomId: string; kind: 'sofa' | 'bed' | 'table' | 'chair' | 'cabinet' | 'desk' | 'toilet' | 'basin' | 'shower' | 'plant'; x: number; z: number; width: number; depth: number; height: number; rotation: number; color: string; material: 'wood' | 'fabric' | 'stone' | 'metal' | 'ceramic' | 'glass'; style: 'straight' | 'rounded' };
+export type GeneratedPlan = { schemaVersion: 1; width: number; depth: number; height: number; footprint: [number, number][]; rooms: ModelRoom[]; walls: PlanWall[]; furniture: PlanFurniture[]; finishes: { floorColor: string; wallColor: string; floorMaterial: 'wood' | 'tile' }; notes: string[] };
+export type GenerationScene = { id: string; name: string; imageAssetId: string; faceAssetIds?: string[] };
+export type GenerationSource = { id: string; title: string; scenes: GenerationScene[] };
+export type GenerationJob = { id: string; status: 'queued' | 'reading' | 'ready' | 'failed' | 'cancelled' | 'interrupted'; stage: string; createdAt: string; updatedAt: string; sourceId?: string; floorplanAssetId?: string; connectionId: string; plan?: GeneratedPlan; error?: string; usage?: { inputTokens: number; outputTokens: number }; revision: number };

@@ -104,3 +104,43 @@ test('lighting feedback uses only online capability-backed light values and neve
   assert.equal(roomSummary([on, ac], 'living').lightsOn, 1);
   assert.equal(on.state.values.brightness, 30);
 });
+
+test('saved models use explicit bindings without falling back to default room names', () => {
+  const living = device('living-light', 'living', ['power'], { power: true });
+  const bed = device('bed-light', 'master-bedroom', ['power'], { power: false });
+  const devices = [living, bed];
+  assert.deepEqual(roomSummary(devices, 'living', []).devices, []);
+  assert.deepEqual(roomSummary(devices, 'living', ['master-bedroom']).devices, [bed]);
+  assert.deepEqual(roomSummary(devices, 'living', ['living']).devices, [living]);
+  assert.deepEqual(roomSummary(devices, 'living', ['removed-business-room']).devices, []);
+  assert.equal(living.state.values.power, true);
+  assert.equal(bed.state.values.power, false);
+});
+
+test('custom model picking uses its own regions and ignores rooms without geometry', () => {
+  const model = { source: 'upload', width: 20, depth: 15, rooms: [
+    { id: 'entry', name: '与默认模型同名', bounds: [14, 10, 18, 14] },
+    { id: 'unplaced', name: '未定位' },
+  ] };
+  assert.equal(modelRoomAt(15, 11, model)?.id, 'entry');
+  assert.equal(modelRoomAt(1.5, 4.5, model), undefined);
+  assert.equal(modelRoomAt(18, 14, model), undefined);
+  assert.equal(modelRoomAt(NaN, 11, model), undefined);
+});
+
+test('initial saved model preserves every existing panorama room and device binding', async () => {
+  const { default: library } = await import('../../../packages/contracts/builtin-space-model.json', { with: { type: 'json' } });
+  const { default: panoramas } = await import('./panoramas.json', { with: { type: 'json' } });
+  const rooms = library.models[0].versions[0].rooms;
+  const linkedRooms = new Set(rooms.flatMap(room => panoramas.scenes.filter(scene => scene.id === room.panoramaSceneId).map(scene => scene.roomId)));
+  assert.deepEqual([...linkedRooms].sort(), [...new Set(panoramas.scenes.map(scene => scene.roomId))].sort());
+  const ids = [...new Set(rooms.flatMap(room => room.deviceRoomIds))];
+  const devices = ids.map(id => device(id, id, ['power'], { power: false }));
+  for (const room of rooms) assert.deepEqual(devicesForModelRoom(devices, room.id, room.deviceRoomIds), devicesForModelRoom(devices, room.id));
+});
+
+test('generated model picking excludes concave recesses even inside a room bounding rectangle', () => {
+  const version = { source: 'generated', rooms: [{ id: 'wide-room', bounds: [0, 0, 10, 8] }], plan: { footprint: [[0,0],[4,0],[4,2],[10,2],[10,8],[0,8]] } };
+  assert.equal(modelRoomAt(7, 1, version), undefined);
+  assert.equal(modelRoomAt(7, 3, version)?.id, 'wide-room');
+});

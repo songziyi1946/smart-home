@@ -11,6 +11,7 @@ import {
   ReceiptText,
   Box,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import type { Session, State } from "../types";
 import Members from "./Members";
@@ -27,6 +28,7 @@ import type { Installation } from '../pwa';
 import InstallApp from './InstallApp';
 import HouseholdName from './HouseholdName';
 import MijiaConnection from './MijiaConnection';
+import AIConnections from './AIConnections';
 export default function Profile({
   state,
   session,
@@ -158,6 +160,7 @@ export default function Profile({
           { id: "general", name: "家庭与账户", Icon: House },
           { id: "members", name: "成员与权限", Icon: Users },
           { id: "integrations", name: "设备接入", Icon: Plug },
+          ...(user.role !== "guest" ? [{ id: "ai", name: "我的 AI", Icon: Sparkles }] : []),
         ].map(({ id, name, Icon }) => (
           <button
             key={id}
@@ -331,6 +334,7 @@ export default function Profile({
         </>
       )}
       {section === "integrations" && integrations}
+      {section === "ai" && user.role !== "guest" && <AIConnections session={session} disabled={busy} onSessionExpired={onSessionExpired} />}
     </div>
   );
 }

@@ -1,0 +1,16 @@
+.ai-connections { display: grid; gap: 20px; min-width: 0; }
+.ai-connections h2 { display: flex; align-items: center; gap: 8px; }
+.ai-connections p { line-height: 1.6; font-size: 14px; }
+.ai-connection-form fieldset { display: grid; gap: 14px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.ai-connection-form label { display: grid; gap: 7px; min-width: 0; font-size: 14px; }
+.ai-connection-form p { margin: 0; }
+.ai-connection-list { display: grid; gap: 14px; margin-top: 16px; }
+.ai-connection-list article { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+.ai-connection-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.ai-connection-heading h3 { overflow-wrap: anywhere; }
+.ai-connection-list dl { display: grid; gap: 8px; margin: 14px 0; font-size: 13px; }
+.ai-connection-list dl > div { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 8px; }
+.ai-connection-list dt { color: var(--muted); }
+.ai-connection-list dd { margin: 0; overflow-wrap: anywhere; }
+.ai-notice { color: var(--accent); }
+@media (max-width: 767px) { .ai-connection-form .arco-input { font-size: 16px; } }
