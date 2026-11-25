@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Modal } from "@arco-design/web-react";
-import { UserPlus, RefreshCw, ShieldCheck, ArrowLeft } from "lucide-react";
+import { UserPlus, RefreshCw, ShieldCheck, ArrowLeft, CircleHelp } from "lucide-react";
 import { ApiError, request } from "../api";
 import type { User } from "../types";
 import { formatTime } from "../utils";
@@ -17,10 +17,12 @@ export default function Members({
   onSessionExpired,
   currentUserId,
   disabled,
+  onShowPermissions,
 }: {
   onSessionExpired: () => void;
   currentUserId: string;
   disabled: boolean;
+  onShowPermissions: () => void;
 }) {
   const mobile = useMobile(),
     [members, setMembers] = useState<User[]>([]),
@@ -205,7 +207,10 @@ export default function Members({
       {(!mobile || !inviting) && (
         <div className="settings-member-heading">
           <div>
-            <h2>家庭成员与访客</h2>
+            <div className="settings-member-title">
+              <h2>家庭成员与访客</h2>
+              <Button type="text" shape="circle" size="small" aria-label="查看身份权限范围" title="身份权限说明" icon={<CircleHelp size={17} />} onClick={onShowPermissions} />
+            </div>
             <p className="settings-muted">
               {loaded
                 ? `${members.length} 位成员 · 上次刷新`

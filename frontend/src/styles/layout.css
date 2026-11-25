@@ -209,7 +209,7 @@
   .ledger-payment-area {grid-template-columns: 1fr; align-content: start;}
   .ledger-records {flex: 1; min-height: 0; overflow: auto;}
   .ledger-record-list li {grid-template-columns: 90px minmax(0, 1fr) auto; gap: 8px;}
-  /* Settings panels align, including expanded permissions and invitation results. */
+  /* Settings panels align, including invitation results. */
   .settings-page {display: flex; flex-direction: column; gap: var(--layout-gap); overflow: auto;}
   .settings-hero, .settings-tabs {flex: none;}
   .settings-page header {margin-bottom: 12px;}
@@ -221,7 +221,6 @@
   .settings-integrations > details:not([open]) {align-self: start;}
   .settings-members {flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--layout-gap);}
   .settings-member-heading {flex: none;}
-  .settings-permissions {flex: none; max-height: 40%; overflow: auto;}
   .settings-facts {margin: 12px 0;}
   .settings-facts > div, .settings-member-list li {padding: 12px 0;}
   /* VR uses remaining height, including the compact navigation drawer trigger. */

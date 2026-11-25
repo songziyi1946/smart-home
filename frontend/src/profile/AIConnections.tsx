@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Button, Input, Modal, Popconfirm } from '@arco-design/web-react';
+import { Button, Input, Message, Modal, Popconfirm } from '@arco-design/web-react';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { ApiError, request } from '../api';
 import type { Session } from '../types';
@@ -25,13 +25,13 @@ function PersonalAIConnections({ disabled, onSessionExpired }: { disabled: boole
   const [saveError, setSaveError] = useState('');
   const [adding, setAdding] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const [pending, setPending] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
+  const [pending, setPending] = useState(false), [error, setError] = useState('');
   const mounted = useRef(false), generation = useRef(0), locked = useRef(false);
   const formId = useId();
   const blocked = disabled || pending;
   function reportError(reason: unknown, saving = false) {
     if (reason instanceof ApiError && reason.status === 401) {
-      setConnections(undefined); setForm(emptyForm()); setFieldErrors({}); setSaveError(''); setAdding(false); setError(''); setNotice(''); onSessionExpired(); return;
+      setConnections(undefined); setForm(emptyForm()); setFieldErrors({}); setSaveError(''); setAdding(false); setError(''); onSessionExpired(); return;
     }
     (saving ? setSaveError : setError)(reason instanceof Error ? reason.message : 'AI 服务暂不可用，请稍后重试');
   }
@@ -50,7 +50,7 @@ function PersonalAIConnections({ disabled, onSessionExpired }: { disabled: boole
     if ((action === 'test' || action === 'delete') && !connection) return;
     locked.current = true;
     const epoch = ++generation.current, current = () => mounted.current && generation.current === epoch;
-    setPending(true); setError(''); setSaveError(''); setNotice('');
+    setPending(true); setError(''); setSaveError('');
     try {
       if (action === 'load') {
         const result = await request<ConnectionsResponse>(endpoint);
@@ -59,14 +59,14 @@ function PersonalAIConnections({ disabled, onSessionExpired }: { disabled: boole
         const input = Object.fromEntries(Object.entries(form).map(([key, value]) => [key, value.trim()])) as AIConnectionInput;
         const result = await request<AIConnection>(endpoint, 'POST', input);
         if (current()) {
-          setConnections(items => [...(items ?? []), result]); setForm(emptyForm()); setFieldErrors({}); setAdding(false); setNotice('连接验证成功，AI 服务已添加。');
+          setConnections(items => [...(items ?? []), result]); setForm(emptyForm()); setFieldErrors({}); setAdding(false); Message.success('连接验证成功，AI 服务已添加。');
         }
       } else {
         const path = `${endpoint}/${encodeURIComponent(connection!.id)}`;
         await request<{ ok: true }>(action === 'test' ? path + '/test' : path, action === 'test' ? 'POST' : 'DELETE', {});
         if (current()) {
           if (action === 'delete') setConnections(items => items?.filter(item => item.id !== connection!.id));
-          setNotice(action === 'test' ? `${connection!.name}：连接成功` : '已删除此 AI 服务');
+          Message.success(action === 'test' ? `${connection!.name}：连接成功` : '已删除此 AI 服务');
         }
       }
     } catch (reason) { if (current()) reportError(reason, action === 'save'); }
@@ -91,7 +91,6 @@ function PersonalAIConnections({ disabled, onSessionExpired }: { disabled: boole
       <header><h2><Sparkles size={19} />我的 AI</h2><div className="settings-actions"><Button icon={<RefreshCw size={15} />} disabled={blocked} onClick={() => void run('load')}>刷新</Button><Button type="primary" disabled={blocked || !connections || !configured} onClick={() => { setForm(emptyForm()); setFieldErrors({}); setSaveError(''); setAdding(true); }}>添加 AI 服务</Button></div></header>
       <p className="settings-muted">仅当前账号可用</p>
       {error && <p className="settings-error" role="alert">{error}</p>}
-      {notice && <p className="ai-notice" role="status">{notice}</p>}
       {!connections ? <p role="status">{pending ? '正在读取 AI 服务…' : '尚未读取 AI 服务，请重试。'}</p> : !connections.length ? <p className="settings-muted">尚未配置 AI 服务</p> : <div className="ai-connection-list">
         {connections.map(connection => <article key={connection.id}>
           <div className="ai-connection-heading"><h3>{connection.name}</h3><span className="settings-badge">密钥已保存</span></div>

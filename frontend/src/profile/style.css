@@ -195,6 +195,15 @@
 .settings-member-heading {
   margin-bottom: 0;
 }
+.settings-member-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.settings-member-title > .arco-btn {
+  flex-shrink: 0;
+  color: var(--muted);
+}
 .settings-actions {
   display: flex;
   gap: 8px;
@@ -312,7 +321,16 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
-  margin: 20px 0;
+  margin: 0;
+}
+.settings-permission-modal .arco-modal-content {
+  max-height: calc(100dvh - 160px);
+  overflow-y: auto;
+}
+.settings-permissions h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
 }
 .settings-permissions ul {
   list-style: none;

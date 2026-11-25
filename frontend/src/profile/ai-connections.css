@@ -12,7 +12,6 @@
 .ai-connection-list dl > div { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 8px; }
 .ai-connection-list dt { color: var(--muted); }
 .ai-connection-list dd { margin: 0; overflow-wrap: anywhere; }
-.ai-notice { color: var(--accent); }
 @media (max-width: 767px) { .ai-connection-form .arco-input { font-size: 16px; } }
 
 .ai-connection-field { display: grid; gap: 7px; min-width: 0; scroll-margin-block: 24px; }

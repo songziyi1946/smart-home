@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "@arco-design/web-react";
+import { Button, Modal } from "@arco-design/web-react";
 import {
   LogOut,
   House,
@@ -12,6 +12,7 @@ import {
   Box,
   ShieldCheck,
   Sparkles,
+  CircleHelp,
 } from "lucide-react";
 import type { Session, State } from "../types";
 import Members from "./Members";
@@ -55,15 +56,16 @@ export default function Profile({
   onSessionUpdated: (session: Session) => void;
 }) {
   const mobile = useMobile(),
-    [section, setSection] = useState(initialSection as string);
+    [section, setSection] = useState(initialSection as string),
+    [permissionsOpen, setPermissionsOpen] = useState(false);
   const { user } = session,
     preview = !!session.localPreview,
     admin = user.role === "admin",
     providers = integrationSummary(state.devices);
   const permissions = (
-    <details className="panel settings-permissions">
-      <summary>查看三种身份的权限范围</summary>
-      <div className="settings-permission-grid">
+    <Modal title="身份与权限范围" visible={permissionsOpen} onCancel={() => setPermissionsOpen(false)} footer={null}
+      className="settings-permission-modal" style={{ width: 'min(760px, calc(100vw - 24px))' }}>
+      <div className="settings-permissions settings-permission-grid">
         {(["admin", "member", "guest"] as const).map((role) => (
           <article key={role}>
             <h3>{roleNames[role]}</h3>
@@ -78,7 +80,7 @@ export default function Profile({
           </article>
         ))}
       </div>
-    </details>
+    </Modal>
   );
   const integrations = (
     <div className="settings-integrations">
@@ -305,17 +307,24 @@ export default function Profile({
         <>
           {preview ? (
             <section className="panel settings-unavailable">
-              <h2>请先登录</h2>
+              <div className="settings-member-title">
+                <h2>请先登录</h2>
+                <Button type="text" shape="circle" size="small" aria-label="查看身份权限范围" title="身份权限说明" icon={<CircleHelp size={17} />} onClick={() => setPermissionsOpen(true)} />
+              </div>
             </section>
           ) : admin ? (
             <Members
               currentUserId={user.id}
               disabled={busy}
               onSessionExpired={onSessionExpired}
+              onShowPermissions={() => setPermissionsOpen(true)}
             />
           ) : (
             <section className="panel settings-unavailable">
-              <h2>你的身份：{roleNames[user.role]}</h2>
+              <div className="settings-member-title">
+                <h2>你的身份：{roleNames[user.role]}</h2>
+                <Button type="text" shape="circle" size="small" aria-label="查看身份权限范围" title="身份权限说明" icon={<CircleHelp size={17} />} onClick={() => setPermissionsOpen(true)} />
+              </div>
               <p>{roleDetails[user.role]}</p>
               <p>
                 成员名单和邀请仅管理员可查看。需要新增成员或调整访问权限时，请联系家庭管理员。
