@@ -4,7 +4,7 @@ import { Box, ChevronRight, Expand, Map, Settings2 } from 'lucide-react';
 import { createViewer, type Viewer, type ViewerStatus } from './viewer';
 import ModelManager from './ModelManager';
 import { currentModelVersion, loadModelAsset, loadModelLibrary, type ModelLibrary, type ModelVersion } from './model-library';
-import builtinLibrary from '../../../packages/contracts/builtin-space-model.json';
+import { initialBuiltinLibrary } from './builtin-presets';
 import { roomSummary } from './room-state';
 import { devicePanelNavigation } from './device-history';
 import { controlStyle, deviceSummary, sendDeviceCommand } from '../deviceControls/model';
@@ -27,7 +27,7 @@ export default function VR(props: VRProps) {
   useEffect(() => {
     let cancelled = false;
     setLoadError('');
-    if (props.role === 'guest') { setLibrary(builtinLibrary as ModelLibrary); setSelectedId('builtin'); return; }
+    if (props.role === 'guest') { const builtinLibrary = initialBuiltinLibrary(); setLibrary(builtinLibrary); setSelectedId(builtinLibrary.defaultModelId); return; }
     loadModelLibrary().then(value => {
       if (cancelled) return;
       setLibrary(value); setSelectedId(id => value.models.some(model => model.id === id) ? id : value.defaultModelId);

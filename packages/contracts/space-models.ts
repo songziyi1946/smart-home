@@ -11,6 +11,7 @@ export type ModelVersion = {
   id: string;
   createdAt: string;
   source: 'builtin' | 'upload' | 'generated';
+  builtinGeometryId?: 'kujiale-3fo3an8k4gd1';
   assetId?: string;
   width: number;
   depth: number;

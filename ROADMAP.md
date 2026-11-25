@@ -378,3 +378,10 @@ Do these before adding new large features:
 10. Only then connect one real household/provider and add realtime events.
 
 This sequence protects the project from becoming a Xiaomi-specific UI that has to be rewritten when the first real integration arrives.
+
+## Deferred — 已装修住宅的实景扫描（2026-11-25）
+
+- [ ] 用手机多视角照片、视频或 LiDAR 扫描还原已装修住宅，作为后续优化，本轮暂不实施。
+- 先用一个客厅比较带贴图网格与 Gaussian Splatting 的实际效果、尺寸校准、导出完整性、文件体积和手机加载表现，再决定全屋流程及工具。
+- 保留三维户型总览、房间切换和设备绑定；扫描外观与平台设备状态分别管理，扫描中的光照不作为实时开灯状态。
+- 当前先讨论现有三维模型参照设计全景的材质、家具和光照优化；实景扫描不作为这项改善的前置条件。

@@ -3,13 +3,14 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildHome, disposeObject, type ModelLoadState } from './scene';
-import { CEILING_HEIGHT as DEFAULT_HEIGHT, designModel, HOME_DEPTH as DEFAULT_DEPTH, HOME_WIDTH as DEFAULT_WIDTH } from './plan';
+import { builtinDesignForVersion } from './builtin-presets';
 import type { ModelVersion } from '../../../packages/contracts/space-models';
 import { isRoomClick, modelRoomAt, type RoomSummary } from './room-state';
 
 export type ViewerStatus = { roomId?: string; modelState: ModelLoadState };
 export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) => void, onRoomSelect?: (id: string) => void, model?: ModelVersion) {
-  const HOME_WIDTH = model?.width ?? DEFAULT_WIDTH, HOME_DEPTH = model?.depth ?? DEFAULT_DEPTH, CEILING_HEIGHT = model?.height ?? DEFAULT_HEIGHT;
+  const designModel = builtinDesignForVersion(model);
+  const HOME_WIDTH = model?.width ?? designModel.width, HOME_DEPTH = model?.depth ?? designModel.depth, CEILING_HEIGHT = model?.height ?? designModel.height;
   const custom = !!model && model.source !== 'builtin';
   const rooms = (model?.rooms ?? designModel.rooms).filter(room => room.bounds !== undefined);
   const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
@@ -41,7 +42,7 @@ export function createViewer(host: HTMLElement, onStatus: (value: ViewerStatus) 
   let imported: T.Group | undefined, importedBounds: T.Box3 | undefined;
   const invalidate = () => { needsRender = true; };
   const report = () => onStatus({ roomId, modelState });
-  const home = custom ? undefined : buildHome(invalidate, state => { modelState = state; renderer.shadowMap.needsUpdate = true; invalidate(); report(); });
+  const home = custom ? undefined : buildHome(invalidate, state => { modelState = state; renderer.shadowMap.needsUpdate = true; invalidate(); report(); }, model);
   if (home) scene.add(home.root);
   const camera = new T.OrthographicCamera(-1, 1, 1, -1, .1, 120);
   const orbit = new OrbitControls(camera, canvas);

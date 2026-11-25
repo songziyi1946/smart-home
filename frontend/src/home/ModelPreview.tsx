@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { createViewer, type Viewer } from '../vr/viewer';
-import { viewpointForRoom } from '../vr/plan';
+import { builtinDesignForVersion, currentBuiltinVersion } from '../vr/builtin-presets';
+import { canonicalRoom } from '../constants';
 import '../vr/style.css';
 
 export default function ModelPreview({ room, overview }: { room: string; overview: boolean }) {
   const host = useRef<HTMLDivElement>(null);
   const viewer = useRef<Viewer>();
   const [error, setError] = useState(false);
-  const viewpoint = viewpointForRoom(room);
+  const rooms = builtinDesignForVersion(currentBuiltinVersion).rooms;
+  const viewpoint = rooms.find(value => value.name === room) ?? rooms.find(value => value.controlRoom === canonicalRoom(room));
   useEffect(() => {
-    try { viewer.current = createViewer(host.current!, status => setError(status.modelState === 'error')); }
+    try { viewer.current = createViewer(host.current!, status => setError(status.modelState === 'error'), undefined, currentBuiltinVersion); }
     catch { setError(true); }
     return () => { viewer.current?.dispose(); viewer.current = undefined; };
   }, []);

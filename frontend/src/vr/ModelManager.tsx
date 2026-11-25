@@ -4,7 +4,7 @@ import * as T from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { disposeObject } from './scene';
-import { panoramaScenes } from './panoramas';
+import { allPanoramaScenes, legacyPanoramaScenes, panoramaScenes } from './panoramas';
 import type { DeviceSnapshot } from '../types';
 import { ApiError } from '../api';
 import { currentModelVersion, draftFromVersion, loadModelLibrary, MAX_MODEL_BYTES, modelBytesBase64, restoreModelVersion, saveSpaceModel, setDefaultModel, validateModelDraft, validateModelGlb, type ModelLibrary, type ModelRoom, type SaveModelInput } from './model-library';
@@ -139,7 +139,9 @@ export default function ModelManager({ library, selectedModelId, onSaved, device
   useEffect(() => { reset('update'); }, [selectedModelId]);
   const pending = disabled || busy || reading;
   const fixedGeometry = version.source === 'builtin' || version.source === 'generated';
-  const panoramaOptions = version.source === 'generated' ? (version.panoramas ?? []).map(scene => ({ id: scene.id, label: scene.name })) : panoramaScenes;
+  const panoramaOptions = version.source === 'generated' ? (version.panoramas ?? []).map(scene => ({ id: scene.id, label: scene.name }))
+    : (version.source === 'builtin' ? (version.builtinGeometryId ? panoramaScenes : legacyPanoramaScenes) : allPanoramaScenes)
+      .map(scene => ({ id: scene.id, label: scene.assetDirectory ? scene.label : `原方案 · ${scene.label}` }));
   const availableRooms = new Map(devices.map(device => [device.roomId, device.room]));
   const bindingNames = new Map(library.models.flatMap(model => model.versions.flatMap(item => item.rooms.flatMap(room => room.deviceRoomIds.map(id => [id, room.name] as const)))));
   const allBindings = [...availableRooms].map(([id, label]) => ({ id, label }));
@@ -157,7 +159,7 @@ export default function ModelManager({ library, selectedModelId, onSaved, device
       if (!mounted.current || attempt !== uploadAttempt.current) return;
       setBytes(buffer); setFileName(file.name);
       setVersion(previous => {
-        const { plan: _plan, sourceId: _sourceId, panoramas: _panoramas, ...value } = previous;
+        const { plan: _plan, sourceId: _sourceId, panoramas: _panoramas, builtinGeometryId: _builtinGeometryId, ...value } = previous;
         return { ...value, source: 'upload', assetId: undefined, rooms: value.rooms.map(({ bounds: _bounds, ...room }) => ({ ...room, panoramaSceneId: previous.source === 'generated' ? undefined : room.panoramaSceneId })) };
       });
       if (!name.trim()) setName(file.name.replace(/\.glb$/i, '').slice(0, 80));

@@ -3,6 +3,8 @@ import { isDeepStrictEqual } from 'node:util';
 import { z } from 'zod';
 import { planSchema, validatePlan } from '../model-generation/schema.mjs';
 import builtinLibrary from '../../../packages/contracts/builtin-space-model.json' with { type: 'json' };
+import kujialeBuiltin from '../../../packages/contracts/kujiale-space-model.json' with { type: 'json' };
+import kujialeSceneIds from '../../../packages/contracts/kujiale-panorama-scene-ids.json' with { type: 'json' };
 import panoramaSceneIds from './panorama-scene-ids.json' with { type: 'json' };
 
 export const MAX_MODEL_BYTES = 30 * 1024 * 1024;
@@ -18,6 +20,7 @@ const roomSchema = z.object({
 }).strict();
 const versionSchema = z.object({
   source: z.enum(['builtin', 'upload', 'generated']), assetId: z.string().uuid().optional(),
+  builtinGeometryId: z.literal('kujiale-3fo3an8k4gd1').optional(),
   width: dimension, depth: dimension, height: z.number().finite().positive().max(20),
   rooms: z.array(roomSchema).max(100),
   sourceId: z.string().uuid().optional(), plan: planSchema.optional(),
@@ -27,7 +30,7 @@ const saveSchema = z.object({ revision, name, version: versionSchema, assetBase6
 const defaultSchema = z.object({ revision, modelId: id }).strict();
 const restoreSchema = z.object({ revision, versionId: id }).strict();
 const builtin = builtinLibrary.models[0].versions[0];
-const legacyBindings = new Set(builtin.rooms.flatMap(room => room.deviceRoomIds));
+const legacyBindings = new Set([...builtin.rooms, ...kujialeBuiltin.rooms].flatMap(room => room.deviceRoomIds));
 
 /** Accept only bounded, self-contained GLB v2; no server or browser external fetches. */
 export function validateModelBytes(bytes) {
@@ -76,7 +79,22 @@ function inspectModelBytes(bytes) {
 
 export class ModelLibraryService {
   constructor(store, { devices = () => [] } = {}) { this.store = store; this.devices = devices; }
-  list() { return this.store.loadModelLibrary() ?? structuredClone(builtinLibrary); }
+  list() {
+    const library = structuredClone(this.store.loadModelLibrary() ?? builtinLibrary);
+    const model = library.models.find(value => value.id === 'builtin');
+    if (model && !model.versions.some(version => version.id === kujialeBuiltin.id)) {
+      const previous = model.versions.find(version => version.id === model.currentVersionId);
+      const next = structuredClone(kujialeBuiltin);
+      for (const room of next.rooms) {
+        const existing = previous?.rooms.find(value => value.id === room.id);
+        if (existing) room.deviceRoomIds = [...existing.deviceRoomIds];
+      }
+      // Bundled upgrades are derived on reads; the next successful catalog write persists them.
+      model.versions.push(next);
+      model.currentVersionId = next.id;
+    }
+    return library;
+  }
   asset(id) {
     if (!z.string().uuid().safeParse(id).success) fail(404, '模型资源不存在');
     const bytes = this.store.loadModelAsset(id); if (!bytes) fail(404, '模型资源不存在'); return bytes;
@@ -89,6 +107,7 @@ export class ModelLibraryService {
     if (!current && library.models.length >= 20) fail(400, '最多保存 20 个模型');
     if (current && current.versions.length >= 20) fail(400, '此模型已达到 20 个版本上限');
     const version = input.version;
+    if (version.source !== 'builtin' && version.builtinGeometryId !== undefined) fail(400, '只有内置模型可以指定内置几何');
     const original = current?.versions.find(value => value.assetId && value.assetId === version.assetId);
     if (!generatedPublication && (version.source === 'generated' || version.plan || version.sourceId || version.panoramas)) {
       if (!original || original.source !== 'generated' || input.assetBase64 !== undefined || version.source !== 'generated'
@@ -99,7 +118,10 @@ export class ModelLibraryService {
       }
       version.plan = { ...version.plan, rooms: structuredClone(version.rooms) };
     }
-    const allowedScenes = new Set(version.source === 'generated' ? (version.panoramas ?? []).map(scene => scene.id) : panoramaSceneIds);
+    const builtinDefinition = version.builtinGeometryId ? kujialeBuiltin : builtin;
+    const allowedScenes = new Set(version.source === 'generated' ? (version.panoramas ?? []).map(scene => scene.id)
+      : version.source === 'upload' ? [...panoramaSceneIds, ...kujialeSceneIds]
+      : version.builtinGeometryId ? kujialeSceneIds : panoramaSceneIds);
     const knownRoomIds = new Set([...legacyBindings, ...this.devices().map(device => device.roomId)]);
     // Preserve previously valid bindings if a provider has since disconnected.
     for (const room of current?.versions.flatMap(value => value.rooms) ?? []) for (const value of room.deviceRoomIds) knownRoomIds.add(value);
@@ -116,8 +138,8 @@ export class ModelLibraryService {
     let asset;
     if (version.source === 'builtin') {
       if (input.assetBase64 !== undefined || version.assetId) fail(400, '内置模型不能替换资源');
-      if (version.width !== builtin.width || version.depth !== builtin.depth || version.height !== builtin.height || version.rooms.length !== builtin.rooms.length || version.rooms.some(room => {
-        const original = builtin.rooms.find(value => value.id === room.id);
+      if (version.width !== builtinDefinition.width || version.depth !== builtinDefinition.depth || version.height !== builtinDefinition.height || version.rooms.length !== builtinDefinition.rooms.length || version.rooms.some(room => {
+        const original = builtinDefinition.rooms.find(value => value.id === room.id);
         return !original || !isDeepStrictEqual(room.bounds, original.bounds);
       })) fail(400, '内置模型只支持修改房间名称和数据关联');
     } else if (input.assetBase64 !== undefined) {

@@ -1,0 +1,171 @@
+{
+  "id": "builtin-kujiale-v1",
+  "createdAt": "2026-11-25T00:00:00.000Z",
+  "source": "builtin",
+  "builtinGeometryId": "kujiale-3fo3an8k4gd1",
+  "width": 12.91,
+  "depth": 7.53,
+  "height": 2.7,
+  "rooms": [
+    {
+      "id": "living",
+      "name": "客厅",
+      "bounds": [
+        1.7,
+        3.74,
+        5.74,
+        7.53
+      ],
+      "deviceRoomIds": [
+        "living"
+      ],
+      "panoramaSceneId": "3FOFR5F8HQ45"
+    },
+    {
+      "id": "dining",
+      "name": "餐厅",
+      "bounds": [
+        5.94,
+        2.5,
+        9.89,
+        4.24
+      ],
+      "deviceRoomIds": [
+        "dining",
+        "room-%E9%A4%90%E5%8E%A8"
+      ],
+      "panoramaSceneId": "3FOFR76S61U6"
+    },
+    {
+      "id": "kitchen",
+      "name": "厨房",
+      "bounds": [
+        5.94,
+        0.89,
+        9.89,
+        2.5
+      ],
+      "deviceRoomIds": [
+        "kitchen",
+        "room-%E5%8E%A8%E6%88%BF",
+        "room-%E9%A4%90%E5%8E%A8"
+      ],
+      "panoramaSceneId": "3FOFR76S61U6"
+    },
+    {
+      "id": "entry",
+      "name": "门厅",
+      "bounds": [
+        5.74,
+        4.24,
+        9.89,
+        5.8
+      ],
+      "deviceRoomIds": [
+        "entry",
+        "room-%E5%85%A5%E6%88%B7"
+      ],
+      "panoramaSceneId": "3FOFR5T7RYNT"
+    },
+    {
+      "id": "balcony",
+      "name": "阳台",
+      "bounds": [
+        0,
+        3.74,
+        1.7,
+        7.53
+      ],
+      "deviceRoomIds": [
+        "balcony",
+        "room-%E9%98%B3%E5%8F%B0"
+      ],
+      "panoramaSceneId": "3FOFR4YL08P6"
+    },
+    {
+      "id": "ensuite",
+      "name": "主卫",
+      "bounds": [
+        3.96,
+        0,
+        5.94,
+        2.14
+      ],
+      "deviceRoomIds": [
+        "master-bathroom",
+        "ensuite"
+      ],
+      "panoramaSceneId": "3FOFRV8POKIE"
+    },
+    {
+      "id": "bedroom",
+      "name": "主卧",
+      "bounds": [
+        0,
+        0,
+        3.96,
+        3.5
+      ],
+      "deviceRoomIds": [
+        "master-bedroom",
+        "bedroom"
+      ],
+      "panoramaSceneId": "3FOFTY0110H1"
+    },
+    {
+      "id": "dressing",
+      "name": "衣帽区",
+      "bounds": [
+        3.96,
+        2.14,
+        5.94,
+        3.5
+      ],
+      "deviceRoomIds": [],
+      "panoramaSceneId": "3FOFTY01KKWV"
+    },
+    {
+      "id": "study",
+      "name": "书房",
+      "bounds": [
+        9.89,
+        0.89,
+        12.91,
+        4.24
+      ],
+      "deviceRoomIds": [
+        "study",
+        "room-%E4%B9%A6%E6%88%BF"
+      ],
+      "panoramaSceneId": "3FOFR7NMVMK7"
+    },
+    {
+      "id": "bath",
+      "name": "卫生间",
+      "bounds": [
+        10.99,
+        4.24,
+        12.91,
+        6.14
+      ],
+      "deviceRoomIds": [
+        "bath",
+        "room-%E6%AC%A1%E5%8D%AB",
+        "room-%E5%AE%A2%E5%8D%AB"
+      ],
+      "panoramaSceneId": "3FOFRV9HU52O"
+    },
+    {
+      "id": "washroom",
+      "name": "盥洗室",
+      "bounds": [
+        9.89,
+        4.24,
+        10.99,
+        6.14
+      ],
+      "deviceRoomIds": [],
+      "panoramaSceneId": "3FOFRV64S4HW"
+    }
+  ]
+}

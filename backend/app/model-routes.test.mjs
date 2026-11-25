@@ -11,6 +11,9 @@ import { createBackup, restoreBackup } from '../infrastructure/backups.mjs';
 import { ModelLibraryService, validateModelBytes } from '../domain/models/service.mjs';
 import { createModelRouter } from './model-routes.mjs';
 import { createAuth, authorizeHousehold, validateOrigin } from '../auth.mjs';
+import legacyBuiltinLibrary from '../../packages/contracts/builtin-space-model.json' with { type: 'json' };
+import kujialeBuiltin from '../../packages/contracts/kujiale-space-model.json' with { type: 'json' };
+import kujialeSceneIds from '../../packages/contracts/kujiale-panorama-scene-ids.json' with { type: 'json' };
 
 const initial = { devices: [], deviceStates: {}, scenes: [], automations: [], sceneRuns: [], automationRuns: [], accounts: [], expenses: [], events: [], rules: [] };
 function fixture(t) {
@@ -32,6 +35,59 @@ function glb(uri) {
   const offset=20+jsonBytes.length; output.writeUInt32LE(binary.length,offset); output.writeUInt32LE(0x004e4942,offset+4); binary.copy(output,offset+8); return output;
 }
 function input(revision=0) {return {revision,name:'装修方案 A',version:{source:'upload',width:10,depth:8,height:2.7,rooms:[{id:'living',name:'起居室',bounds:[0,0,4,4],deviceRoomIds:['real-living']}]},assetBase64:glb().toString('base64')};}
+function editableVersion(version) { const {id,createdAt,...body}=structuredClone(version);return body; }
+
+test('bundled Kujiale upgrade is read-only, retains historical versions and user bindings without changing custom defaults',t=>{
+  const f=fixture(t),stored=structuredClone(legacyBuiltinLibrary),model=stored.models[0];
+  const previous={...structuredClone(model.versions[0]),id:'user-p07',createdAt:'2026-11-25T00:00:00.000Z'};
+  const shared=previous.rooms.find(room=>kujialeBuiltin.rooms.some(next=>next.id===room.id));assert.ok(shared);
+  shared.deviceRoomIds=['this-household-room'];shared.name='用户重命名房间';
+  model.name='用户自定义方案名';model.versions.push(previous);model.currentVersionId=previous.id;
+  stored.models.push({id:'custom-default',name:'自定义默认方案',currentVersionId:'custom-v1',versions:[{...structuredClone(previous),id:'custom-v1'}]});
+  stored.defaultModelId='custom-default';stored.revision=7;f.store.saveModelLibrary(stored,0);
+  const derived=f.service().list(),upgraded=derived.models.find(value=>value.id==='builtin');
+  assert.equal(derived.revision,7);assert.equal(derived.defaultModelId,'custom-default');assert.equal(upgraded.name,'用户自定义方案名');
+  assert.equal(upgraded.currentVersionId,kujialeBuiltin.id);assert.deepEqual(upgraded.versions.slice(0,-1),model.versions);
+  const added=upgraded.versions.at(-1);assert.equal(added.builtinGeometryId,'kujiale-3fo3an8k4gd1');
+  assert.deepEqual(added.rooms.find(room=>room.id===shared.id).deviceRoomIds,['this-household-room']);
+  for(const room of added.rooms.filter(room=>!previous.rooms.some(old=>old.id===room.id)))assert.deepEqual(room.deviceRoomIds,kujialeBuiltin.rooms.find(seed=>seed.id===room.id).deviceRoomIds);
+  assert.deepEqual(f.store.loadModelLibrary(),stored);assert.deepEqual(f.service().list(),derived);
+  const other=fixture(t);assert.ok(!JSON.stringify(other.service().list()).includes('this-household-room'));assert.equal(other.store.loadModelLibrary(),null);
+  added.rooms.find(room=>room.id===shared.id).deviceRoomIds.push('mutated-client-copy');
+  assert.ok(!JSON.stringify(f.service().list()).includes('mutated-client-copy'));
+});
+
+test('restoring and editing the old built-in version persists without re-applying the bundled upgrade',t=>{
+  const f=fixture(t),stored=structuredClone(legacyBuiltinLibrary);f.store.saveModelLibrary(stored,0);
+  const old=stored.models[0].versions[0],restored=f.service().restore('builtin',{revision:0,versionId:old.id});
+  assert.equal(restored.models[0].currentVersionId,old.id);assert.ok(restored.models[0].versions.some(version=>version.id===kujialeBuiltin.id));
+  f.restart();assert.equal(f.service().list().models[0].currentVersionId,old.id);
+  const edited=editableVersion(old);edited.rooms[0].deviceRoomIds=['real-living'];edited.rooms[0].name='已校正房间名';
+  const saved=f.service().save({revision:1,name:'保留旧方案',version:edited},'builtin'),current=saved.models[0].versions.at(-1);
+  assert.equal(current.builtinGeometryId,undefined);assert.deepEqual(current.rooms[0].deviceRoomIds,['real-living']);
+  f.restart();assert.equal(f.service().list().models[0].currentVersionId,current.id);assert.equal(f.service().list().models[0].versions.filter(version=>version.id===kujialeBuiltin.id).length,1);
+});
+
+test('built-in geometry identifiers select a fixed seed and cannot be attached to uploaded geometry',t=>{
+  const f=fixture(t),newVersion=editableVersion(kujialeBuiltin);
+  newVersion.rooms[0].deviceRoomIds=['real-living'];
+  const saved=f.service().save({revision:0,name:'当前酷家乐方案',version:newVersion},'builtin');
+  assert.equal(saved.models[0].versions.at(-1).builtinGeometryId,'kujiale-3fo3an8k4gd1');
+  for(const modify of [value=>value.width+=1,value=>value.rooms[0].bounds[0]+=.01,value=>value.rooms[0].id='forged-room',value=>value.builtinGeometryId='unknown-builtin',value=>{delete value.builtinGeometryId;}]){
+    const bad=editableVersion(kujialeBuiltin);modify(bad);assert.throws(()=>f.service().save({revision:1,name:'不能伪造几何',version:bad},'builtin'));
+  }
+  const upload=input(1);upload.version.builtinGeometryId='kujiale-3fo3an8k4gd1';assert.throws(()=>f.service().save(upload),{status:400});
+  assert.equal(f.service().list().revision,1);
+});
+
+test('panorama association catalogs stay separated for built-ins and both remain available to uploads',t=>{
+  const f=fixture(t),old=legacyBuiltinLibrary.models[0].versions[0],oldScene=old.rooms.find(room=>room.panoramaSceneId).panoramaSceneId;
+  const newVersion=editableVersion(kujialeBuiltin);newVersion.rooms[0].panoramaSceneId=kujialeSceneIds.at(-1);
+  let library=f.service().save({revision:0,name:'新视点关联',version:newVersion},'builtin');assert.equal(library.revision,1);
+  newVersion.rooms[0].panoramaSceneId=oldScene;assert.throws(()=>f.service().save({revision:1,name:'新模型不能混入旧全景',version:newVersion},'builtin'),{status:400});
+  const oldVersion=editableVersion(old);oldVersion.rooms[0].panoramaSceneId=kujialeSceneIds[0];assert.throws(()=>f.service().save({revision:1,name:'旧模型不能混入新全景',version:oldVersion},'builtin'),{status:400});
+  for(const sceneId of [oldScene,kujialeSceneIds.at(-1)]){const upload=input(library.revision);upload.version.rooms[0].panoramaSceneId=sceneId;library=f.service().save(upload);assert.equal(library.models.at(-1).versions[0].rooms[0].panoramaSceneId,sceneId);}
+});
 
 test('model versions are encrypted, persisted, independent of business state, and restored atomically', t => {
   const f=fixture(t), before=f.store.loadState();

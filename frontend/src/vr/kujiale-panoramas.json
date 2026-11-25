@@ -1,0 +1,98 @@
+{
+  "title": "【奥林装饰】埠印贤府8-2-102",
+  "sourceUrl": "https://yun.kujiale.com/design/3FO3AN8K4GD1/show",
+  "downloadedOn": "2026-11-25",
+  "assetDirectory": "kujiale-3fo3an8k4gd1",
+  "scenes": [
+    {
+      "id": "3FOFRV8POKIE",
+      "roomId": "ensuite",
+      "room": "主卫",
+      "controlRoom": "主卫",
+      "label": "主卫",
+      "assetDirectory": "kujiale-3fo3an8k4gd1",
+      "sourceBase": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4PMQUWIQYWLUFX7RSNOQ8.0_7500x1250.jpg_%s"
+    },
+    {
+      "id": "3FOFRV9HU52O",
+      "roomId": "bath",
+      "room": "卫生间",
+      "controlRoom": "次卫",
+      "label": "卫生间",
+      "assetDirectory": "kujiale-3fo3an8k4gd1",
+      "sourceBase": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4POAUWICZOLUFX7SJZLI8.0_7500x1250.jpg_%s"
+    },
+    {
+      "id": "3FOFRV64S4HW",
+      "roomId": "washroom",
+      "room": "盥洗室",
+      "controlRoom": "次卫",
+      "label": "盥洗室",
+      "assetDirectory": "kujiale-3fo3an8k4gd1",
+      "sourceBase": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX35BIUWICZOLUFX7RXGGA8.0_7500x1250.jpg_%s"
+    },
+    {
+      "id": "3FOFR5F8HQ45",
+      "roomId": "living",
+      "room": "客厅",
+      "controlRoom": "客厅",
+      "label": "客厅",
+      "assetDirectory": "kujiale-3fo3an8k4gd1",
+      "sourceBase": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7UQUWJ7SALUFX7RF2PQ8.0_7500x1250.jpg_%s"
+    },
+    {
+      "id": "3FOFR5T7RYNT",
+      "roomId": "entry",
+      "room": "门厅",
+      "controlRoom": "入户",
+      "label": "门厅",
+      "assetDirectory": "kujiale-3fo3an8k4gd1",
+      "sourceBase": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7XIUWLALKLUFX7RGHYY8.0_7500x1250.jpg_%s"
+    },
+    {
+      "id": "3FOFR4YL08P6",
+      "roomId": "balcony",
+      "room": "阳台",
+      "controlRoom": "阳台",
+      "label": "阳台",
+      "assetDirectory": "kujiale-3fo3an8k4gd1",
+      "sourceBase": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZNRYUWJ7SALUFX7RA3GY8.0_7500x1250.jpg_%s"
+    },
+    {
+      "id": "3FOFR76S61U6",
+      "roomId": "dining",
+      "room": "餐厅",
+      "controlRoom": "餐厨",
+      "label": "餐厅",
+      "assetDirectory": "kujiale-3fo3an8k4gd1",
+      "sourceBase": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXVMOYUWLONSLUFX7Q6HMA8.0_7500x1250.jpg_%s"
+    },
+    {
+      "id": "3FOFR7NMVMK7",
+      "roomId": "study",
+      "room": "书房",
+      "controlRoom": "书房",
+      "label": "书房",
+      "assetDirectory": "kujiale-3fo3an8k4gd1",
+      "sourceBase": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXUSOIUWLONSLUFX7Q7ODQ8.0_7500x1250.jpg_%s"
+    },
+    {
+      "id": "3FOFTY0110H1",
+      "roomId": "bedroom",
+      "room": "主卧",
+      "controlRoom": "主卧",
+      "label": "主卧",
+      "assetDirectory": "kujiale-3fo3an8k4gd1",
+      "sourceBase": "https://qhrenderpic-cos.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4FQUWIF3QLUFX77YSHQ8.0_7500x1250.jpg_%s"
+    },
+    {
+      "id": "3FOFTY01KKWV",
+      "roomId": "dressing",
+      "room": "衣帽区",
+      "controlRoom": "主卧",
+      "label": "衣帽区",
+      "assetDirectory": "kujiale-3fo3an8k4gd1",
+      "sourceBase": "https://qhrenderpicoss.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4EAUWLTSCLUFX77GDNA8.0_7500x1250.jpg_%s"
+    }
+  ]
+}

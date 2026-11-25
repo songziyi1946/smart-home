@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Matrix4, Quaternion, Vector3 } from 'three';
 import { canWalk, CEILING_HEIGHT, designModel, FOOTPRINT_AREA, footprint, HOME_DEPTH, HOME_WIDTH, insideHome, obstacles, viewpointForRoom, viewpoints } from './plan.ts';
-import { panoramaScenes } from './panoramas.ts';
+import { legacyPanoramaScenes as panoramaScenes } from './panoramas.ts';
 
 test('panorama reconstruction labels estimated dimensions and covers every source room', () => {
   assert.equal(designModel.estimated, true);

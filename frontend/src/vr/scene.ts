@@ -1,12 +1,17 @@
 import * as T from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import modelUrl from './models/panorama-home.glb?url';
-import { CEILING_HEIGHT, designModel, footprint, wallFootprints } from './plan';
+import kujialeModelUrl from './models/kujiale-home.glb?url';
+import { builtinDesignForVersion, KUJIALE_GEOMETRY_ID } from './builtin-presets';
+import type { ModelVersion } from '../../../packages/contracts/space-models';
 import type { RoomSummary } from './room-state';
 
 export type ModelLoadState = 'loading' | 'ready' | 'error';
 
-export function buildHome(invalidate: () => void, onLoadState: (state: ModelLoadState) => void) {
+export function buildHome(invalidate: () => void, onLoadState: (state: ModelLoadState) => void, version?: ModelVersion) {
+  const designModel = builtinDesignForVersion(version);
+  const CEILING_HEIGHT = designModel.height, footprint = designModel.footprint, wallFootprints = designModel.walls;
+  const assetUrl = version?.builtinGeometryId === KUJIALE_GEOMETRY_ID ? kujialeModelUrl : modelUrl;
   const root = new T.Group();
   const fallback = new T.Group();
   const wallTops = new T.Group();
@@ -47,7 +52,7 @@ export function buildHome(invalidate: () => void, onLoadState: (state: ModelLoad
     if (disposed) return;
     const version = ++generation;
     onLoadState('loading');
-    new GLTFLoader().load(modelUrl, ({ scene: loaded }) => {
+    new GLTFLoader().load(assetUrl, ({ scene: loaded }) => {
       if (disposed || generation !== version) { disposeObject(loaded); return; }
       if (model) { root.remove(model); disposeObject(model); }
       model = loaded;

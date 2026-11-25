@@ -1,0 +1,755 @@
+{
+  "sourceUrl": "https://yun.kujiale.com/design/3FO3AN8K4GD1/show",
+  "designId": "3FO3AN8K4GD1",
+  "title": "【奥林装饰】埠印贤府8-2-102",
+  "sceneCount": 10,
+  "access": {
+    "show": true,
+    "status": 3
+  },
+  "geometry": {
+    "status": "not-available",
+    "endpoint": "https://yun.kujiale.com/panobiz/api/room-mesh-url?design_id=3FO3AN8K4GD1",
+    "urls": {
+      "panoDesignModelDataUrl": "https://panojson-oss.kujiale.com/panoDesignModel/prod/UltimatePanoDesignModel/AI_ROAM/3FO3AN8K4GD1",
+      "roomMeshUrl": "https://panojson-oss.kujiale.com/panoRoomMesh/prod/UltimatePanoDesignModel/AI_ROAM/3FO3AN8K4GD1"
+    },
+    "staticResourceStatus": {
+      "roomMeshUrl": 404,
+      "panoDesignModelDataUrl": 404
+    },
+    "fallbackEndpoint": "https://yun.kujiale.com/drs/api/c/panodesignmodel/3FO3AN8K4GD1",
+    "fallbackStatus": 500,
+    "threeDMetadataEndpoint": "https://yun.kujiale.com/panobiz/api/3d/metainfo?levelid=NHWGSMQKTJGQWAABAAAAADY8&designid=3FO3AN8K4GD1",
+    "threeDMetadata": {
+      "status": 2
+    },
+    "pano3DEnabled": false,
+    "aiRoamStatus": 0,
+    "directGlbOrGltfFound": false,
+    "limitation": "Public player data provides images, hotspots and camera positions, but referenced geometric resources are unavailable. No full designer model or furniture meshes have been obtained."
+  },
+  "downloadedOn": "2026-11-25",
+  "assets": [
+    {
+      "path": "3FOFRV8POKIE/r.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4PMQUWIQYWLUFX7RSNOQ8.0_7500x1250.jpg_r",
+      "sha256": "b150ff9f0b24e78c9c67d9444500f5755ef2b08f37b7adf44e73b1bfed72163d",
+      "bytes": 457088,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV8POKIE/l.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4PMQUWIQYWLUFX7RSNOQ8.0_7500x1250.jpg_l",
+      "sha256": "fb2609bd1dc15682e481ba3fb26e21d0f34839b705c4ee8d22b8eb3789a5b8ce",
+      "bytes": 481795,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV8POKIE/u.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4PMQUWIQYWLUFX7RSNOQ8.0_7500x1250.jpg_u",
+      "sha256": "c2dde47d81ad91290fec446519bb6f21f52eac494e5d83cec1bc82c9988f1039",
+      "bytes": 371043,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV8POKIE/d.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4PMQUWIQYWLUFX7RSNOQ8.0_7500x1250.jpg_d",
+      "sha256": "68ee5cecd46589133add04e1b5bc568fa0d95e869046f79296d05df5bea52eba",
+      "bytes": 540445,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV8POKIE/f.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4PMQUWIQYWLUFX7RSNOQ8.0_7500x1250.jpg_f",
+      "sha256": "1ce2ddbec66eb66980710a38180821ebcc510e171cff7d2855551955d0ae521b",
+      "bytes": 447445,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV8POKIE/b.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4PMQUWIQYWLUFX7RSNOQ8.0_7500x1250.jpg_b",
+      "sha256": "bf19f6a8c187bd76305dad8c2007886ebdda1e90bf3b07083e1edd479dbd6e5a",
+      "bytes": 400293,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV8POKIE/thumb.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4PMQUWIQYWLUFX7RSNOQ8.0_7500x1250.jpg_f",
+      "sha256": "1ce2ddbec66eb66980710a38180821ebcc510e171cff7d2855551955d0ae521b",
+      "bytes": 447445,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV9HU52O/r.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4POAUWICZOLUFX7SJZLI8.0_7500x1250.jpg_r",
+      "sha256": "7a5cc5e968a03a8be15e29d7fa81087f71d9d00a7e71e099b3164aaaf266a1bd",
+      "bytes": 399244,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV9HU52O/l.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4POAUWICZOLUFX7SJZLI8.0_7500x1250.jpg_l",
+      "sha256": "67e3e7ad53e865bc97c82fe99b20fbdec5018ebfbab80a65a1d5bc0d7a1c3c53",
+      "bytes": 557420,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV9HU52O/u.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4POAUWICZOLUFX7SJZLI8.0_7500x1250.jpg_u",
+      "sha256": "053de12f81c358d7f552c77f859b4117edae00cc9644c2d6a17d60dfc4041bc2",
+      "bytes": 334956,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV9HU52O/d.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4POAUWICZOLUFX7SJZLI8.0_7500x1250.jpg_d",
+      "sha256": "37d30c5fc149ad4e330d8ef6c054405d9475d8d841f6d5c7a390f0a677175110",
+      "bytes": 389293,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV9HU52O/f.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4POAUWICZOLUFX7SJZLI8.0_7500x1250.jpg_f",
+      "sha256": "f756615cf887ed7f5b1819180d3a1d8b49d14aa43297b6817f7b3acc09ca5cc6",
+      "bytes": 337780,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV9HU52O/b.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4POAUWICZOLUFX7SJZLI8.0_7500x1250.jpg_b",
+      "sha256": "9785f9f0b22d5c1dcb2a463ea7716905fc1ab5ce460c194c93ea8f2062be71b8",
+      "bytes": 350366,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV9HU52O/thumb.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX4POAUWICZOLUFX7SJZLI8.0_7500x1250.jpg_f",
+      "sha256": "f756615cf887ed7f5b1819180d3a1d8b49d14aa43297b6817f7b3acc09ca5cc6",
+      "bytes": 337780,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV64S4HW/r.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX35BIUWICZOLUFX7RXGGA8.0_7500x1250.jpg_r",
+      "sha256": "3b2911d959021266235274a0726d5a7d1802f7f5f3997ea74858e6223dfeecaf",
+      "bytes": 438822,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV64S4HW/l.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX35BIUWICZOLUFX7RXGGA8.0_7500x1250.jpg_l",
+      "sha256": "ca0a5aeacad3ac23167b9fc7f4307247d8d5ad1e7d5b214961275224fc343b38",
+      "bytes": 379545,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV64S4HW/u.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX35BIUWICZOLUFX7RXGGA8.0_7500x1250.jpg_u",
+      "sha256": "9ee58d01b7a18b7eab3302d7f60debcb6e1ab3a892f258c600b282b0b259df05",
+      "bytes": 283920,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV64S4HW/d.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX35BIUWICZOLUFX7RXGGA8.0_7500x1250.jpg_d",
+      "sha256": "2c75cd0f5717cde24f40d3903ee07b5d177a33c2a9f1c28c33f288cd47ecb0ea",
+      "bytes": 453444,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV64S4HW/f.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX35BIUWICZOLUFX7RXGGA8.0_7500x1250.jpg_f",
+      "sha256": "597282bf0cb175ce4b6fb4d3f04599d74792567a064c57ffe60bf0b239539a8e",
+      "bytes": 483728,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV64S4HW/b.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX35BIUWICZOLUFX7RXGGA8.0_7500x1250.jpg_b",
+      "sha256": "5622aaa50185a3f4a6874b6465880548527a13a523640110b1a22b49fe0a52a7",
+      "bytes": 193868,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFRV64S4HW/thumb.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTX35BIUWICZOLUFX7RXGGA8.0_7500x1250.jpg_f",
+      "sha256": "597282bf0cb175ce4b6fb4d3f04599d74792567a064c57ffe60bf0b239539a8e",
+      "bytes": 483728,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5F8HQ45/r.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7UQUWJ7SALUFX7RF2PQ8.0_7500x1250.jpg_r",
+      "sha256": "3e3782561c49dcd9abac205084a347f6b0d3304bac5184a1127e251a45cc4cb1",
+      "bytes": 357780,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5F8HQ45/l.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7UQUWJ7SALUFX7RF2PQ8.0_7500x1250.jpg_l",
+      "sha256": "587eb3123dffcf5f36f9499f9be81313d0914888af672cb577520f0708ef0ce7",
+      "bytes": 451883,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5F8HQ45/u.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7UQUWJ7SALUFX7RF2PQ8.0_7500x1250.jpg_u",
+      "sha256": "0680da0db34e8196df6347748cd93f6e248c7aafb6ea8841ea763794bead2304",
+      "bytes": 210584,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5F8HQ45/d.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7UQUWJ7SALUFX7RF2PQ8.0_7500x1250.jpg_d",
+      "sha256": "7397e34ac511436055bd29ad3e8f72a907bdbbcaf9b33d74875849704f882ad0",
+      "bytes": 516572,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5F8HQ45/f.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7UQUWJ7SALUFX7RF2PQ8.0_7500x1250.jpg_f",
+      "sha256": "46e82ead23f04feea38497759ff0d0c89073c82f7b295de4ec496a306e4c619d",
+      "bytes": 365129,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5F8HQ45/b.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7UQUWJ7SALUFX7RF2PQ8.0_7500x1250.jpg_b",
+      "sha256": "952ed7ed7822d593244262b59f5f631ac803738e17d3bfcc842373b83375dc77",
+      "bytes": 392157,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5F8HQ45/thumb.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7UQUWJ7SALUFX7RF2PQ8.0_7500x1250.jpg_f",
+      "sha256": "46e82ead23f04feea38497759ff0d0c89073c82f7b295de4ec496a306e4c619d",
+      "bytes": 365129,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5T7RYNT/r.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7XIUWLALKLUFX7RGHYY8.0_7500x1250.jpg_r",
+      "sha256": "ab980443a0aa70b5dde7c4c10f89c9006e464d57b2a6aadf8d54fff3833607d7",
+      "bytes": 309134,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5T7RYNT/l.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7XIUWLALKLUFX7RGHYY8.0_7500x1250.jpg_l",
+      "sha256": "650bfa32ce1ab49e61bf43c5d521819db626814b0deacda0f1d875669dc22278",
+      "bytes": 220374,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5T7RYNT/u.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7XIUWLALKLUFX7RGHYY8.0_7500x1250.jpg_u",
+      "sha256": "2af236f0f5013d7f45a00094744900052970cc496e96b26208d260efff608269",
+      "bytes": 256427,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5T7RYNT/d.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7XIUWLALKLUFX7RGHYY8.0_7500x1250.jpg_d",
+      "sha256": "a3cc6f1e996e2d45bf5769948b7d9407967f578375295a553cef8e3c4a16a1e0",
+      "bytes": 500919,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5T7RYNT/f.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7XIUWLALKLUFX7RGHYY8.0_7500x1250.jpg_f",
+      "sha256": "a2357d92fb4cd711ee3886e97a878f2c15db551cac84874f8c63fecb4c733803",
+      "bytes": 471937,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5T7RYNT/b.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7XIUWLALKLUFX7RGHYY8.0_7500x1250.jpg_b",
+      "sha256": "512533612516c2ce7b9c9a768c68027172e4e4ec2d6a6341dcf6a01aae327474",
+      "bytes": 509512,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR5T7RYNT/thumb.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZ7XIUWLALKLUFX7RGHYY8.0_7500x1250.jpg_f",
+      "sha256": "a2357d92fb4cd711ee3886e97a878f2c15db551cac84874f8c63fecb4c733803",
+      "bytes": 471937,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR4YL08P6/r.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZNRYUWJ7SALUFX7RA3GY8.0_7500x1250.jpg_r",
+      "sha256": "7b38d99d7d4ee638680ae914e52b1acc5d2ace14be5ab766a4f26801d20d9105",
+      "bytes": 459760,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR4YL08P6/l.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZNRYUWJ7SALUFX7RA3GY8.0_7500x1250.jpg_l",
+      "sha256": "0b0995a4fbab9886ea737c14eef4da297df763ea3db5eeff75ce46e6e3516293",
+      "bytes": 475472,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR4YL08P6/u.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZNRYUWJ7SALUFX7RA3GY8.0_7500x1250.jpg_u",
+      "sha256": "8bc9739ed8cae2b7a248d1a454d1ea4e4161b1fbc207fa919ad9b2974f3aa005",
+      "bytes": 273885,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR4YL08P6/d.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZNRYUWJ7SALUFX7RA3GY8.0_7500x1250.jpg_d",
+      "sha256": "e1562f9b3b5d34f30c5aee021a324ccd84e823917242ae58f23f5cf868ae522a",
+      "bytes": 592321,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR4YL08P6/f.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZNRYUWJ7SALUFX7RA3GY8.0_7500x1250.jpg_f",
+      "sha256": "9dd272aad917da91da26cfb9846629f234c7111a1fa5e578f71b9c7c9afd00ac",
+      "bytes": 421984,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR4YL08P6/b.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZNRYUWJ7SALUFX7RA3GY8.0_7500x1250.jpg_b",
+      "sha256": "e1b072b9ebf0b455e8bd549596886eaf3c51b350123b94c753784ddc943ac695",
+      "bytes": 596013,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR4YL08P6/thumb.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXZNRYUWJ7SALUFX7RA3GY8.0_7500x1250.jpg_f",
+      "sha256": "9dd272aad917da91da26cfb9846629f234c7111a1fa5e578f71b9c7c9afd00ac",
+      "bytes": 421984,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR76S61U6/r.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXVMOYUWLONSLUFX7Q6HMA8.0_7500x1250.jpg_r",
+      "sha256": "61be168a1f0c25a13683a820b5f99d1cb8863d3c12a67c78618d07609fe14578",
+      "bytes": 488074,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR76S61U6/l.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXVMOYUWLONSLUFX7Q6HMA8.0_7500x1250.jpg_l",
+      "sha256": "61db63d15132c3993122a4e4853e3604e3856e63f154bf2177b42df4a03ce64b",
+      "bytes": 440492,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR76S61U6/u.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXVMOYUWLONSLUFX7Q6HMA8.0_7500x1250.jpg_u",
+      "sha256": "c774535c98d9f5fcf2391be2ae3bbebe58fc46a3c99b0f53809e008f9a8ef89d",
+      "bytes": 209630,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR76S61U6/d.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXVMOYUWLONSLUFX7Q6HMA8.0_7500x1250.jpg_d",
+      "sha256": "0102288b6724ec3d8a90753dfb88b9471bb0c791ec5a523f08a886f024865605",
+      "bytes": 608062,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR76S61U6/f.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXVMOYUWLONSLUFX7Q6HMA8.0_7500x1250.jpg_f",
+      "sha256": "ea4373cfdf1b57079d0d71992472c5ac6f8b510c3b932fbd8384b90abf62ab9b",
+      "bytes": 460805,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR76S61U6/b.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXVMOYUWLONSLUFX7Q6HMA8.0_7500x1250.jpg_b",
+      "sha256": "7ba0e4cdbe87e7fe2e673302eb213249644b88f24fb82cb148e76115fd344b91",
+      "bytes": 356794,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR76S61U6/thumb.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXVMOYUWLONSLUFX7Q6HMA8.0_7500x1250.jpg_f",
+      "sha256": "ea4373cfdf1b57079d0d71992472c5ac6f8b510c3b932fbd8384b90abf62ab9b",
+      "bytes": 460805,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR7NMVMK7/r.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXUSOIUWLONSLUFX7Q7ODQ8.0_7500x1250.jpg_r",
+      "sha256": "d70a289d933285eb864f18b83121460b6cddef76ac44a834e3dcd3ac2e2dc92b",
+      "bytes": 473569,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR7NMVMK7/l.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXUSOIUWLONSLUFX7Q7ODQ8.0_7500x1250.jpg_l",
+      "sha256": "d64d0f0df5457ad1296ca3b3a19da16eb30c070a99fd042ca0482c735c09a896",
+      "bytes": 261717,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR7NMVMK7/u.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXUSOIUWLONSLUFX7Q7ODQ8.0_7500x1250.jpg_u",
+      "sha256": "ca0e226ee0042bd2c203f90bbf516301d918b6ba2809f9d66a9efa0440fd6898",
+      "bytes": 251503,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR7NMVMK7/d.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXUSOIUWLONSLUFX7Q7ODQ8.0_7500x1250.jpg_d",
+      "sha256": "f1ecf4d6d73e94dd305ab7125e3ebfaab137b63fe0df7d0c3f3dceafe6e204f7",
+      "bytes": 595666,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR7NMVMK7/f.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXUSOIUWLONSLUFX7Q7ODQ8.0_7500x1250.jpg_f",
+      "sha256": "940b566f3ab0e04212b92b4a9a34ec9200941b41e249c3c558b941a2505e1b51",
+      "bytes": 464271,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR7NMVMK7/b.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXUSOIUWLONSLUFX7Q7ODQ8.0_7500x1250.jpg_b",
+      "sha256": "163448779d4bd7fbfb0a259083ea1bcba454f5bc522c5dbda77e49d93ed293ca",
+      "bytes": 306098,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFR7NMVMK7/thumb.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/04/28/L3D748S41ENDOTXUSOIUWLONSLUFX7Q7ODQ8.0_7500x1250.jpg_f",
+      "sha256": "940b566f3ab0e04212b92b4a9a34ec9200941b41e249c3c558b941a2505e1b51",
+      "bytes": 464271,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY0110H1/r.jpg",
+      "url": "https://qhrenderpic-cos.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4FQUWIF3QLUFX77YSHQ8.0_7500x1250.jpg_r",
+      "sha256": "1329978ae822c9bed20cac4f3799689303c43b8d633bd5c1cdcfb255f75ced15",
+      "bytes": 326500,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY0110H1/l.jpg",
+      "url": "https://qhrenderpic-cos.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4FQUWIF3QLUFX77YSHQ8.0_7500x1250.jpg_l",
+      "sha256": "0fa2eb1ce2ef9e3ff381d349fe3f19d7603825cca13a3d93ab37656233077957",
+      "bytes": 439089,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY0110H1/u.jpg",
+      "url": "https://qhrenderpic-cos.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4FQUWIF3QLUFX77YSHQ8.0_7500x1250.jpg_u",
+      "sha256": "c479ef7db477ab7cbce901d69628b885f8301c1e03154d5eed41b27e9424bcf6",
+      "bytes": 168783,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY0110H1/d.jpg",
+      "url": "https://qhrenderpic-cos.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4FQUWIF3QLUFX77YSHQ8.0_7500x1250.jpg_d",
+      "sha256": "431bbc9fe6c068068ea491662e9c14daceb3fc30cf1b1ea079cb5c410b4a56ee",
+      "bytes": 656857,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY0110H1/f.jpg",
+      "url": "https://qhrenderpic-cos.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4FQUWIF3QLUFX77YSHQ8.0_7500x1250.jpg_f",
+      "sha256": "4862bff696d93f7c2dc80e7deb0fb0f2c0eac9504109272b469508c2e1d27744",
+      "bytes": 403134,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY0110H1/b.jpg",
+      "url": "https://qhrenderpic-cos.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4FQUWIF3QLUFX77YSHQ8.0_7500x1250.jpg_b",
+      "sha256": "38854f557bd54c640411c97f75eaa3a1cd470603df7012bf35a9fee2b6b568da",
+      "bytes": 204605,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY0110H1/thumb.jpg",
+      "url": "https://qhrenderpic-cos.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4FQUWIF3QLUFX77YSHQ8.0_7500x1250.jpg_f",
+      "sha256": "4862bff696d93f7c2dc80e7deb0fb0f2c0eac9504109272b469508c2e1d27744",
+      "bytes": 403134,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY01KKWV/r.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4EAUWLTSCLUFX77GDNA8.0_7500x1250.jpg_r",
+      "sha256": "b3b7fce0eb9f4cb6ddd5e1fb7837e8baf866c2b758829f855423b1b4f5cbdd0e",
+      "bytes": 320140,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY01KKWV/l.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4EAUWLTSCLUFX77GDNA8.0_7500x1250.jpg_l",
+      "sha256": "6988eb0b94d94c86d580aa77ff1270d180719c2d94c571433f6accd8b3a3f946",
+      "bytes": 372060,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY01KKWV/u.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4EAUWLTSCLUFX77GDNA8.0_7500x1250.jpg_u",
+      "sha256": "69038f89716e3c6c2dc41f843075c6b7c41f34502f2f1bfbc5c9886545ff4605",
+      "bytes": 283762,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY01KKWV/d.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4EAUWLTSCLUFX77GDNA8.0_7500x1250.jpg_d",
+      "sha256": "1765535dd8215bb50a5b9f5f75158d9cc84ec9e32671361fb54b97a1685fa64a",
+      "bytes": 581187,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY01KKWV/f.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4EAUWLTSCLUFX77GDNA8.0_7500x1250.jpg_f",
+      "sha256": "5325488993125658be489aea970bf3e20454a1965beaac643df08c8a675bb6b2",
+      "bytes": 619156,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY01KKWV/b.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4EAUWLTSCLUFX77GDNA8.0_7500x1250.jpg_b",
+      "sha256": "f288cafdf5e149451b4c96dfe33cc02fc2560036b141c8ee58d68f1dd54d38d7",
+      "bytes": 415399,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "3FOFTY01KKWV/thumb.jpg",
+      "url": "https://qhrenderpicoss.kujiale.com/r/2026/05/06/L3D748S41ENDOTSU4EAUWLTSCLUFX77GDNA8.0_7500x1250.jpg_f",
+      "sha256": "5325488993125658be489aea970bf3e20454a1965beaac643df08c8a675bb6b2",
+      "bytes": 619156,
+      "dimensions": [
+        1250,
+        1250
+      ]
+    },
+    {
+      "path": "floor-plan.jpg",
+      "url": "https://qhtbdoss.kujiale.com/fpimgnew/prod/bim/3FO3AN8K4GD1/1/NH5LMBYKTJBIEAABAAAAACI8.jpg",
+      "sha256": "2637c7ae29a6cfd16a9277a9eba553e5ca4210688569e9ff6b2e212d42ba2732",
+      "bytes": 85809,
+      "dimensions": [
+        800,
+        800
+      ]
+    },
+    {
+      "path": "navigation-plan.png",
+      "url": "https://panosxml-oss.kujiale.com/PROD/planimage/normal/3FO3AN8K4GD1/NHWGSMQKTJGQWAABAAAAADY8/1778038285000_800x800.png",
+      "sha256": "5389c30e5a6a65f5239cb5e27cf22c0f2e87c4f038b7e323981b21fe9a816d0f",
+      "bytes": 9165,
+      "dimensions": [
+        800,
+        800
+      ]
+    }
+  ]
+}

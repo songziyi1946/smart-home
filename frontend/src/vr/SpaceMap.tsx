@@ -1,17 +1,22 @@
-import { designModel, footprint, furnishingFootprints, HOME_DEPTH, HOME_WIDTH, viewpointForRoom, wallFootprints } from './plan';
+import { viewpointForRoom } from './plan';
+import { builtinDesignForVersion } from './builtin-presets';
 import type { ModelVersion } from '../../../packages/contracts/space-models';
 
 export default function SpaceMap({ room, onSelect, version }: { room: string; onSelect: (room: string) => void; version?: ModelVersion }) {
   const selectedId = version ? room : viewpointForRoom(room)?.id;
   const builtin = !version || version.source === 'builtin';
-  const width = version?.width ?? HOME_WIDTH, depth = version?.depth ?? HOME_DEPTH;
+  const designModel = builtinDesignForVersion(version);
+  const { footprint, walls: wallFootprints, furniture: furnishingFootprints } = designModel;
+  const width = version?.width ?? designModel.width, depth = version?.depth ?? designModel.depth;
   const rooms = version?.rooms ?? designModel.rooms;
   return <div className="vr-map-wrap">
     <svg className="vr-map" viewBox={`-.3 -.3 ${width + .6} ${depth + .6}`} role="img" aria-label="户型导航">
       {builtin ? <>
         <polygon points={footprint.map(point => point.join(',')).join(' ')} className="map-floor" strokeWidth=".07" />
         {wallFootprints.map(wall => <rect key={wall.id} x={wall.minX} y={wall.minZ} width={wall.maxX - wall.minX} height={wall.maxZ - wall.minZ} className="map-wall-fill" />)}
-        {furnishingFootprints.map(item => <rect key={item.id} x={item.minX} y={item.minZ} width={item.maxX - item.minX} height={item.maxZ - item.minZ} rx=".04" className="map-furniture" strokeWidth=".025" />)}
+        {furnishingFootprints.map(item => item.outline
+          ? <polygon key={item.id} points={item.outline.map(point => point.join(',')).join(' ')} className="map-furniture" strokeWidth=".025" />
+          : <rect key={item.id} x={item.minX} y={item.minZ} width={item.maxX - item.minX} height={item.maxZ - item.minZ} rx=".04" className="map-furniture" strokeWidth=".025" />)}
       </> : version?.plan ? <>
         <polygon points={version.plan.footprint.map(point => point.join(',')).join(' ')} className="map-floor" strokeWidth=".04" />
         {version.plan.walls.flatMap(wall => {

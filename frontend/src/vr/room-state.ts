@@ -2,7 +2,7 @@ import type { DeviceSnapshot } from '../types';
 import type { ModelVersion } from '../../../packages/contracts/space-models';
 import { isRunning } from '../devices';
 import { isSimulatedDevice, metricReading, occupancyReading, sourceLabel } from '../homeTelemetry';
-import { designModel, insideHome } from './plan';
+import { builtinDesignForVersion } from './builtin-presets';
 
 const legacyRoomId = (name: string) => `room-${encodeURIComponent(name)}`;
 
@@ -48,9 +48,9 @@ export type RoomSummary = ReturnType<typeof roomSummary>;
 
 export function modelRoomAt(x: number, z: number, version?: ModelVersion) {
   if (!Number.isFinite(x) || !Number.isFinite(z)) return;
-  if ((!version || version.source === 'builtin') && !insideHome(x, z, 0)) return;
-  if (version?.plan) {
-    const polygon = version.plan.footprint;
+  const designModel = builtinDesignForVersion(version);
+  const polygon = version?.plan?.footprint ?? ((!version || version.source === 'builtin') ? designModel.footprint : undefined);
+  if (polygon) {
     let inside = false, boundary = false;
     for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
       const [ax, az] = polygon[j], [bx, bz] = polygon[i];
