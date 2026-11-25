@@ -79,18 +79,19 @@ test('deleting a connection cancels its pending call and timeouts also cover DNS
 });
 
 async function httpFixture(t) {
-  const f=storage(t),auth=createAuth({file:join(f.data,'auth.json')}),app=express();let resolveResponse,called;
-  const service=new PersonalAiService({vault:f.vault,resolve:publicDns,transport:async()=>{called?.();return new Promise(resolve=>{resolveResponse=resolve;});}});
+  const f=storage(t),auth=createAuth({file:join(f.data,'auth.json')}),app=express();let resolveResponse,called,hold=false,lastSignal;
+  let upstream=()=>response({data:[{id:'vision-model'}]});
+  const service=new PersonalAiService({vault:f.vault,resolve:publicDns,transport:async args=>{lastSignal=args.signal;assert.equal(args.method,'GET');assert.equal(args.url.pathname,'/v1/models');called?.();return hold?new Promise(resolve=>{resolveResponse=resolve;}):upstream();}});
   app.use(express.json({limit:'32kb'}));app.use('/api',validateOrigin);app.use('/api/auth',auth.router);app.use('/api',auth.requireAuth,authorizeHousehold);
   const routes=createPersonalAiRouter({service,sessionFor:auth.sessionFor,subscribeAuth:auth.subscribeSessions});app.use('/api/ai',routes.router);
   app.use((error,_req,res,_next)=>res.status(error instanceof z.ZodError?400:error.status||500).json({message:error.message}));
   const server=await new Promise((resolve,reject)=>{const value=app.listen(0,'127.0.0.1',error=>error?reject(error):resolve(value));});
   t.after(()=>{routes.close();service.close();server.closeAllConnections();server.close();});
   const base=`http://127.0.0.1:${server.address().port}`;
-  async function request(path,{method='GET',body,cookie,origin}={}) {const res=await fetch(base+'/api'+path,{method,headers:{...(body===undefined?{}:{'Content-Type':'application/json'}),...(cookie?{Cookie:cookie}:{}),...(origin?{Origin:origin}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:res.status,body:await res.json(),cookie:res.headers.get('set-cookie')?.split(';')[0],cache:res.headers.get('cache-control')};}
+  async function request(path,{method='GET',body,cookie,origin,signal}={}) {const res=await fetch(base+'/api'+path,{method,signal,headers:{...(body===undefined?{}:{'Content-Type':'application/json'}),...(cookie?{Cookie:cookie}:{}),...(origin?{Origin:origin}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:res.status,body:await res.json(),cookie:res.headers.get('set-cookie')?.split(';')[0],cache:res.headers.get('cache-control')};}
   const admin=await request('/auth/setup',{method:'POST',body:{username:'ai_admin',password:'fixture-platform-password',displayName:'管理员',homeName:'家庭'}});assert.equal(admin.status,200);
   async function invite(role,username){const inv=await request('/auth/invitations',{method:'POST',cookie:admin.cookie,body:{role,expiresInHours:24,...(role==='guest'?{accessHours:1}:{})}});const joined=await request('/auth/join',{method:'POST',body:{username,password:'fixture-member-password',displayName:username,code:inv.body.code}});assert.equal(joined.status,200);return {cookie:joined.cookie,user:joined.body.user};}
-  return {request,admin:admin.cookie,invite,begun:()=>new Promise(resolve=>{called=resolve;}),finish:()=>resolveResponse?.(response({data:[{id:'vision-model'}]}))};
+  return {request,admin:admin.cookie,invite,vault:f.vault,setResponse:value=>{upstream=()=>value;},begun:()=>{hold=true;return new Promise(resolve=>{called=resolve;});},aborted:()=>lastSignal?.aborted?Promise.resolve():new Promise(resolve=>lastSignal.addEventListener('abort',resolve,{once:true})),finish:()=>{hold=false;resolveResponse?.(response({data:[{id:'vision-model'}]}));}};
 }
 
 test('same-browser users and admin cannot see, test or remove another account connection; revoked sessions cancel work',async t=>{
@@ -126,4 +127,29 @@ test('successful Responses cannot echo API keys through strings, object keys or 
   }
   body=JSON.stringify({output_text:JSON.stringify({plan:{notes:['普通估算备注']}}),usage:{input_tokens:12}});
   const result=await service.requestResponses('alice',a.id,{input:'read plan'});assert.equal(result.usage.input_tokens,12);
+});
+
+test('new AI connections are verified without temporary persistence and saved once only after selected model succeeds', async t=>{
+  const f=await httpFixture(t),alice=await f.invite('member','verify_alice'),bob=await f.invite('member','verify_bob'),prefix='/ai/connections';
+  f.setResponse({status:401,body:Buffer.from('fixture-owner-secret')});
+  const rejected=await f.request(prefix,{method:'POST',cookie:alice.cookie,body:connection()});
+  assert.equal(rejected.status,502);assert.ok(!JSON.stringify(rejected.body).includes('fixture-owner-secret'));assert.deepEqual(f.vault.load().connections,[]);
+  f.setResponse(response({data:[{id:'different-model'}]}));
+  const unavailable=await f.request(prefix,{method:'POST',cookie:alice.cookie,body:connection()});assert.equal(unavailable.status,400);assert.deepEqual(f.vault.load().connections,[]);
+  const begun=f.begun(),pending=f.request(prefix,{method:'POST',cookie:alice.cookie,body:connection()});await begun;
+  for(const cookie of [alice.cookie,bob.cookie,f.admin])assert.deepEqual((await f.request(prefix,{cookie})).body.connections,[]);
+  assert.deepEqual(f.vault.load().connections,[]);f.finish();
+  const saved=await pending;assert.equal(saved.status,200);assert.equal(saved.body.hasKey,true);assert.ok(!JSON.stringify(saved.body).includes('fixture-owner-secret'));
+  assert.equal(f.vault.load().connections.length,1);assert.equal(f.vault.load().connections[0].ownerId,alice.user.id);
+  assert.equal((await f.request(prefix,{cookie:alice.cookie})).body.connections.length,1);assert.deepEqual((await f.request(prefix,{cookie:bob.cookie})).body.connections,[]);
+});
+
+test('revoked sessions and disconnected verification requests cannot leave new AI credentials behind', async t=>{
+  const f=await httpFixture(t),alice=await f.invite('member','revoke_verify'),bob=await f.invite('member','disconnect_verify'),prefix='/ai/connections';
+  let begun=f.begun();const revoked=f.request(prefix,{method:'POST',cookie:alice.cookie,body:connection()});await begun;
+  assert.equal((await f.request('/auth/logout',{method:'POST',cookie:alice.cookie,body:{}})).status,200);
+  assert.equal((await revoked).status,403);f.finish();assert.deepEqual(f.vault.load().connections,[]);
+  const controller=new AbortController();begun=f.begun();const disconnected=f.request(prefix,{method:'POST',cookie:bob.cookie,body:connection(),signal:controller.signal});
+  const rejection=assert.rejects(disconnected,error=>error.name==='AbortError');await begun;const upstreamAborted=f.aborted();controller.abort();await rejection;await upstreamAborted;f.finish();
+  assert.deepEqual(f.vault.load().connections,[]);assert.deepEqual((await f.request(prefix,{cookie:bob.cookie})).body.connections,[]);
 });

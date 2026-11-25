@@ -1,9 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Button, Input, Popconfirm } from '@arco-design/web-react';
+import { Button, Input, Modal, Popconfirm } from '@arco-design/web-react';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { ApiError, request } from '../api';
 import type { Session } from '../types';
-import { aiConnectionOwnerKey, validateAIConnectionInput, type AIConnection, type AIConnectionInput } from './ai-connections-model';
+import { aiConnectionOwnerKey, validateAIConnectionInput, type AIConnection, type AIConnectionInput, type AIConnectionFieldErrors } from './ai-connections-model';
 import './ai-connections.css';
 
 const endpoint = '/ai/connections';
@@ -21,25 +21,36 @@ function PersonalAIConnections({ disabled, onSessionExpired }: { disabled: boole
   const [connections, setConnections] = useState<AIConnection[]>();
   const [configured, setConfigured] = useState(true);
   const [form, setForm] = useState(emptyForm);
+  const [fieldErrors, setFieldErrors] = useState<AIConnectionFieldErrors>({});
+  const [saveError, setSaveError] = useState('');
+  const [adding, setAdding] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const [pending, setPending] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
   const mounted = useRef(false), generation = useRef(0), locked = useRef(false);
   const formId = useId();
   const blocked = disabled || pending;
-  function reportError(reason: unknown) {
+  function reportError(reason: unknown, saving = false) {
     if (reason instanceof ApiError && reason.status === 401) {
-      setConnections(undefined); setForm(emptyForm()); setError(''); setNotice(''); onSessionExpired(); return;
+      setConnections(undefined); setForm(emptyForm()); setFieldErrors({}); setSaveError(''); setAdding(false); setError(''); setNotice(''); onSessionExpired(); return;
     }
-    setError(reason instanceof Error ? reason.message : 'AI 服务暂不可用，请稍后重试');
+    (saving ? setSaveError : setError)(reason instanceof Error ? reason.message : 'AI 服务暂不可用，请稍后重试');
   }
   async function run(action: 'load' | 'save' | 'test' | 'delete', connection?: AIConnection) {
     if (locked.current || (action !== 'load' && disabled)) return;
     if (action === 'save') {
-      const invalid = validateAIConnectionInput(form); if (invalid) { setError(invalid); return; }
+      const invalid = validateAIConnectionInput(form);
+      setFieldErrors(invalid); setSaveError(''); setError('');
+      const first = Object.keys(invalid)[0];
+      if (first) {
+        const input = formRef.current?.elements.namedItem(first) as HTMLInputElement | null;
+        input?.focus(); input?.scrollIntoView({ block: 'center', behavior: 'auto' });
+        return;
+      }
     }
     if ((action === 'test' || action === 'delete') && !connection) return;
     locked.current = true;
     const epoch = ++generation.current, current = () => mounted.current && generation.current === epoch;
-    setPending(true); setError(''); setNotice('');
+    setPending(true); setError(''); setSaveError(''); setNotice('');
     try {
       if (action === 'load') {
         const result = await request<ConnectionsResponse>(endpoint);
@@ -48,7 +59,7 @@ function PersonalAIConnections({ disabled, onSessionExpired }: { disabled: boole
         const input = Object.fromEntries(Object.entries(form).map(([key, value]) => [key, value.trim()])) as AIConnectionInput;
         const result = await request<AIConnection>(endpoint, 'POST', input);
         if (current()) {
-          setConnections(items => [...(items ?? []), result]); setForm(emptyForm()); setNotice('AI 服务已保存，仅当前账号可用。');
+          setConnections(items => [...(items ?? []), result]); setForm(emptyForm()); setFieldErrors({}); setAdding(false); setNotice('连接验证成功，AI 服务已添加。');
         }
       } else {
         const path = `${endpoint}/${encodeURIComponent(connection!.id)}`;
@@ -58,17 +69,26 @@ function PersonalAIConnections({ disabled, onSessionExpired }: { disabled: boole
           setNotice(action === 'test' ? `${connection!.name}：连接成功` : '已删除此 AI 服务');
         }
       }
-    } catch (reason) { if (current()) reportError(reason); }
+    } catch (reason) { if (current()) reportError(reason, action === 'save'); }
     finally { if (current()) { locked.current = false; setPending(false); } }
   }
   useEffect(() => {
     mounted.current = true; void run('load');
     return () => { mounted.current = false; generation.current++; locked.current = false; };
   }, []);
-  function update(key: keyof AIConnectionInput, value: string) { setForm(current => ({ ...current, [key]: value })); }
+  function update(key: keyof AIConnectionInput, value: string) {
+    setForm(current => ({ ...current, [key]: value })); setSaveError('');
+    if (fieldErrors[key]) setFieldErrors(current => ({ ...current, [key]: validateAIConnectionInput({ ...form, [key]: value })[key] }));
+  }
+  const fields = [
+    { key: 'name', label: '服务名称', maxLength: 80, placeholder: '例如：我的 OpenAI' },
+    { key: 'baseUrl', label: '接口地址', maxLength: 2048 },
+    { key: 'model', label: '模型名称', maxLength: 160 },
+    { key: 'apiKey', label: 'API 密钥', maxLength: 8192, placeholder: '输入 API 密钥' },
+  ] as const;
   return <div className="ai-connections">
     <section className="panel">
-      <header><h2><Sparkles size={19} />我的 AI</h2><Button icon={<RefreshCw size={15} />} disabled={blocked} onClick={() => void run('load')}>刷新</Button></header>
+      <header><h2><Sparkles size={19} />我的 AI</h2><div className="settings-actions"><Button icon={<RefreshCw size={15} />} disabled={blocked} onClick={() => void run('load')}>刷新</Button><Button type="primary" disabled={blocked || !connections || !configured} onClick={() => { setForm(emptyForm()); setFieldErrors({}); setSaveError(''); setAdding(true); }}>添加 AI 服务</Button></div></header>
       <p className="settings-muted">仅当前账号可用</p>
       {error && <p className="settings-error" role="alert">{error}</p>}
       {notice && <p className="ai-notice" role="status">{notice}</p>}
@@ -80,18 +100,25 @@ function PersonalAIConnections({ disabled, onSessionExpired }: { disabled: boole
         </article>)}
       </div>}
     </section>
-    <section className="panel">
-      <header><h2>添加 AI 服务</h2></header>
-      {!configured ? <p role="status">AI 服务配置暂不可用，请联系管理员。</p> : <form className="ai-connection-form" onSubmit={event => { event.preventDefault(); void run('save'); }}>
+    <Modal title="添加 AI 服务" visible={adding} onCancel={() => { if (!pending) { setAdding(false); setForm(emptyForm()); setFieldErrors({}); setSaveError(''); } }} footer={null}
+      closable={!pending} maskClosable={!pending} escToExit={!pending} unmountOnExit style={{ width: 'min(480px, calc(100vw - 24px))' }} className="ai-connection-modal">
+      {!configured ? <p role="status">AI 服务配置暂不可用，请联系管理员。</p> : <form ref={formRef} className="ai-connection-form" noValidate onSubmit={event => { event.preventDefault(); void run('save'); }}>
         <fieldset disabled={blocked || !connections}>
-          <label htmlFor={formId + '-name'}>服务名称<Input id={formId + '-name'} value={form.name} maxLength={80} placeholder="例如：我的 OpenAI" onChange={value => update('name', value)} disabled={blocked || !connections} /></label>
-          <label htmlFor={formId + '-url'}>接口地址<Input id={formId + '-url'} value={form.baseUrl} maxLength={2048} onChange={value => update('baseUrl', value)} disabled={blocked || !connections} autoComplete="off" /></label>
-          <p className="settings-muted">接口协议：OpenAI Responses</p>
-          <label htmlFor={formId + '-model'}>模型名称<Input id={formId + '-model'} value={form.model} maxLength={160} onChange={value => update('model', value)} disabled={blocked || !connections} autoComplete="off" /></label>
-          <label htmlFor={formId + '-key'}>API 密钥<Input id={formId + '-key'} type="password" value={form.apiKey} maxLength={8192} placeholder="输入 API 密钥" onChange={value => update('apiKey', value)} disabled={blocked || !connections} autoComplete="off" spellCheck={false} /></label>
-          <Button htmlType="submit" type="primary" loading={pending} disabled={blocked || !connections}>保存 AI 服务</Button>
+          {fields.map(field => <div key={field.key} className="ai-connection-field">
+            <label htmlFor={formId + '-' + field.key}>{field.label}<span className="ai-field-required" aria-hidden="true"> *</span></label>
+            <Input id={formId + '-' + field.key} name={field.key} value={form[field.key]} maxLength={field.maxLength}
+              placeholder={'placeholder' in field ? field.placeholder : undefined} type={field.key === 'apiKey' ? 'password' : 'text'}
+              onChange={value => update(field.key, value)} disabled={blocked || !connections} autoComplete="off" spellCheck={false}
+              status={fieldErrors[field.key] ? 'error' : undefined} aria-required="true" aria-invalid={!!fieldErrors[field.key]}
+              aria-describedby={fieldErrors[field.key] ? formId + '-' + field.key + '-error' : undefined} />
+            {fieldErrors[field.key] && <p id={formId + '-' + field.key + '-error'} className="ai-field-error" role="alert">{fieldErrors[field.key]}</p>}
+            {field.key === 'baseUrl' && <p className="settings-muted">接口协议：OpenAI Responses</p>}
+          </div>)}
+          {saveError && <p className="settings-error" role="alert">{saveError}</p>}
+          <p className="settings-muted">验证接口连接及模型访问权限，通过后自动添加。</p>
+          <div className="ai-form-actions"><Button disabled={pending} onClick={() => { setAdding(false); setForm(emptyForm()); setFieldErrors({}); setSaveError(''); }}>取消</Button><Button htmlType="submit" type="primary" loading={pending} disabled={blocked || !connections}>{pending ? '正在验证连接…' : '验证并添加'}</Button></div>
         </fieldset>
       </form>}
-    </section>
+    </Modal>
   </div>;
 }

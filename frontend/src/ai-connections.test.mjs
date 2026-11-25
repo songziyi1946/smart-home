@@ -16,13 +16,22 @@ test('personal AI state is isolated across household, user and fresh sign-in', (
 });
 
 test('connection form rejects credentials in URL and requires explicit nonempty key', () => {
-  assert.equal(validateAIConnectionInput(form), undefined);
-  assert.equal(validateAIConnectionInput({ ...form, baseUrl: 'https://gateway.example.com/openai/v1' }), undefined);
+  assert.deepEqual(validateAIConnectionInput(form), {});
+  assert.deepEqual(validateAIConnectionInput({ ...form, baseUrl: 'https://gateway.example.com/openai/v1' }), {});
   for (const baseUrl of ['http://api.openai.com/v1', 'https://user:secret@api.openai.com/v1', 'https://api.openai.com/v1?api_key=secret', 'https://api.openai.com/v1#secret', 'not-a-url']) {
-    assert.match(validateAIConnectionInput({ ...form, baseUrl }), /地址/);
+    assert.match(validateAIConnectionInput({ ...form, baseUrl }).baseUrl, /地址/);
   }
-  assert.match(validateAIConnectionInput({ ...form, apiKey: '   ' }), /密钥/);
-  assert.match(validateAIConnectionInput({ ...form, name: ' ' }), /服务名称/);
-  assert.match(validateAIConnectionInput({ ...form, model: ' ' }), /模型名称/);
-  assert.match(validateAIConnectionInput({ ...form, apiKey: 'k'.repeat(8193) }), /密钥/);
+  assert.match(validateAIConnectionInput({ ...form, apiKey: '   ' }).apiKey, /密钥/);
+  assert.match(validateAIConnectionInput({ ...form, name: ' ' }).name, /服务名称/);
+  assert.match(validateAIConnectionInput({ ...form, model: ' ' }).model, /模型名称/);
+  assert.match(validateAIConnectionInput({ ...form, apiKey: 'k'.repeat(8193) }).apiKey, /密钥/);
+});
+
+test('validation identifies every missing field in display order and clears corrected fields', () => {
+  const empty = { name: '', baseUrl: '', model: '', apiKey: '' };
+  assert.deepEqual(Object.keys(validateAIConnectionInput(empty)), ['name', 'baseUrl', 'model', 'apiKey']);
+  const corrected = validateAIConnectionInput({ ...empty, name: '我的服务' });
+  assert.equal(corrected.name, undefined);
+  assert.match(corrected.apiKey, /填写/);
+  assert.deepEqual(Object.keys(validateAIConnectionInput({ ...form, name: '' })), ['name']);
 });

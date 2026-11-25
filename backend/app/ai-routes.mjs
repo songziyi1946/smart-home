@@ -29,8 +29,13 @@ export function createPersonalAiRouter({service,sessionFor,subscribeAuth,allowCr
     }finally{pending.delete(entry);res.off('close',closed);}
   };
   router.get('/connections',route(req=>service.list(req.user.id)));
-  router.post('/connections',route(req=>{
-    try{return service.create(req.user.id,req.body);}
+  router.post('/connections',route(async(req,signal)=>{
+    try{
+      const verified=await service.verify(req.user.id,req.body,{signal});
+      if(!authorized(req))throw aiError(403,'登录已过期或账号权限已失效');
+      if(signal.aborted)throw aiError(499,'AI 请求已取消');
+      return service.create(req.user.id,verified);
+    }
     finally{if(req.body&&typeof req.body==='object')delete req.body.apiKey;}
   }));
   router.delete('/connections/:id',route(req=>{z.object({}).strict().parse(req.body??{});return service.remove(req.user.id,req.params.id);}));

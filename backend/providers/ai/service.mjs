@@ -24,6 +24,17 @@ export class PersonalAiService {
     const connection={...parsed,baseUrl:normalizeAiBaseUrl(parsed.baseUrl),id:randomUUID(),ownerId,createdAt:new Date().toISOString()};
     state.connections.push(connection); this.vault.save(state); return safe(connection);
   }
+  async verify(ownerId,input,{signal}={}) {
+    owner(ownerId);
+    const parsed=inputSchema.parse(input);
+    parsed.baseUrl=normalizeAiBaseUrl(parsed.baseUrl);
+    if(this.list(ownerId).connections.length>=10)throw aiError(400,'最多保存 10 个个人 AI 连接');
+    // Reuse the same guarded transport without exposing an unverified connection in the real vault.
+    const connection={...parsed,id:randomUUID(),ownerId,createdAt:new Date().toISOString()};
+    const temporary=new PersonalAiService({vault:{load:()=>({connections:[connection]})},resolve:this.resolve,transport:this.transport,timeoutMs:this.timeoutMs});
+    try { await temporary.test(ownerId,connection.id,{signal});return parsed; }
+    finally { temporary.close(); }
+  }
   remove(ownerId,id) {
     this.getForOwner(ownerId,id); const state=this.vault.load(); state.connections=state.connections.filter(value=>value.id!==id||value.ownerId!==ownerId); this.vault.save(state);
     for (const active of this.inflight.values()) if (active.ownerId===ownerId&&active.connectionId===id) active.controller.abort();

@@ -14,3 +14,11 @@
 .ai-connection-list dd { margin: 0; overflow-wrap: anywhere; }
 .ai-notice { color: var(--accent); }
 @media (max-width: 767px) { .ai-connection-form .arco-input { font-size: 16px; } }
+
+.ai-connection-field { display: grid; gap: 7px; min-width: 0; scroll-margin-block: 24px; }
+.ai-connection-form .ai-connection-field > label { display: block; }
+.ai-field-error, .ai-field-required { color: var(--color-danger); }
+.ai-connection-form .ai-field-error { font-size: 13px; }
+
+.ai-connection-modal .arco-modal-content { max-height: calc(100dvh - 180px); overflow-y: auto; }
+.ai-form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
